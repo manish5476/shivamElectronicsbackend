@@ -9,6 +9,8 @@ const productRoutes = require("./routes/product");
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+const cors = require("cors");
+app.use(cors());
 
 app.use(morgan("combined"));
 app.use((req, res, next) => {

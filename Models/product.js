@@ -4,7 +4,7 @@ const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
       unique: true,
       minlength: 3,
@@ -12,14 +12,14 @@ const productSchema = new mongoose.Schema(
     },
     brand: {
       type: String,
-      required: true,
+      // required: true,
       trim: true,
       minlength: 2,
       maxlength: 50,
     },
     price: {
       type: Number,
-      required: true,
+      // required: true,
       min: 0,
     },
     description: {
@@ -31,17 +31,17 @@ const productSchema = new mongoose.Schema(
     },
     images: {
       type: [String],
-      required: true,
+      // required: true,
     },
     stock: {
       type: Number,
-      required: true,
+      // required: true,
       min: 0,
     },
     category: {
       type: String,
-      required: true,
-      enum: ["electronics", "clothing", "accessories", "other"], // Customizable categories
+      // required: true,
+      // enum: ["electronics", "clothing", "accessories", "other"], // Customizable categories
     },
     ratingsAverage: {
       type: Number,
@@ -58,12 +58,12 @@ const productSchema = new mongoose.Schema(
       {
         user: {
           type: String,
-          required: true,
+          // required: true,
           trim: true,
         },
         rating: {
           type: Number,
-          required: true,
+          // required: true,
           min: 0,
           max: 5,
         },
