@@ -9,6 +9,7 @@ mongoose
     `mongodb+srv://msms5476mmmm:ms201426@shivamelectronics.ahdcm.mongodb.net/?retryWrites=true&w=majority&appName=ShivamElectronics`
   )
   .then((con) => {});
+
 const cors = require("cors");
 app.use(cors());
 
@@ -18,8 +19,8 @@ app.listen(port, () => {
 });
 
 //
-{
-  /* <html>
+// {
+/* <html>
 <head>
     <style>
         body {
@@ -98,5 +99,5 @@ app.listen(port, () => {
     </div>
 </body>
 </html> */
-}
+// }
 //
