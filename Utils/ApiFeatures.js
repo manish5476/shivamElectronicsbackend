@@ -5,12 +5,10 @@ class ApiFeatures {
   }
 
   filter() {
-    // Filtering
     const queryObj = { ...this.queryString };
     const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
 
-    // Advanced filtering
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
     this.query = this.query.find(JSON.parse(queryStr));
@@ -18,7 +16,6 @@ class ApiFeatures {
   }
 
   sort() {
-    // Sorting
     if (this.queryString.sort) {
       const sortBy = this.queryString.sort.split(",").join(" ");
       this.query = this.query.sort(sortBy);
@@ -29,7 +26,6 @@ class ApiFeatures {
   }
 
   limitFields() {
-    // Limiting fields
     if (this.queryString.fields) {
       const fields = this.queryString.fields.split(",").join(" ");
       this.query = this.query.select(fields);
@@ -40,9 +36,11 @@ class ApiFeatures {
   }
 
   paginate() {
-    // Pagination
-    const page = this.queryString.page * 1 || 1;
-    const limit = this.queryString.limit * 1 || 100;
+    const page = Math.max(this.queryString.page * 1 || 1, 1); // Ensure page is at least 1
+    const limit = Math.min(
+      Math.max(this.queryString.limit * 1 || 200, 1),
+      1000
+    ); // Limit max to 1000
     const skip = (page - 1) * limit;
 
     this.query = this.query.skip(skip).limit(limit);

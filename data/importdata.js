@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const data = require("./data.111");
+const data = require("./jsondata");
 const Product = require("./../Models/Product"); // Assuming you have a Product schema defined
 dotenv.config({ path: "./config.env" });
 
@@ -29,7 +29,7 @@ async function uploadProducts() {
       });
 
       if (existingProduct) {
-        console.log(`Product already exists: ${existingProduct.displayName}`);
+        console.log(`Product already exists: ${existingProduct.modelCode}`);
         continue; // Skip this product if it already exists
       }
 
@@ -40,25 +40,34 @@ async function uploadProducts() {
         thumbUrl: productData.thumbUrl,
         thumbUrlAlt: productData.thumbUrlAlt,
         largeUrl: productData.largeUrl,
-        galleryImage: productData.galleryImage,
-        galleryImageAlt: productData.galleryImageAlt,
+        galleryImage: productData.galleryImage || [], // Default to empty array if undefined
+        galleryImageAlt: productData.galleryImageAlt || [],
         ratingsAverage: parseFloat(productData.ratings) || 0,
         ratingsCount: parseInt(productData.reviewCount) || 0,
         reviewUrl: productData.reviewUrl,
-        selected: productData.selected === "Y",
-        fmyChipList: productData.fmyChipList,
+        selected: productData.selected || false, // Default to false if undefined
+        fmyChipList: productData.fmyChipList || [], // Default to empty array
         ctaType: productData.ctaType,
         stockStatusText: productData.stockStatusText,
-        description: productData.description,
-        price: parseFloat(productData.price),
+        description: productData.description || [], // Default to empty array
+        price: productData.price, // Null if no price
         priceDisplay: productData.priceDisplay,
-        promotionPrice: parseFloat(productData.promotionPrice),
+        promotionPrice: productData.promotionPrice
+          ? parseFloat(productData.promotionPrice)
+          : null,
         promotionPriceDisplay: productData.promotionPriceDisplay,
-        listPrice: parseFloat(productData.listPrice),
+        listPrice: productData.listPrice
+          ? parseFloat(productData.listPrice)
+          : null,
         listPriceDisplay: productData.listPriceDisplay,
         saveText: productData.saveText,
-        monthlyPriceInfo: productData.monthlyPriceInfo,
-        keySummary: productData.keySummary,
+        monthlyPriceInfo: {
+          leasingUpfront: productData.monthlyPriceInfo?.leasingUpfront || null,
+          leasingMonthly: productData.monthlyPriceInfo?.leasingMonthly || null,
+          leasingMonths: productData.monthlyPriceInfo?.leasingMonths || null,
+          interest: productData.monthlyPriceInfo?.interest || null,
+        },
+        keySummary: productData.keySummary || [], // Default to empty array
         pviTypeName: productData.pviTypeName,
         pviSubtypeName: productData.pviSubtypeName,
         ctaLocalText: productData.ctaLocalText,
@@ -68,7 +77,6 @@ async function uploadProducts() {
         isComingSoon: productData.isComingSoon || false,
         packageYN: productData.packageYN === "Y",
       });
-
       await product.save();
       console.log(`Saved product: ${product.displayName}`);
     }

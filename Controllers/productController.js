@@ -1,17 +1,14 @@
 const { query } = require("express");
-const Product = require("./../Models/Product");
+const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
 exports.getAllProduct = async (req, res) => {
   try {
-    // Filtering, sorting, limiting fields, and pagination
     const features = new ApiFeatures(Product.find(), req.query)
       .filter()
       .limitFields()
       .sort()
       .paginate();
-
     const products = await features.query;
-
     res.status(200).json({
       status: "success",
       result: products.length,
