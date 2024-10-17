@@ -1,6 +1,7 @@
 const { query } = require("express");
 const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
+
 exports.getAllProduct = async (req, res) => {
   try {
     const features = new ApiFeatures(Product.find(), req.query)
