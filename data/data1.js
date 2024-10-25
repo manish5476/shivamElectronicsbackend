@@ -1,207 +1,178 @@
-module.exports = [
-  {
-    familyRecord: "1",
-    familyId: "518900",
-    modelCount: "1",
-    fmyMarketingName: "Galaxy F14 (4GB Memory)",
-    fmyEngName: "Galaxy F14 4GB Memory",
-    categorySubTypeCode: "01010800",
-    categorySubTypeEngName: "Galaxy F",
-    categorySubTypeName: "Galaxy F",
-    simplePdYN: "Y",
-    oldProductYN: "N",
-    productGroupId: "galaxyf144gbmemory",
-    optionPriceUse: null,
-    iaCtaDisplay: "Y",
-    wtbOnlineDispFuncUseYN: null,
-    wtbDispFuncUseYN: null,
-    filterParamText: null,
-    thirdPASeller: null,
-    isRecommended: null,
-    chipOptions: [
+sampledata={
+  "productId": "prod_001",
+  "name": "Smart Refrigerator",
+  "description": {
+    "text": "A high-efficiency smart refrigerator with advanced cooling technology.",
+    "images": [
       {
-        fmyChipType: "COLOR",
-        optionTypeSeq: "1",
-        optionTypeCode: "CM001",
-        optionList: [
-          {
-            optionCode: "#bbc7d6",
-            optionName: "prism crush silver",
-            optionLocalName: "Silver",
-            multiColorYN: "N",
-            multiColorList: null,
-          },
-        ],
+        "url": "http://example.com/description-image1.jpg",
+        "altText": "Smart Refrigerator in Kitchen"
       },
       {
-        fmyChipType: "MOBILE MEMORY",
-        optionTypeSeq: "1",
-        optionTypeCode: "IM003",
-        optionList: [
-          {
-            optionCode: "64 GB",
-            optionName: "64 gb",
-            optionLocalName: "64 GB",
-            multiColorYN: "N",
-            multiColorList: null,
-          },
-        ],
-      },
+        "url": "http://example.com/description-image2.jpg",
+        "altText": "Interior View of Refrigerator"
+      }
     ],
-    awardList: [],
-    quickLooks: [],
-    localBenefitList: [],
-    modelList: [
-      {
-        modelCode: "SM-E145FZSDINS",
-        shopSKU: "SM-E145FZSD",
-        modelName: "SM-E145F/DS",
-        displayName: "Galaxy F14 (4GB Memory)",
-        marketingpdpYN: "N",
-        thumbUrl:
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002102",
-        thumbUrlAlt: "SM-E145FZSDINS",
-        largeUrl:
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002099",
-        galleryImage: [
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002106",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002111",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002116",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002120",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002122",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-thumb-543002124",
-        ],
-        galleryImageAlt: [
-          "SM-E145FZSDINS ",
-          "SM-E145FZSDINS ",
-          "SM-E145FZSDINS ",
-          "SM-E145FZSDINS ",
-          "SM-E145FZSDINS ",
-          "SM-E145FZSDINS ",
-        ],
-        galleryImageLarge: [
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002105",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002109",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002114",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002119",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002121",
-          "//images.samsung.com/is/image/samsung/p6pim/in/sm-e145fzsdins/gallery/in-galaxy-f14-4gb-memory-sm-e145fzsdins-543002123",
-        ],
-        pdpUrl:
-          "/in/smartphones/galaxy-f/galaxy-f14-silver-64gb-sm-e145fzsdins/",
-        originPdpUrl:
-          "/in/smartphones/galaxy-f/galaxy-f14-silver-64gb-sm-e145fzsdins/",
-        configuratorUrl: null,
-        ratings: null,
-        reviewCount: null,
-        reviewUrl:
-          "/in/smartphones/galaxy-f/galaxy-f14-silver-64gb-sm-e145fzsdins/#reviews",
-        energyLabelGrade: null,
-        newEnergyLabel: null,
-        energyLabelClass1: null,
-        energyLabelClass2: null,
-        energyFileUrl: null,
-        ficheFileUrl: null,
-        selected: "Y",
-        fmyChipList: [
-          {
-            fmyChipType: "COLOR",
-            optionTypeSeq: "1",
-            optionTypeCode: "CM001",
-            fmyChipCode: "#bbc7d6",
-            fmyChipName: "Prism Crush Silver",
-            fmyChipLocalName: "Silver",
-            multiColorYN: "N",
-            multiColorList: null,
-          },
-          {
-            fmyChipType: "MOBILE MEMORY",
-            optionTypeSeq: "1",
-            optionTypeCode: "IM003",
-            fmyChipCode: "64 GB",
-            fmyChipName: "64 GB",
-            fmyChipLocalName: "64 GB",
-            multiColorYN: "N",
-            multiColorList: null,
-          },
-        ],
-        ctaType: "InStock",
-        offerCtaFlag: "Y",
-        tariffYN: "N",
-        wtbUseFlag: "Y",
-        repairabilityIndex: null,
-        repairabilityIndexPdfUrl: null,
-        stockStatusText: "InStock",
-        financeInfoAmount: null,
-        financeInfoValue: null,
-        tradeIn: "N",
-        tradeInDesc: null,
-        tradeInFormattedDesc: null,
-        premiumCare: "N",
-        premiumCareDesc: null,
-        premiumCareFormattedDesc: null,
-        financing: "N",
-        financingDesc: null,
-        financingFormattedDesc: null,
-        upgrade: "N",
-        upgradeDesc: null,
-        upgradeFormattedDesc: null,
-        storePromotions: null,
-        usp: [
-          "50 MP Triple Camera with 13 MP Front Camera",
-          "SD 680 Processor",
-          "17.08 cm FHD+, 90 Hz",
-        ],
-        leasingInfo: null,
-        price: "13999",
-        priceDisplay: "₹ 13999.00",
-        promotionPrice: "8999",
-        promotionPriceDisplay: "₹ 8999.00",
-        tradeInPriceText: null,
-        listPrice: "8999",
-        listPriceDisplay: "₹ 8999.00",
-        saveText: "5000",
-        pricePeriodInfo: null,
-        buyBackDesc: null,
-        tradeInDiscount: null,
-        tradeInPrice: null,
-        msrpPrice: null,
-        vatEligible: null,
-        vatFreePrice: null,
-        vatFreePriceDisplay: null,
-        monthlyPriceInfo: {
-          leasingUpfront: "8999",
-          leasingMonthly: "436.33",
-          leasingMonths: "24",
-          interest: "15",
-        },
-        topFlags: {
-          iconTypeCd: "N",
-          iconTitle: null,
-        },
-        merchandisingText: null,
-        keySummary: null,
-        emiCalculatorUrl: null,
-        pviTypeName: "Mobile",
-        pviSubtypeName: "Smartphone",
-        deliveryYN: "N",
-        buyingConfigLinkType: null,
-        buyingConfigLink: null,
-        bespokeCtaUse: "N",
-        bespokeCtaLink: null,
-        ctaLocalText: null,
-        ctaEngText: null,
-        configuratorUseYn: "N",
-        pf360IconUse: "N",
-        uspText: null,
-        lowestWasPrice: null,
-        lowestWasPriceDisplay: null,
-        specCompareYN: "Y",
-        isComingSoon: false,
-        packageYN: "N",
-        pkgChildModelList: null,
-        keySpec: null,
-      },
-    ],
+    "video": {
+      "url": "http://example.com/product-video.mp4",
+      "description": "Product demonstration video."
+    }
   },
-];
+  "category": {
+    "main": "Electrical Appliances",
+    "sub": "Refrigerators",
+    "subCategories": ["French Door", "Smart Refrigerators"]
+  },
+  "brand": {
+    "name": "CoolTech",
+    "logo": "http://example.com/logo.jpg",
+    "website": "http://cooltech.com",
+    "established": "1995",
+    "country": "USA"
+  },
+  "price": {
+    "current": 1199.99,
+    "original": 1399.99,
+    "currency": "USD",
+    "discount": {
+      "percentage": 15,
+      "expiresOn": "2024-12-31"
+    },
+    "financingOptions": [
+      {
+        "term": "12 months",
+        "monthlyPayment": 100.00,
+        "interestRate": "0% APR"
+      }
+    ]
+  },
+  "stock": {
+    "quantity": 75,
+    "status": "in_stock",
+    "restockDate": "2024-05-01",
+    "warehouseLocation": "Warehouse B, City, State"
+  },
+  "images": {
+    "default": "http://example.com/default.jpg",
+    "variants": [
+      {
+        "color": "Silver",
+        "images": [
+          {
+            "imageUrl": "http://example.com/silver-1.jpg",
+            "altText": "Silver Refrigerator Front View"
+          },
+          {
+            "imageUrl": "http://example.com/silver-2.jpg",
+            "altText": "Silver Refrigerator Side View"
+          }
+        ],
+        "stock": 40
+      },
+      {
+        "color": "Black",
+        "images": [
+          {
+            "imageUrl": "http://example.com/black-1.jpg",
+            "altText": "Black Refrigerator Front View"
+          },
+          {
+            "imageUrl": "http://example.com/black-2.jpg",
+            "altText": "Black Refrigerator Side View"
+          }
+        ],
+        "stock": 35
+      }
+    ],
+    "360View": "http://example.com/360-view.jpg"
+  },
+  "specifications": {
+    "dimensions": {
+      "width": "70 cm",
+      "height": "180 cm",
+      "depth": "75 cm"
+    },
+    "weight": "80 kg",
+    "energyRating": "A+++",
+    "features": [
+      { "text": "Smart Home Integration" },
+      { "text": "Energy Efficient" },
+      { "text": "Temperature Control" }
+    ],
+    "warranty": {
+      "period": "3 years",
+      "details": "Comprehensive warranty covering parts and labor."
+    },
+    "materials": ["Stainless Steel", "Plastic", "Glass"],
+    "usageInstructions": "Refer to the user manual for installation and use.",
+    "safetyWarnings": [
+      "Keep away from water sources.",
+      "Do not overload shelves."
+    ]
+  },
+  "metadata": {
+    "sku": "SKU123456",
+    "tags": ["energy-efficient", "smart refrigerator", "home appliance"],
+    "releaseDate": "2024-01-15",
+    "timestamps": {
+      "createdAt": "2024-01-01T12:00:00Z",
+      "updatedAt": "2024-10-01T12:00:00Z"
+    },
+    "relatedProducts": [
+      {
+        "productId": "prod_002",
+        "name": "CoolTech Freezer"
+      },
+      {
+        "productId": "prod_003",
+        "name": "CoolTech Water Dispenser"
+      }
+    ]
+  },
+  "shipping": {
+    "weight": "85 kg",
+    "dimensions": {
+      "width": "75 cm",
+      "height": "185 cm",
+      "depth": "80 cm"
+    },
+    "options": [
+      {
+        "method": "Standard Shipping",
+        "cost": 25.00,
+        "estimatedDelivery": "5-7 days"
+      },
+      {
+        "method": "Express Shipping",
+        "cost": 60.00,
+        "estimatedDelivery": "2-3 days"
+      }
+    ],
+    "handlingInstructions": "Fragile, handle with care."
+  },
+  "reviews": [
+    {
+      "reviewId": "review_001",
+      "userId": "user_001",
+      "rating": 4.8,
+      "comment": "Fantastic refrigerator! Keeps everything fresh.",
+      "date": "2024-10-01",
+      "helpfulCount": 15,
+      "responses": [
+        {
+          "adminId": "admin_001",
+          "response": "Thank you for your feedback!",
+          "date": "2024-10-02"
+        }
+      ]
+    },
+    {
+      "reviewId": "review_002",
+      "userId": "user_002",
+      "rating": 4.0,
+      "comment": "Great features but a bit noisy.",
+      "date": "2024-09-15",
+      "helpfulCount": 5
+    }
+  ]
+}
