@@ -2,6 +2,10 @@ const { query } = require("express");
 const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
 
+
+
+
+//get all data on the basis of the product
 exports.getAllProduct = async (req, res) => {
   try {
     const features = new ApiFeatures(Product.find(), req.query)
@@ -23,6 +27,7 @@ exports.getAllProduct = async (req, res) => {
   }
 };
 
+//Create new Product
 exports.newProduct = async (req, res) => {
   try {
     const newProduct = await Product.create(req.body);
@@ -40,6 +45,7 @@ exports.newProduct = async (req, res) => {
     });
   }
 };
+//update Product
 exports.updateProduct=async(req,res)=>{
   try{
     const product= await Product.findByIdAndUpdate(req.params.id,req.body)
@@ -55,6 +61,7 @@ exports.updateProduct=async(req,res)=>{
   }
 }
 
+//Delete methodds
 exports.deleteProduct=async(req,res)=>{
   try{
     await Product.findByIdAndDelete(req.params.id)
@@ -71,6 +78,7 @@ res.status(404).json({
   }
 }
 
+// Get product dropDown data
 exports.getProductDropDownWithId=async(req,res)=>{
   try{
     const products = await Product.find().select('modelName modelCode _id');
