@@ -8,11 +8,13 @@ router
   .route("/")
   .get(productControl.getAllProduct)
   .post(productControl.newProduct);
-// router
-//   .route("/:id")
-//   .get(productControl.GetAllProductsById)
-//   .patch(productControl.updateProduct)
-//   .delete(productControl.deleteProduct);
+router
+  .route("/:id")
+  // .get(productControl.GetAllProductsById)
+  .patch(productControl.updateProduct)
+  .delete(productControl.deleteProduct);
+
+  router.route('/DropdownData').get(productControl.getProductDropDownWithId);
 
 // too heavy  watch  this route
 module.exports = router;
