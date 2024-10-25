@@ -40,3 +40,33 @@ exports.newProduct = async (req, res) => {
     });
   }
 };
+exports.updateProduct=async(req,res)=>{
+  try{
+    const product= await Product.findByIdAndUpdate(req.params.id,req.body)
+    rea.status(201).json({
+      status:'Success',
+      data:{        product      }
+    })
+  } catch(err){
+    res.status(400).json({
+      status:'fail',
+      message:err.message || err,
+    })
+  }
+}
+
+exports.deleteProduct=async(req,res)=>{
+  try{
+    await Product.findByIdAndDelete(req.params.id)
+    res.status(200).json({
+      Status: 'success',
+      message: 'Data deleted successfully',
+      data: null,
+    });
+  }catch(err){
+res.status(404).json({
+  status:'fail',
+  message:'Data Not Found'
+})
+  }
+}

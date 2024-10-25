@@ -8,11 +8,11 @@ router
   .route("/")
   .get(productControl.getAllProduct)
   .post(productControl.newProduct);
-// router
-//   .route("/:id")
-//   .get(productControl.GetAllProductsById)
-//   .patch(productControl.updateProduct)
-//   .delete(productControl.deleteProduct);
+router
+  .route("/:id")
+  .get(productControl.GetAllProductsById)
+  .patch(productControl.updateProduct)
+  .delete(productControl.deleteProduct);
 
 // too heavy  watch  this route
 module.exports = router;
