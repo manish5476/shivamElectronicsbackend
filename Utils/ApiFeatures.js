@@ -61,13 +61,11 @@ class ApiFeatures {
   
     return this;
   }
-  
-  // Method to handle sorting
+    // Method to handle sorting
   sort() {
     if (this.queryString.sort) {
       // Convert the comma-separated sort parameter to space-separated for Mongoose
       const sortBy = this.queryString.sort.split(",").join(" ");
-
       // Apply the sorting to the query
       this.query = this.query.sort(sortBy);
     } else {
