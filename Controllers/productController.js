@@ -70,3 +70,21 @@ res.status(404).json({
 })
   }
 }
+
+exports.getProductDropDownWithId=async(req,res)=>{
+  try{
+    const products = await Product.find().select('modelName modelCode _id');
+    res.status(200).json({
+      status: 'success',
+      results: products.length,
+      data: {
+        products
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err.message
+    });
+  }
+}

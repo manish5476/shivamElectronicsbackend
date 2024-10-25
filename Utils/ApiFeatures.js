@@ -7,27 +7,61 @@ class ApiFeatures {
   }
 
   // Method to handle filtering based on query parameters
+  // filter() {
+  //   // Copy queryString to avoid mutating the original object
+  //   const queryObj = { ...this.queryString };
+
+  //   // Fields to exclude from the query (they are used for other functionalities)
+  //   const excludedFields = ["page", "sort", "limit", "fields"];
+
+  //   // Remove excluded fields from the query object
+  //   excludedFields.forEach((el) => delete queryObj[el]);
+
+  //   // Convert query object to a JSON string and replace operators like gte, gt, lte, lt with MongoDB operators ($gte, etc.)
+  //   let queryStr = JSON.stringify(queryObj);
+  //   queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+  //   // Object.keys(query).forEach((key) => {
+  //   //   if (typeof query[key] === 'string' && query[key].includes(',')) {
+  //   //     query[key] = { $in: query[key].split(',') };
+  //   //   }
+  //   // });
+  
+  //   // this.query = this.query.find(query);
+  
+  //   // Update the query with filtering applied
+  //   this.query = this.query.find(JSON.parse(queryStr));
+
+  //   // Return `this` to allow method chaining
+  //   return this;
+  // }
   filter() {
-    // Copy queryString to avoid mutating the original object
+    // Ensure this.query is initialized
+    if (!this.query) {
+      this.query = {}; // Initialize as an empty object if not already defined
+    }
+  
     const queryObj = { ...this.queryString };
-
-    // Fields to exclude from the query (they are used for other functionalities)
     const excludedFields = ["page", "sort", "limit", "fields"];
-
-    // Remove excluded fields from the query object
     excludedFields.forEach((el) => delete queryObj[el]);
-
-    // Convert query object to a JSON string and replace operators like gte, gt, lte, lt with MongoDB operators ($gte, etc.)
+  
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
-    // Update the query with filtering applied
-    this.query = this.query.find(JSON.parse(queryStr));
-
-    // Return `this` to allow method chaining
+  
+    const query = JSON.parse(queryStr);
+  
+    // Dynamically handle multiple values for any field
+    Object.keys(query).forEach((key) => {
+      if (typeof query[key] === 'string' && query[key].includes(',')) {
+        query[key] = { $in: query[key].split(',') };
+      }
+    });
+  
+    this.query = this.query.find(query);
+  
     return this;
   }
-
+  
   // Method to handle sorting
   sort() {
     if (this.queryString.sort) {
