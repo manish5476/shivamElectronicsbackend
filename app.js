@@ -6,9 +6,9 @@ const morgan = require("morgan");
 const productRoutes = require("./routes/product");
 // const usersRoutes = require("./routes/auth");
 
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+// if (process.env.NODE_ENV === "development") {
+//   app.use(morgan("dev"));
+// }
 const cors = require("cors");
 app.use(cors());
 
@@ -23,7 +23,20 @@ app.use((req, res, next) => {
 });
 app.use(express.static(`${__dirname}/public/`));
 
+app.use((req,res,next)=>{
+  req.requestTime=new Date().toISOString();
+  next();
+})
 // app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/Product", productRoutes);
 
+
+app.all('*',(req,res,next)=>{
+  res.status(404).json({
+    status:'fail',
+    message:`Cant find the Requested url ${req.originalUrl} on Server `
+  })
+})
+
 module.exports = app;
+  
