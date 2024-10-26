@@ -41,7 +41,7 @@
     "financingOptions": [
       {
         "term": "12 months",
-        "monthlyPayment": 75.00,
+        "monthlyPayment": 75.0,
         "interestRate": "0% APR"
       }
     ]
@@ -122,12 +122,12 @@
     "options": [
       {
         "method": "Standard Shipping",
-        "cost": 20.00,
+        "cost": 20.0,
         "estimatedDelivery": "5-7 days"
       },
       {
         "method": "Express Shipping",
-        "cost": 50.00,
+        "cost": 50.0,
         "estimatedDelivery": "2-3 days"
       }
     ],

@@ -24,10 +24,10 @@ exports.getAllProduct = async (req, res) => {
   }
 };
 
-const catchAsync = catchAsync((req, res, next) => {
-  try {
-  } catch (err) {}
-});
+// const catchAsync = catchAsync((req, res, next) => {
+//   try {
+//   } catch (err) {}
+// });
 
 //Create new Product
 exports.newProduct = async (req, res) => {
