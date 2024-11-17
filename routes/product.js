@@ -11,10 +11,11 @@ router
 router
   .route("/:id")
   // .get(productControl.GetAllProductsById)
+  .get(productControl.getProductById)
   .patch(productControl.updateProduct)
   .delete(productControl.deleteProduct);
 
-  router.route('/DropdownData').get(productControl.getProductDropDownWithId);
+router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 
 // too heavy  watch  this route
 module.exports = router;

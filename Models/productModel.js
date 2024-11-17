@@ -8,17 +8,19 @@ const productSchema = new mongoose.Schema({
   listPriceDisplay: { type: String },
   modelCode: {
     type: String,
-    required: true,
+    required: [true, "Must have a model code"],
   },
   category: {
     type: String,
   },
   modelName: {
     type: String,
+    unique: true, // Fixed casing here
     required: true,
   },
   displayName: {
     type: String,
+    unique: true, // Fixed casing here
     required: true,
   },
   thumbUrl: {
