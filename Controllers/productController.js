@@ -3,7 +3,7 @@ const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
 const catchAsync = require("../Utils/catchAsyncModule");
 //get all data on the basis of the product
-exports.getAllProduct = catchAsync(async (req, res) => {
+exports.getAllProduct = catchAsync(async (req, res, next) => {
   const features = new ApiFeatures(Product.find(), req.query)
     .filter()
     .limitFields()
@@ -17,23 +17,7 @@ exports.getAllProduct = catchAsync(async (req, res) => {
   });
 });
 
-//   try {
-//   } catch (err) {
-//     res.status(400).json({
-//       status: "fail",
-//       message: err.message || "Failed to get products",
-//     });
-//   }
-// };
-
-// const catchAsync = (fn) => {
-//   return (req, res, next) => {
-//     fn(req, res, next).catch(next);
-//   };
-// };
-
-//Create new Product
-exports.newProduct = catchAsync(async (req, res) => {
+exports.newProduct = catchAsync(async (req, res, next) => {
   const newProduct = await Product.create(req.body);
   console.log(newProduct);
   res.status(201).json({
@@ -44,41 +28,17 @@ exports.newProduct = catchAsync(async (req, res) => {
   });
 });
 
-//   try {
-//     const newProduct = await Product.create(req.body);
-//     console.log(newProduct);
-//     res.status(201).json({
-//       status: "success",
-//       data: {
-//         Product: newProduct,
-//       },
-//     });
-//   } catch (err) {
-//     res.status(400).json({
-//       status: "fail",
-//       message: err.message || err,
-//     });
-//   }
-// };
 //update Product
-exports.updateProduct = catchAsync(async (req, res) => {
+exports.updateProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findByIdAndUpdate(req.params.id, req.body);
-  rea.status(201).json({
+  res.status(201).json({
     status: "Success",
     data: { product },
   });
 });
-// try {
-//   } catch (err) {
-//     res.status(400).json({
-//       status: "fail",
-//       message: err.message || err,
-//     });
-//   }
-// };
 
-//Delete methodds
-exports.deleteProduct = catchAsync(async (req, res) => {
+//delete Product
+exports.deleteProduct = catchAsync(async (req, res, next) => {
   await Product.findByIdAndDelete(req.params.id);
   res.status(200).json({
     Status: "success",
@@ -86,17 +46,9 @@ exports.deleteProduct = catchAsync(async (req, res) => {
     data: null,
   });
 });
-//   try {
-//   } catch (err) {
-//     res.status(404).json({
-//       status: "fail",
-//       message: "Data Not Found",
-//     });
-//   }
-// };
 
 // Get product dropDown data
-exports.getProductDropDownWithId = catchAsync(async (req, res) => {
+exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
   const products = await Product.find().select("modelName modelCode _id");
   res.status(200).json({
     status: "success",
@@ -106,11 +58,21 @@ exports.getProductDropDownWithId = catchAsync(async (req, res) => {
     },
   });
 });
-//   try {
-//   } catch (err) {
-//     res.status(400).json({
-//       status: "fail",
-//       message: err.message,
-//     });
-//   }
-// };
+
+//get product stats
+exports.getProductStats = catchAsync(async (req, res, next) => {
+  const stat = await Product.aggregate([
+    {
+      $match: { listPrice: { gte: 400 } },
+    },
+    {
+      $group: {
+        _id: null,
+        avgPrice: { $avg: "$listPrice" },
+        maxPrice: { $max: "$listPrice" },
+        minPrice: { $min: "$listPrice" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+});
