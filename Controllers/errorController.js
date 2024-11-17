@@ -1,12 +1,3 @@
-// app.all("*", (req, res, next) => {
-//   next(
-//     new AppError(
-//       `Cant find the Requested url ${req.originalUrl} on Server `,
-//       404
-//     )
-//   );
-// });
-
 module.exports = (err, req, res, next) => {
   console.log(err.stack);
 
@@ -18,3 +9,12 @@ module.exports = (err, req, res, next) => {
     message: err.message,
   });
 };
+
+// app.all("*", (req, res, next) => {
+//   next(
+//     new AppError(
+//       `Cant find the Requested url ${req.originalUrl} on Server `,
+//       404
+//     )
+//   );
+// });

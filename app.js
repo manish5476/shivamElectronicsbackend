@@ -31,6 +31,7 @@ app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
+
 // app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/Product", productRoutes);
 
@@ -43,6 +44,6 @@ app.all("*", (req, res, next) => {
   );
 });
 
-app.use(globalErrorhandler);
+app.use(globalErrorhandler); //errorcontroller.js
 
 module.exports = app;
