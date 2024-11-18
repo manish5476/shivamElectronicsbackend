@@ -1,32 +1,22 @@
-// const User= require('../Models/User')
-// const catchAsync=require('../Utils/catchAsyncModule')
-// // const AppError=require('../Utils/appError')
+const User = require("../Models/UserModel");
+const catchAsync = require("../Utils/catchAsyncModule");
+const AppError = require("../Utils/appError"); // Make sure this is available for error handling
+const ApiFeatures = require("../Utils/ApiFeatures");
+const jwt = require("jsonwebtoken");
 
-// exports.signup =catchAsync( async(req,res,next)=>{
-//     const newUser= await User.create(req.body)
-//     // if(!newUser){
-//     //     return next(new AppError("Product not created", 404));
-//     // }
-//     res.status(201).json({
-//         status:'success',
-//         data:{
-//             user:newUser
-//         }
-//     })
-//     next()
-// })
-const User = require('../Models/User');
-const catchAsync = require('../Utils/catchAsyncModule');
-const AppError = require('../Utils/appError'); // Make sure this is available for error handling
+const signToken = (id) => {
+  jwt.sign({ id: id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 
 exports.signup = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm } = req.body;
 
   // Check if passwords match before proceeding
   if (password !== passwordConfirm) {
-    return next(new AppError('Passwords do not match', 400));
+    return next(new AppError("Passwords do not match", 400));
   }
-
   // Create the new user
   const newUser = await User.create({
     name,
@@ -35,11 +25,172 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm,
   });
 
+  const token = signToken(newUser._id);
+
   // Send the response
   res.status(201).json({
-    status: 'success',
+    status: "success",
+    token,
     data: {
       user: newUser,
     },
   });
 });
+
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return next(new AppError("Please provide an email and  a password", 400));
+  }
+
+  const user = await User.findOne({ email }).select("+password");
+  // const correct = ;
+
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError("Invalid emai and  password", 400));
+  }
+  const token = signToken(user._id);
+
+  // Check if passwords match before proceeding
+  res.status(200).json({
+    status: "success",
+    token: "",
+    // data: {
+    //   users,
+    // },
+  });
+});
+
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const features = new ApiFeatures(User.find(), req.query)
+    .filter()
+    .limitFields()
+    .sort()
+    .paginate();
+  const users = await features.query;
+  res.status(200).json({
+    status: "success",
+    result: users.length,
+    data: { users },
+  });
+});
+
+// // // const User= require('../Models/User')
+// // // const catchAsync=require('../Utils/catchAsyncModule')
+// // // // const AppError=require('../Utils/appError')
+
+// // // exports.signup =catchAsync( async(req,res,next)=>{
+// // //     const newUser= await User.create(req.body)
+// // //     // if(!newUser){
+// // //     //     return next(new AppError("Product not created", 404));
+// // //     // }
+// // //     res.status(201).json({
+// // //         status:'success',
+// // //         data:{
+// // //             user:newUser
+// // //         }
+// // //     })
+// // //     next()
+// // // })
+
+// // exports.login = catchAsync(async (req, res, next) => {
+// //   const { email, password } = req.body;
+
+// //   // 1. Check if email and password are provided
+// //   if (!email || !password) {
+// //     return next(new AppError("Please provide email and password", 400));
+// //   }
+
+// //   // 2. Find user by email
+// //   const user = await User.findOne({ email }).select('+password');
+// //   if (!user) {
+// //     return next(new AppError("Invalid credentials", 401));
+// //   }
+
+// //   // 3. Check if password is correct
+// //   const isPasswordCorrect = await user.correctPassword(password, user.password);
+// //   if (!isPasswordCorrect) {
+// //     return next(new AppError("Invalid credentials", 401));
+// //   }
+
+// //   // 4. Generate token and send response
+// //   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+// //     expiresIn: process.env.JWT_EXPIRES_IN,
+// //   });
+
+// //   res.status(200).json({
+// //     status: "success",
+// //     token,
+// //   });
+// // });
+
+// const User = require("../Models/UserModel");
+// const jwt = require("jsonwebtoken");
+// const catchAsync = require("../Utils/catchAsyncModule");
+// const AppError = require("../Utils/appError");
+// const ApiFeatures = require("../Utils/ApiFeatures");
+
+// const createToken = (id) =>
+//   jwt.sign({ id }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN,
+//   });
+
+// exports.signup = catchAsync(async (req, res, next) => {
+//   const { name, email, password, passwordConfirm } = req.body;
+
+//   if (!name || !email || !password || !passwordConfirm) {
+//     return next(new AppError("All fields are required", 400));
+//   }
+
+//   if (password !== passwordConfirm) {
+//     return next(new AppError("Passwords do not match", 400));
+//   }
+
+//   const newUser = await User.create({ name, email, password, passwordConfirm });
+
+//   const token = createToken(newUser._id);
+
+//   res.status(201).json({
+//     status: "success",
+//     token,
+//     data: { user: newUser },
+//   });
+// });
+
+// exports.login = catchAsync(async (req, res, next) => {
+//   const { email, password } = req.body;
+
+//   if (!email || !password) {
+//     return next(new AppError("Please provide email and password", 400));
+//   }
+
+//   const user = await User.findOne({ email }).select("+password");
+
+//   if (!user || !(await user.correctPassword(password, user.password))) {
+//     return next(new AppError("Invalid credentials", 401));
+//   }
+
+//   const token = createToken(user._id);
+
+//   res.status(200).json({
+//     status: "success",
+//     token,
+//   });
+// });
+
+// exports.getAllUsers = catchAsync(async (req, res, next) => {
+//   const features = new ApiFeatures(User.find(), req.query)
+//     .filter()
+//     .limitFields()
+//     .sort()
+//     .paginate();
+
+//   const users = await features.query;
+
+//   res.status(200).json({
+//     status: "success",
+//     result: users.length,
+//     data: { users },
+//   });
+// });

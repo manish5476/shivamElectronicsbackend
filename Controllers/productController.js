@@ -87,7 +87,7 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
   if (!product) {
     return next(new AppError("Product not found with Id", 404));
   }
-  
+
   res.status(200).json({
     Status: "success",
     message: "Data deleted successfully",
