@@ -7,7 +7,7 @@ app.use(express.json());
 const morgan = require("morgan");
 
 const productRoutes = require("./routes/product");
-// const usersRoutes = require("./routes/auth");
+const usersRoutes = require("./routes/UserRoutes");
 
 // if (process.env.NODE_ENV === "development") {
 //   app.use(morgan("dev"));
@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/Product", productRoutes);
 
 app.all("*", (req, res, next) => {
