@@ -4,6 +4,7 @@ const router = express.Router();
 const app = express();
 app.use(express.json());
 const productControl = require("./../Controllers/productController");
+
 router
   .route("/")
   .get(productControl.getAllProduct)
