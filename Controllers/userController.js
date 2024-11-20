@@ -1,4 +1,4 @@
-const {promisify}= require('util');
+const { promisify } = require("util");
 const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
@@ -6,7 +6,7 @@ const ApiFeatures = require("../Utils/ApiFeatures");
 const jwt = require("jsonwebtoken");
 
 const signToken = (id) => {
-  jwt.sign({ id: id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
@@ -25,9 +25,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm,
   });
   const token = signToken(newUser._id);
-  console.log(newUser._id,token);
-  
-  
+
   // Send the response
   res.status(201).json({
     status: "success",
@@ -40,23 +38,22 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  // console.log(email, password);
 
   if (!email || !password) {
     return next(new AppError("Please provide an email and  a password", 400));
   }
   const user = await User.findOne({ email }).select("+password");
-  // const correct = ;
+
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Invalid emai and  password", 400));
   }
   const token = signToken(user._id);
-  console.log("Generated token:", token);  // Log the token to verify it
-  
+  // console.log("Generated token:", token); // Log the token to verify it
   // Check if passwords match before proceeding
   res.status(200).json({
-    status: "success",
-    token:token,
-    token: "",
+    status: "successsss",
+    token: token,
     // data: {
     //   users,
     // },
@@ -80,33 +77,62 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 // note
 // better prctive is the send the token wiht header
 
-exports.protect =catchAsync(async(req,res,next)=>{
-// const token=
-let token;
-//get the token
-if(req.headers.authorization  && req.headers.authorization.startsWith('Bearer')){
-   token= req.headers.authorization.split(' ')[1]
-}
+exports.protect = catchAsync(async (req, res, next) => {
+  // console.log(req.headers);
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
-if(!token){
-return next(new AppError("token expired please log in Again",401))
-}
-console.log("token",token,)
+  if (!token) {
+    return next(
+      new AppError("You are not logged in! Please log in to get access.", 401)
+    );
+  }
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // we use promisify here because it act as a promise and give resust as per promise like we done in every where
+  console.log("decoded", decoded); //example { id: '673b7badcd643e50cc9517c9', iat: 1732112514, exp: 1739888514 }
 
-
-// verifiation the token
-
-const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-console.log("decoded",decoded);
-
-//check if user exist 
-
-// check f the user channge the password after the jwt is asigned
-
-//next is called
-
+  // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return next(
+      new AppError("The user belonging to this Id no longer exists.", 401)
+    );
+  }
+  currentUser.changePasswordAfter(decoded.iat);
+  // req.user = currentUser;
   next();
-})
+});
+
+// exports.protect = catchAsync(async (req, res, next) => {
+//   // const token=
+//   let token;
+//   //get the token
+//   if(req.headers.authorization  && req.headers.authorization.startsWith('Bearer')){
+//      token= req.headers.authorization.split(' ')[1]
+//   }
+
+//   if(!token){
+//   return next(new AppError("token expired please log in Again",401))
+//   }
+//   console.log("token",token,)
+
+//   // verifiation the token
+
+//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+//   console.log("decoded",decoded);
+
+//   //check if user exist
+
+//   // check f the user channge the password after the jwt is asigned
+
+//   //next is called
+
+//   next();
+// });
 
 // // // const User= require('../Models/User')
 // // // const catchAsync=require('../Utils/catchAsyncModule')

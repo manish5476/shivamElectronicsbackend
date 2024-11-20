@@ -21,12 +21,21 @@ const sendDuplicateErorDB = (err) => {
 //   return new AppError(message, 400);
 // };
 //
+const sendTokenError = (err) => {
+  return new AppError("invalid token log in Again", 401);
+};
+
 const sendValidationError = (err, res) => {
   const error = Object.values(err.errors).map((er) => er.message);
   const message = `invalid input value ${error.join(". ")}`;
   return new AppError(message, 400);
 };
+//
+const sendTokenExpireError = (err) => {
+  return new AppError("invalid token or token expired so log in again", 401);
+};
 
+// //
 //
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -70,7 +79,11 @@ module.exports = (err, req, res, next) => {
     if (error.name === "CastError") error = handleCastErrorDB(error);
     if (error.code === 11000) error = sendDuplicateErorDB(error);
     if (err.name === "validationError") error = sendValidationError(error);
+    if (error.name === "JsonWebTokenError") error = sendTokenError(error);
+    if (error.name === "TokenExpiredError") error = sendTokenExpireError(error);
   }
+
+  sendErrorProd(error, res);
   next(); // Ensure the middleware chain continues if needed
 };
 

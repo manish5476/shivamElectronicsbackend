@@ -4,11 +4,11 @@ const router = express.Router();
 const app = express();
 app.use(express.json());
 const productControl = require("./../Controllers/productController");
-const userController=require("./../Controllers/userController")
+const userController = require("./../Controllers/userController");
 
 router
   .route("/")
-  .get(userController.protect,productControl.getAllProduct)
+  .get(userController.protect, productControl.getAllProduct)
   .post(productControl.newProduct);
 router
   .route("/:id")

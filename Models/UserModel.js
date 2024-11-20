@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
         message: "Passwords must match",
       },
     },
+    passwordChangedAt: { Date },
   },
   { timestamps: true }
 );
@@ -48,5 +49,13 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userpassword); // "npm i bcrypt "
 };
 
+userSchema.methods.changePasswordAfter = async function (JWTTimestamp) {
+  // if (this.isModified("password")) return await false;
+  console.log(this);
+  if (this.passwordChangedAt) {
+    console.log("password Changed", this.passwordChangedAt, "at", JWTTimestamp);
+  }
+  return false;
+};
+
 module.exports = mongoose.model("User", userSchema);
-  

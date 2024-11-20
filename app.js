@@ -29,12 +29,12 @@ app.use(express.static(`${__dirname}/public/`));
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
-  console.log(req.headers)
+  console.log(req.headers);
   next();
 });
 
 app.use("/api/v1/users", usersRoutes);
-app.use("/api/v1/Product", productRoutes);
+app.use("/api/v1/products", productRoutes);
 
 app.all("*", (req, res, next) => {
   next(
