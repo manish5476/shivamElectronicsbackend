@@ -1,3 +1,4 @@
+const {promisify}= require('util');
 const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
@@ -24,6 +25,9 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm,
   });
   const token = signToken(newUser._id);
+  console.log(newUser._id,token);
+  
+  
   // Send the response
   res.status(201).json({
     status: "success",
@@ -46,9 +50,12 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid emai and  password", 400));
   }
   const token = signToken(user._id);
+  console.log("Generated token:", token);  // Log the token to verify it
+  
   // Check if passwords match before proceeding
   res.status(200).json({
     status: "success",
+    token:token,
     token: "",
     // data: {
     //   users,
@@ -86,8 +93,11 @@ return next(new AppError("token expired please log in Again",401))
 }
 console.log("token",token,)
 
+
 // verifiation the token
 
+const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+console.log("decoded",decoded);
 
 //check if user exist 
 
