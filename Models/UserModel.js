@@ -34,9 +34,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
 // Pre-save hook to hash password
 userSchema.pre("save", async function (next) {
-
   if (!this.isModified("password")) return next(); // Only hash if the password is modified
   this.password = await bcrypt.hash(this.password, 12); // Hash password  // " npm i bcrypt "
   this.passwordConfirm = undefined; // Remove passwordConfirm from the schema after hashing
@@ -69,7 +69,6 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
 //   if (this.passwordChangedAt) {
 //     const passwordChangedtimestamp= parseInt(this.passwordChangedAt.getTime()/1000,10)
 //     console.log("password Changed",passwordChangedtimestamp, "at", JWTTimestamp);
-
 //     return JWTTimestamp<passwordChangedtimestamp
 //   }
 //   return false;

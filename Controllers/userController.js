@@ -93,6 +93,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError("You are not logged in! Please log in to get access.", 401)
     );
   }
+  
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // we use promisify here because it act as a promise and give resust as per promise like we done in every where
   console.log("decoded", decoded); //example { id: '673b7badcd643e50cc9517c9', iat: 1732112514, exp: 1739888514 }
 
