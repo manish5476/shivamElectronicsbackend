@@ -29,10 +29,11 @@ const userSchema = new mongoose.Schema(
         message: "Passwords must match",
       },
     },
-    passwordChangedAt: { Date },
+    passwordChangedAt:  { type: Date} ,
   },
   { timestamps: true }
 );
+
 
 // Pre-save hook to hash password
 userSchema.pre("save", async function (next) {
@@ -49,13 +50,28 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userpassword); // "npm i bcrypt "
 };
 
-userSchema.methods.changePasswordAfter = async function (JWTTimestamp) {
-  // if (this.isModified("password")) return await false;
-  console.log(this);
+userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
+  // If there is a passwordChangedAt field, compare it to the JWT issue timestamp
   if (this.passwordChangedAt) {
-    console.log("password Changed", this.passwordChangedAt, "at", JWTTimestamp);
+    // Convert passwordChangedAt to a timestamp in seconds for comparison
+    const passwordChangedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+
+    // If the password was changed after the JWT was issued, return true
+    return passwordChangedTimestamp > JWTTimestamp;
   }
+
+  // If there's no password change, return false
   return false;
 };
+// userSchema.methods.changePasswordAfter = async function (JWTTimestamp) {
+//   // if (this.isModified("password")) return await false;
+//   console.log(this);
+//   if (this.passwordChangedAt) {
+//     const passwordChangedtimestamp= parseInt(this.passwordChangedAt.getTime()/1000,10)
+//     console.log("password Changed",passwordChangedtimestamp, "at", JWTTimestamp);
+//     return JWTTimestamp<passwordChangedtimestamp
+//   }
+//   return false;
+// };
 
 module.exports = mongoose.model("User", userSchema);
