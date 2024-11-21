@@ -12,7 +12,7 @@ const signToken = (id) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body;
+  const { name, email, password, passwordConfirm,passwordChangedAt } = req.body;
   // Check if passwords match before proceeding
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
@@ -23,6 +23,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     email,
     password,
     passwordConfirm,
+    passwordChangedAt
   });
   const token = signToken(newUser._id);
 
@@ -102,10 +103,29 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError("The user belonging to this Id no longer exists.", 401)
     );
   }
-  currentUser.changePasswordAfter(decoded.iat);
-  // req.user = currentUser;
+  
+ if( currentUser.changePasswordAfter(decoded.iat)){
+  return next(new AppError("User recently changed the pssword Log IN Again",401))
+ }
+
+  req.user = currentUser;
   next();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // exports.protect = catchAsync(async (req, res, next) => {
 //   // const token=
