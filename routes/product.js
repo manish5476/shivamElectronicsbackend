@@ -13,9 +13,9 @@ router
 router
   .route("/:id")
   // .get(productControl.GetAllProductsById)
-  .get(productControl.getProductById)
+  .get(userController.protect,productControl.getProductById)
   .patch(productControl.updateProduct)
-  .delete(productControl.deleteProduct);
+  .delete(userController.protect,userController.restrictTo('admin'),productControl.deleteProduct);
 
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 

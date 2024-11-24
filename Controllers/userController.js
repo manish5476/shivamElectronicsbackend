@@ -12,7 +12,7 @@ const signToken = (id) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm,passwordChangedAt } = req.body;
+  const { name, email, password, passwordConfirm,passwordChangedAt,role } = req.body;
   // Check if passwords match before proceeding
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
@@ -23,10 +23,10 @@ exports.signup = catchAsync(async (req, res, next) => {
     email,
     password,
     passwordConfirm,
-    passwordChangedAt
+    passwordChangedAt,
+    role
   });
   const token = signToken(newUser._id);
-
   // Send the response
   res.status(201).json({
     status: "success",
@@ -75,28 +75,39 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getAllUsersById =catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+  res.status(200).json({
+    status: "success",
+    data: { user },
+  });
+});
+
+
+
+
+///////////////
+
 // note
 // better prctive is the send the token wiht header
-
 exports.protect = catchAsync(async (req, res, next) => {
-  // console.log(req.headers);
   let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
+  if (req.headers.authorization &&req.headers.authorization.startsWith("Bearer")){token = req.headers.authorization.split(" ")[1];}
 
   if (!token) {
-    return next(
-      new AppError("You are not logged in! Please log in to get access.", 401)
-    );
+    return next(new AppError("You are not logged in! Please log in to get access.", 401));
   }
   
+  // try {
+  //   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // } catch (err) {
+  //   return next(new AppError("Token has expired. Please log in again.", 401));
+  // }
+  
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // we use promisify here because it act as a promise and give resust as per promise like we done in every where
-  console.log("decoded", decoded); //example { id: '673b7badcd643e50cc9517c9', iat: 1732112514, exp: 1739888514 }
-
   // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
@@ -108,14 +119,20 @@ exports.protect = catchAsync(async (req, res, next) => {
  if( currentUser.changePasswordAfter(decoded.iat)){
   return next(new AppError("User recently changed the pssword Log IN Again",401))
  }
-
   req.user = currentUser;
   next();
 });
 
 
-
-
+exports.restrictTo=(...roles)=>{
+  return (req, res, next) => {
+    console.log(req.user.role);
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError("You do not have permission to perform this action", 403));
+    }
+    next();
+  };
+}
 
 
 

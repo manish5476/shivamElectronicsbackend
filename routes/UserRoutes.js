@@ -10,15 +10,14 @@ router.post("/login", User.login);
 
 module.exports = router;
 
-// .post(User.newUser);
-// router
-//   .route("/:id")
-//   // .get(User.GetAllProductsById)
-//   .get(User.getUser)
-//   .patch(User.updateUser)
-//   .delete(User.delelteUser);
+router
+  .route("/:id")
+  .get(User.getAllUsersById)
+  // .get(User.getUser)
+  // .patch(User.updateUser)
+  // .delete(User.delelteUser);
 
 // router.route("/DropdownData").get(User.getProductDropDownWithId);
 
 // too heavy  watch  this route
-// router.route("/").get(User.getAllUsers).
+router.route("/").get(User.getAllUsers)
