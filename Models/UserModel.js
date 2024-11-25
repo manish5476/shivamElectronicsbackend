@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs"); // For hashing passwords
@@ -12,7 +13,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       validate: [validator.isEmail, "Please provide a valid email address"],
     },
-    role: { 
+    role: {
       type: String,
       enum: ["admin", "user", "staff"],
       default: "user",
@@ -34,7 +35,11 @@ const userSchema = new mongoose.Schema(
         message: "Passwords must match",
       },
     },
-    passwordChangedAt:  { type: Date} ,
+    passwordChangedAt: { type: Date },
+    passwordResetToken: { type: String },
+    passwordResetTokenExpire: { type: String },
+
+
   },
   { timestamps: true }
 );
@@ -48,10 +53,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userpassword
-) {
+userSchema.methods.correctPassword = async function (candidatePassword, userpassword) {
   return await bcrypt.compare(candidatePassword, userpassword); // "npm i bcrypt "
 };
 
@@ -60,14 +62,22 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     // Convert passwordChangedAt to a timestamp in seconds for comparison
     const passwordChangedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
-
     // If the password was changed after the JWT was issued, return true
     return passwordChangedTimestamp > JWTTimestamp;
-  }
-
-  // If there's no password change, return false
+  }  // If there's no password change, return false
   return false;
 };
+
+userSchema.methods.createInstancePasswordToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  console.log(resetToken,this.passwordResetToken);
+  
+  this.passwordResetTokenExpire = Date.now() + 10 * 60 * 1000;
+  return resetToken;
+}
+
 // userSchema.methods.changePasswordAfter = async function (JWTTimestamp) {
 //   // if (this.isModified("password")) return await false;
 //   console.log(this);
