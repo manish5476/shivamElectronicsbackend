@@ -1,4 +1,5 @@
 const { promisify } = require("util");
+const crypto = require("crypto");
 const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
@@ -169,5 +170,11 @@ return next(new AppError('there was an error sending an email,...try later'),500
 })
 
 exports.resetPassword =catchAsync(async(req,res,next)=>{
+  //get user based on token
+const hasToken =  crypto.createHash('sha256').update(req.params.token).digest('hex')
+  //if token not expired change the pass else not
 
+  //update change passwordat proprty for user
+
+  //log the user in,send JWT
 })
