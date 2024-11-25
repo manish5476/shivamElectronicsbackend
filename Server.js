@@ -6,7 +6,7 @@ console.log(process.env.NODE_ENV);
 
 mongoose
   .connect(
-    `mongodb+srv://msms5476mmmm:ms201426@shivamelectronics.ahdcm.mongodb.net/?retryWrites=true&w=majority&appName=ShivamElectronics`
+    process.env.DATABASE
   )
   .then((con) => {});
 

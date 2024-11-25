@@ -7,7 +7,7 @@ dotenv.config({ path: "./config.env" });
 // Connect to MongoDB
 mongoose
   .connect(
-    `mongodb+srv://msms5476mmmm:ms201426@shivamelectronics.ahdcm.mongodb.net/?retryWrites=true&w=majority&appName=ShivamElectronics`
+    process.env.DATABASE
   )
   .then(() => {
     console.log("MongoDB connection successful!");
