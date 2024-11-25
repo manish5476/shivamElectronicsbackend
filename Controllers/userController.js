@@ -3,6 +3,8 @@ const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
 const ApiFeatures = require("../Utils/ApiFeatures");
+const sendEmail = require("../Utils/email");
+
 const jwt = require("jsonwebtoken");
 
 const signToken = (id) => {
@@ -142,165 +144,30 @@ if(!user){
   return next(new AppError("User is not Found ,Write Correct Email", 404));
 }
   //generate the random token using instant token method
-  const resetToken = User.createInstancePasswordToken()
-  await user.save();
+  const resetToken = user.createInstancePasswordToken()
+  await user.save({validateBeforeSave:false});
+  //send the token to user
+const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}}`
+const message = `User reset password ,submit new patch request with new password and password confirm to :${resetUrl}.\ If not forgotten the password please ignor this email `
+try{
+await sendEmail({
+  email:user.email,
+  subject: "Reset Password valid for (10 minutes)...",
+  message,
 
 })
-
-exports.resetPassword =(req,res,next)=>{
-
+  res.status(200).json({
+    status: "success",
+    message: "Token sent to email!",
+  });
+}catch(err){
+user.passwordResetToken=undefined,
+user.passwordResetExpires=undefined,
+await user.save({validateBeforeSave:false});
+return next(new AppError('there was an error sending an email,...try later'),500)
 }
+})
 
+exports.resetPassword =catchAsync(async(req,res,next)=>{
 
-
-
-
-
-
-
-
-// exports.protect = catchAsync(async (req, res, next) => {
-//   // const token=
-//   let token;
-//   //get the token
-//   if(req.headers.authorization  && req.headers.authorization.startsWith('Bearer')){
-//      token= req.headers.authorization.split(' ')[1]
-//   }
-
-//   if(!token){
-//   return next(new AppError("token expired please log in Again",401))
-//   }
-//   console.log("token",token,)
-
-//   // verifiation the token
-
-//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-//   console.log("decoded",decoded);
-
-//   //check if user exist
-
-//   // check f the user channge the password after the jwt is asigned
-
-//   //next is called
-
-//   next();
-// });
-
-// // // const User= require('../Models/User')
-// // // const catchAsync=require('../Utils/catchAsyncModule')
-// // // // const AppError=require('../Utils/appError')
-
-// // // exports.signup =catchAsync( async(req,res,next)=>{
-// // //     const newUser= await User.create(req.body)
-// // //     // if(!newUser){
-// // //     //     return next(new AppError("Product not created", 404));
-// // //     // }
-// // //     res.status(201).json({
-// // //         status:'success',
-// // //         data:{
-// // //             user:newUser
-// // //         }
-// // //     })
-// // //     next()
-// // // })
-
-// // exports.login = catchAsync(async (req, res, next) => {
-// //   const { email, password } = req.body;
-
-// //   // 1. Check if email and password are provided
-// //   if (!email || !password) {
-// //     return next(new AppError("Please provide email and password", 400));
-// //   }
-
-// //   // 2. Find user by email
-// //   const user = await User.findOne({ email }).select('+password');
-// //   if (!user) {
-// //     return next(new AppError("Invalid credentials", 401));
-// //   }
-
-// //   // 3. Check if password is correct
-// //   const isPasswordCorrect = await user.correctPassword(password, user.password);
-// //   if (!isPasswordCorrect) {
-// //     return next(new AppError("Invalid credentials", 401));
-// //   }
-
-// //   // 4. Generate token and send response
-// //   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-// //     expiresIn: process.env.JWT_EXPIRES_IN,
-// //   });
-
-// //   res.status(200).json({
-// //     status: "success",
-// //     token,
-// //   });
-// // });
-
-// const User = require("../Models/UserModel");
-// const jwt = require("jsonwebtoken");
-// const catchAsync = require("../Utils/catchAsyncModule");
-// const AppError = require("../Utils/appError");
-// const ApiFeatures = require("../Utils/ApiFeatures");
-
-// const createToken = (id) =>
-//   jwt.sign({ id }, process.env.JWT_SECRET, {
-//     expiresIn: process.env.JWT_EXPIRES_IN,
-//   });
-
-// exports.signup = catchAsync(async (req, res, next) => {
-//   const { name, email, password, passwordConfirm } = req.body;
-
-//   if (!name || !email || !password || !passwordConfirm) {
-//     return next(new AppError("All fields are required", 400));
-//   }
-
-//   if (password !== passwordConfirm) {
-//     return next(new AppError("Passwords do not match", 400));
-//   }
-
-//   const newUser = await User.create({ name, email, password, passwordConfirm });
-
-//   const token = createToken(newUser._id);
-
-//   res.status(201).json({
-//     status: "success",
-//     token,
-//     data: { user: newUser },
-//   });
-// });
-
-// exports.login = catchAsync(async (req, res, next) => {
-//   const { email, password } = req.body;
-
-//   if (!email || !password) {
-//     return next(new AppError("Please provide email and password", 400));
-//   }
-
-//   const user = await User.findOne({ email }).select("+password");
-
-//   if (!user || !(await user.correctPassword(password, user.password))) {
-//     return next(new AppError("Invalid credentials", 401));
-//   }
-
-//   const token = createToken(user._id);
-
-//   res.status(200).json({
-//     status: "success",
-//     token,
-//   });
-// });
-
-// exports.getAllUsers = catchAsync(async (req, res, next) => {
-//   const features = new ApiFeatures(User.find(), req.query)
-//     .filter()
-//     .limitFields()
-//     .sort()
-//     .paginate();
-
-//   const users = await features.query;
-
-//   res.status(200).json({
-//     status: "success",
-//     result: users.length,
-//     data: { users },
-//   });
-// });
+})

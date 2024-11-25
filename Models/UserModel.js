@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordChangedAt: { type: Date },
     passwordResetToken: { type: String },
-    passwordResetTokenExpire: { type: String },
+    passwordResetTokenExpire: { type: Date },
 
 
   },
@@ -70,11 +70,12 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
 
 userSchema.methods.createInstancePasswordToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-
-  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  console.log(resetToken,this.passwordResetToken);
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+  console.log("resetToken",resetToken,this.passwordResetToken);
   
-  this.passwordResetTokenExpire = Date.now() + 10 * 60 * 1000;
+    this.passwordResetTokenExpire = Date.now() + 10 * 60 * 1000;
+  console.log("passwordResetToken",this.passwordResetTokenExpire);
   return resetToken;
 }
 

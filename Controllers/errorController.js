@@ -82,7 +82,7 @@ module.exports = (err, req, res, next) => {
     if (error.name === "JsonWebTokenError") error = sendTokenError(error);
     if (error.name === "TokenExpiredError") error = sendTokenExpireError(error);
   }
-
+  
   sendErrorProd(error, res);
   next(); // Ensure the middleware chain continues if needed
 };
