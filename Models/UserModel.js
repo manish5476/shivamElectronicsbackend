@@ -37,9 +37,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordChangedAt: { type: Date },
     passwordResetToken: { type: String },
-    passwordResetTokenExpire: { type: Date },
-
-
+    passwordResetExpires: { type: Date },
   },
   { timestamps: true }
 );
@@ -74,8 +72,8 @@ userSchema.methods.createInstancePasswordToken = function () {
     
   console.log("resetToken",resetToken,this.passwordResetToken);
   
-    this.passwordResetTokenExpire = Date.now() + 10 * 60 * 1000;
-  console.log("passwordResetToken",this.passwordResetTokenExpire);
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  console.log("passwordResetToken",this.passwordResetExpires);
   return resetToken;
 }
 
