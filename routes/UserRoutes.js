@@ -9,7 +9,7 @@ router.post("/signup", User.signup);
 router.post("/login", User.login);
 router.post("/forgotPassword", User.forgotPassword);
 router.patch("/resetPassword/:token", User.resetPassword);
-
+router.patch("/updatePassword",User.protect ,User.updateUserPassword)
 
 module.exports = router;
 

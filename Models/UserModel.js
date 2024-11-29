@@ -51,6 +51,13 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+  this.passwordChangedAt = Date.now() - 1000;
+
+  next();
+})
+
 userSchema.methods.correctPassword = async function (candidatePassword, userpassword) {
   return await bcrypt.compare(candidatePassword, userpassword); // "npm i bcrypt "
 };
@@ -68,12 +75,12 @@ userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
 
 userSchema.methods.createInstancePasswordToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    
-  console.log("resetToken",resetToken,this.passwordResetToken);
-  
-    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-  console.log("passwordResetToken",this.passwordResetExpires);
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  console.log("resetToken", resetToken, this.passwordResetToken);
+
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  console.log("passwordResetToken", this.passwordResetExpires);
   return resetToken;
 }
 
