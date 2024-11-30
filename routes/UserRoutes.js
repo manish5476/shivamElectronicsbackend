@@ -3,24 +3,18 @@ const express = require("express");
 const router = express.Router();
 const app = express();
 app.use(express.json());
-const User = require("../Controllers/userController");
+const authController = require("../Controllers/authController");
+const User = require("../Controllers/usercontroller");
 
-router.post("/signup", User.signup);
-router.post("/login", User.login);
-router.post("/forgotPassword", User.forgotPassword);
-router.patch("/resetPassword/:token", User.resetPassword);
-router.patch("/updatePassword",User.protect ,User.updateUserPassword)
-
+router.post("/signup", authController.signup);
+router.post("/login", authController.login);
+router.post("/forgotPassword", authController.forgotPassword);
+router.patch("/resetPassword/:token", authController.resetPassword);
+router.patch("/updatePassword",authController.protect ,authController.updateUserPassword)
 module.exports = router;
 
-router
+router  
   .route("/:id")
   .get(User.getAllUsersById)
-  // .get(User.getUser)
-  // .patch(User.updateUser)
-  // .delete(User.delelteUser);
 
-// router.route("/DropdownData").get(User.getProductDropDownWithId);
-
-// too heavy  watch  this route
 router.route("/").get(User.getAllUsers)

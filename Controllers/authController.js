@@ -5,7 +5,6 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
 const ApiFeatures = require("../Utils/ApiFeatures");
 const sendEmail = require("../Utils/email");
-
 const jwt = require("jsonwebtoken");
 
 const signToken = (id) => {
@@ -85,32 +84,32 @@ exports.login = catchAsync(async (req, res, next) => {
   // });
 });
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const features = new ApiFeatures(User.find(), req.query)
-    .filter()
-    .limitFields()
-    .sort()
-    .paginate();
-  const users = await features.query;
-  createSendToken(users,200,res)
-  // res.status(200).json({
-  //   status: "success",
-  //   result: users.length,
-  //   data: { users },
-  // });
-});
+// exports.getAllUsers = catchAsync(async (req, res, next) => {
+//   const features = new ApiFeatures(User.find(), req.query)
+//     .filter()
+//     .limitFields()
+//     .sort()
+//     .paginate();
+//   const users = await features.query;
+//   createSendToken(users,200,res)
+//   // res.status(200).json({
+//   //   status: "success",
+//   //   result: users.length,
+//   //   data: { users },
+//   // });
+// });
 
-exports.getAllUsersById =catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-  if (!user) {
-    return next(new AppError("User not found", 404));
-  }
-  createSendToken(user,200,res)
-  // res.status(200).json({
-  //   status: "success",
-  //   data: { user },
-  // });
-});
+// exports.getAllUsersById =catchAsync(async (req, res, next) => {
+//   const user = await User.findById(req.params.id);
+//   if (!user) {
+//     return next(new AppError("User not found", 404));
+//   }
+//   createSendToken(user,200,res)
+//   // res.status(200).json({
+//   //   status: "success",
+//   //   data: { user },
+//   // });
+// });
 
 exports.updateUserPassword= catchAsync(async(req,res,next)=>{
   //get user from collection
@@ -125,8 +124,7 @@ if(!(user.correctPassword(req.body.currentPassword,user.password))){
   await user.save();
   //using findby id and the 
   //og user in ,send jwt
-
-
+  createSendToken(user,200,res)
 
 })
 
