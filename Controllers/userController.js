@@ -93,7 +93,6 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     .paginate();
   const users = await features.query;
   createSendToken(users,200,res)
-
   // res.status(200).json({
   //   status: "success",
   //   result: users.length,
@@ -107,7 +106,6 @@ exports.getAllUsersById =catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 404));
   }
   createSendToken(user,200,res)
-
   // res.status(200).json({
   //   status: "success",
   //   data: { user },
@@ -118,11 +116,10 @@ exports.updateUserPassword= catchAsync(async(req,res,next)=>{
   //get user from collection
   const user= await User.findById(req.user.id).select('+password');
   //check if the logged user is correct
-if(!(user.correctPassword(req.body.passwordCurrent,user.password))){
+if(!(user.correctPassword(req.body.currentPassword,user.password))){
   return next(AppError("password is innocorrect",401))
 }
   //if so update the password
-
   user.password=req.body.password
   user.passwordConfirm=req.body.passwordConfirm
   await user.save();
@@ -241,6 +238,7 @@ console.log(req.params.token,"available tokens");
 
   console.log("Password reset expires:", user.passwordResetExpires);
   // Update the user password
+  // user.currentPassword=req.body.currentPassword
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm; // Optional
   user.passwordResetToken = undefined;
