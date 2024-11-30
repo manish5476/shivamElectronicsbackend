@@ -15,7 +15,6 @@ const filterObj=(obj, ...allowedFields)=>{
         }
     })
     return newObj
-
 }
 
 const signToken = (id) => {
@@ -73,7 +72,6 @@ exports.updateMe=catchAsync(async(req,res,next)=>{
 
 exports.deleteMe=catchAsync(async(req,res,next)=>{
     await User.findByIdAndUpdate(req.user.id,{active:false})
-
     // createSendToken("null",200,res)
     res.status(204).json({
       status:"success",
