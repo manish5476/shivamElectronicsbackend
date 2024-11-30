@@ -4,18 +4,18 @@ const router = express.Router();
 const app = express();
 app.use(express.json());
 const productControl = require("./../Controllers/productController");
-const userController = require("./../Controllers/userController");
+const authController = require("./../Controllers/authController");
 
 router
   .route("/")
-  .get(userController.protect, productControl.getAllProduct)
+  .get(authController.protect, productControl.getAllProduct)
   .post(productControl.newProduct);
 router
   .route("/:id")
   // .get(productControl.GetAllProductsById)
-  .get(userController.protect,productControl.getProductById)
+  .get(authController.protect,productControl.getProductById)
   .patch(productControl.updateProduct)
-  .delete(userController.protect,userController.restrictTo('admin'),productControl.deleteProduct);
+  .delete(authController.protect,authController.restrictTo('admin'),productControl.deleteProduct);
 
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 

@@ -4,7 +4,9 @@ const ApiFeatures = require("../Utils/ApiFeatures");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
 //get all data on the basis of the product
-exports.getAllProduct = catchAsync(async (req, res, next) => {
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
+ exports.getAllProduct = catchAsync(async (req, res, next) => {
   const features = new ApiFeatures(Product.find(), req.query)
     .filter()
     .limitFields()
@@ -17,8 +19,9 @@ exports.getAllProduct = catchAsync(async (req, res, next) => {
     data: { products },
   });
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
-exports.getProductById = catchAsync(async (req, res, next) => {
+ exports.getProductById = catchAsync(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
 
   if (!product) {
@@ -29,8 +32,9 @@ exports.getProductById = catchAsync(async (req, res, next) => {
     data: product,
   });
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
-exports.newProduct = catchAsync(async (req, res, next) => {
+ exports.newProduct = catchAsync(async (req, res, next) => {
   const existingProduct = await Product.findOne({ name: req.body.name });
   if (existingProduct) {
     return next(
@@ -52,7 +56,9 @@ exports.newProduct = catchAsync(async (req, res, next) => {
     },
   });
 });
-// exports.newProduct = catchAsync(async (req, res, next) => {
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
+//  exports.newProduct = catchAsync(async (req, res, next) => {
 //   const newProduct = await Product.create(req.body);
 
 //   if (!newProduct) {
@@ -65,9 +71,10 @@ exports.newProduct = catchAsync(async (req, res, next) => {
 //     },
 //   });
 // });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 //update Product
-exports.updateProduct = catchAsync(async (req, res, next) => {
+ exports.updateProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findByIdAndUpdate(req.params.id, req.body);
   if (!product) {
     return next(
@@ -79,9 +86,10 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     data: { product },
   });
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 //delete Product
-exports.deleteProduct = catchAsync(async (req, res, next) => {
+ exports.deleteProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findByIdAndDelete(req.params.id);
 
   if (!product) {
@@ -94,9 +102,9 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-
+// ---------------------------------------------------------------------------------------------------------------------------------------
 // Get product dropDown data
-exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
+ exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
   const products = await Product.find().select("modelName modelCode _id");
 
   res.status(200).json({
@@ -109,6 +117,7 @@ exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
 });
 
 //get product stats
+// ---------------------------------------------------------------------------------------------------------------------------------------
 exports.getProductStats = catchAsync(async (req, res, next) => {
   const stat = await Product.aggregate([
     {
@@ -125,3 +134,4 @@ exports.getProductStats = catchAsync(async (req, res, next) => {
     },
   ]);
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
