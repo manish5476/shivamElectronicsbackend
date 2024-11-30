@@ -7,12 +7,15 @@ const ApiFeatures = require("../Utils/ApiFeatures");
 const sendEmail = require("../Utils/email");
 const jwt = require("jsonwebtoken");
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 // 
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 
 const createSendToken=(user,statusCode,res)=>{
@@ -29,6 +32,7 @@ const createSendToken=(user,statusCode,res)=>{
 
 // 
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 exports.signup = catchAsync(async (req, res, next) => {
   const { name, email, password, passwordConfirm,passwordChangedAt,role } = req.body;
@@ -56,6 +60,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   //   },
   // });
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -84,33 +89,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // });
 });
 
-// exports.getAllUsers = catchAsync(async (req, res, next) => {
-//   const features = new ApiFeatures(User.find(), req.query)
-//     .filter()
-//     .limitFields()
-//     .sort()
-//     .paginate();
-//   const users = await features.query;
-//   createSendToken(users,200,res)
-//   // res.status(200).json({
-//   //   status: "success",
-//   //   result: users.length,
-//   //   data: { users },
-//   // });
-// });
-
-// exports.getAllUsersById =catchAsync(async (req, res, next) => {
-//   const user = await User.findById(req.params.id);
-//   if (!user) {
-//     return next(new AppError("User not found", 404));
-//   }
-//   createSendToken(user,200,res)
-//   // res.status(200).json({
-//   //   status: "success",
-//   //   data: { user },
-//   // });
-// });
-
+// ---------------------------------------------------------------------------------------------------------------------------------------
 exports.updateUserPassword= catchAsync(async(req,res,next)=>{
   //get user from collection
   const user= await User.findById(req.user.id).select('+password');
@@ -125,20 +104,15 @@ if(!(user.correctPassword(req.body.currentPassword,user.password))){
   //using findby id and the 
   //og user in ,send jwt
   createSendToken(user,200,res)
-
+  
 })
 
-
-
-
-///////////////
-
-// note
+// ---------------------------------------------------------------------------------------------------------------------------------------
 // better prctive is the send the token wiht header
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
   if (req.headers.authorization &&req.headers.authorization.startsWith("Bearer")){token = req.headers.authorization.split(" ")[1];}
-
+  
   if (!token) {
     return next(new AppError("You are not logged in! Please log in to get access.", 401));
   }
@@ -146,7 +120,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   // try {
   //   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
   // } catch (err) {
-  //   return next(new AppError("Token has expired. Please log in again.", 401));
+    //   return next(new AppError("Token has expired. Please log in again.", 401));
   // }
   
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // we use promisify here because it act as a promise and give resust as per promise like we done in every where
@@ -175,6 +149,7 @@ exports.restrictTo=(...roles)=>{
     next(); 
   };
 }
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////
 exports.forgotPassword = catchAsync(async (req, res, next) => {
@@ -183,22 +158,22 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("No user found with that email", 404));
   }
-
+  
   // Generate password reset token
   const resetToken = user.createInstancePasswordToken();
   await user.save({ validateBeforeSave: false }); // Save without validation to skip hashing
-
+  
   // Create reset URL
   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
   const message = `Forgot your password? Submit a PATCH request with your new password and confirm it here: ${resetUrl}. If you did not request this, please ignore this email.`;
-
+  
   try {
     await sendEmail({
       email: user.email,
       subject: "Password reset link (valid for 10 minutes)",
       message,
     });
-
+    
     res.status(200).json({
       status: "success",
       message: "Token sent to email!",
@@ -211,6 +186,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("There was an error sending the email. Please try again later.", 500));
   }
 });
+// ---------------------------------------------------------------------------------------------------------------------------------------
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 exports.resetPassword = catchAsync(async (req, res, next) => {
@@ -251,3 +227,30 @@ console.log(req.params.token,"available tokens");
   //   token,
   // });
 });
+
+  // exports.getAllUsers = catchAsync(async (req, res, next) => {
+  //   const features = new ApiFeatures(User.find(), req.query)
+  //     .filter()
+  //     .limitFields()
+  //     .sort()
+  //     .paginate();
+  //   const users = await features.query;
+  //   createSendToken(users,200,res)
+  //   // res.status(200).json({
+  //   //   status: "success",
+  //   //   result: users.length,
+  //   //   data: { users },
+  //   // });
+  // });
+  
+  // exports.getAllUsersById =catchAsync(async (req, res, next) => {
+  //   const user = await User.findById(req.params.id);
+  //   if (!user) {
+  //     return next(new AppError("User not found", 404));
+  //   }
+  //   createSendToken(user,200,res)
+  //   // res.status(200).json({
+  //   //   status: "success",
+  //   //   data: { user },
+  //   // });
+  // });
