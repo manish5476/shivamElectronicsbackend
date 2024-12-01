@@ -6,7 +6,7 @@ const AppError = require("../Utils/appError");
 //get all data on the basis of the product
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
- exports.getAllProduct = catchAsync(async (req, res, next) => {
+exports.getAllProduct = catchAsync(async (req, res, next) => {
   const features = new ApiFeatures(Product.find(), req.query)
     .filter()
     .limitFields()
@@ -21,9 +21,13 @@ const AppError = require("../Utils/appError");
 });
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
- exports.getProductById = catchAsync(async (req, res, next) => {
+exports.getProductById = catchAsync(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
-
+  // .populate({
+  //   path: 'salesPerson',
+  //   select: '-__v -createdAt', // Exclude the `__v` and `createdAt` fields from thr shalesperson key
+  // });
+  console.log(product);
   if (!product) {
     return next(new AppError("Product not found with Id", 404));
   }
@@ -34,12 +38,12 @@ const AppError = require("../Utils/appError");
 });
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
- exports.newProduct = catchAsync(async (req, res, next) => {
-  const existingProduct = await Product.findOne({ name: req.body.name });
+exports.newProduct = catchAsync(async (req, res, next) => {
+  const existingProduct = await Product.findOne({ name: req.body.sku });
   if (existingProduct) {
     return next(
       new AppError(
-        `Product with this name already exists by name  ${req.body.modelCode}`,
+        `Product with this name already exists by name  ${req.body.sku}`,
         400
       )
     );
@@ -74,7 +78,7 @@ const AppError = require("../Utils/appError");
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
 //update Product
- exports.updateProduct = catchAsync(async (req, res, next) => {
+exports.updateProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findByIdAndUpdate(req.params.id, req.body);
   if (!product) {
     return next(
@@ -89,13 +93,11 @@ const AppError = require("../Utils/appError");
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
 //delete Product
- exports.deleteProduct = catchAsync(async (req, res, next) => {
+exports.deleteProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findByIdAndDelete(req.params.id);
-
   if (!product) {
     return next(new AppError("Product not found with Id", 404));
   }
-
   res.status(200).json({
     Status: "success",
     message: "Data deleted successfully",
@@ -104,7 +106,7 @@ const AppError = require("../Utils/appError");
 });
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // Get product dropDown data
- exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
+exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
   const products = await Product.find().select("modelName modelCode _id");
 
   res.status(200).json({

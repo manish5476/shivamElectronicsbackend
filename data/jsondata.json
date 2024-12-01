@@ -25,13 +25,20 @@
     "address": "Mumbai, Maharashtra",
     "description": "Warehouse Location"
   },
-  "location": {
+  "location": [
+  {
     "type": "Point",
     "coordinates": [77.5946, 12.9716],
     "address": "Bangalore, Karnataka",
     "description": "Delivery Hub",
     "day": 2
   },
+  { 
+    "type": "Point",
+  "coordinates": [77.5946, 12.9716],
+  "address": "surat, Karnataka",
+  "description": "Delivery Hub",
+  "day": 3}],
   "reviews": [
     {
       "reviewerName": "John Doe",

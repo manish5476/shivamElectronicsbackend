@@ -1,18 +1,18 @@
 const express = require("express");
 const app = express();
-const AppError = require("./Utils/appError");
-const globalErrorhandler = require("./Controllers/errorController");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const mongoSanatize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
+const globalErrorhandler = require("./Controllers/errorController");
+const AppError = require("./Utils/appError");
 const productRoutes = require("./routes/product");
 const usersRoutes = require("./routes/UserRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const cors = require("cors");
-const hpp=require("hpp");
+const hpp = require("hpp");
 app.use(helmet());
-
 
 //development mode
 if (process.env.NODE_ENV === "development") {
@@ -20,30 +20,33 @@ if (process.env.NODE_ENV === "development") {
 }
 
 //production mode rate limiter and rate
-const limiter = rateLimit({ 
+const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000, // 1 hour window
-  message: "Too many requests from this IP, please try again in an hour"  // default message 
+  message: "Too many requests from this IP, please try again in an hour", // default message
 });
 
 //global error handler middleware
-app.use("/api",limiter);//limiter
+app.use("/api", limiter); //limiter
+
 //body parser readign data from body req.body
-app.use(express.json({ limit:'10kb'}))
+
+app.use(express.json({ limit: "10kb" }));
 app.use(cors());
 
 app.use(morgan("combined"));
 
-
 // app.use(express.json());
-app.use(mongoSanatize())
+app.use(mongoSanatize());
 
 //data sanitizer
-app.use(xss())
+app.use(xss());
 
-app.use(hpp({
-  whitelist: ['duration', 'limit','average',],
-}));
+app.use(
+  hpp({
+    whitelist: ["duration", "limit", "average"],
+  })
+);
 //serving statc sites
 app.use(express.static(`${__dirname}/public/`));
 
@@ -65,6 +68,7 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 app.all("*", (req, res, next) => {
   next(

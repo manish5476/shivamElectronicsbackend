@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
+const User = require("./UserModel");
+const slugify = require("slugify");
 // Sub-schema for Distributor Details
 const distributorSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -30,98 +31,146 @@ const invoiceSchema = new mongoose.Schema({
 });
 
 // Main Product Schema
-const productSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true, maxlength: 200 },
-  description: { type: String, required: true, trim: true, maxlength: 500 },
-  detailedDescriptions: [
-    {
-      id: { type: String, required: true },
-      detail: { type: String, required: true },
+const productSchema = new mongoose.Schema(
+  {
+    // productID:{type:String,unique:true,},
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    description: { type: String, required: true, trim: true, maxlength: 500 },
+    detailedDescriptions: [
+      {
+        id: { type: String, required: true },
+        detail: { type: String, required: true },
+      },
+    ], // Array of objects for detailed descriptions
+    category: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    stock: { type: Number, required: true, min: 0 },
+    tags: [{ type: String, trim: true }],
+    brand: { type: String, required: true, trim: true },
+    sku: { type: String, required: true, unique: true, trim: true },
+    weight: { type: Number, required: true, min: 0 },
+    dimensions: {
+      width: { type: Number, required: true },
+      height: { type: Number, required: true },
+      depth: { type: Number, required: true },
     },
-  ], // Array of objects for detailed descriptions
-  category: { type: String, required: true, trim: true },
-  price: { type: Number, required: true, min: 0 },
-  discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
-  finalPrice: {
-    type: Number,
-    required: true,
-    get: function () {
-      return this.price - (this.price * this.discountPercentage) / 100;
+    warrantyInformation: { type: String, required: true, trim: true },
+    shippingInformation: { type: String, required: true, trim: true },
+    availabilityStatus: {
+      type: String,
+      enum: ["In Stock", "Low Stock", "Out of Stock"],
+      required: true,
     },
-  },
-  rating: { type: Number, min: 0, max: 5, default: 0 },
-  stock: { type: Number, required: true, min: 0 },
-  tags: [{ type: String, trim: true }],
-  brand: { type: String, required: true, trim: true },
-  sku: { type: String, required: true, unique: true, trim: true },
-  weight: { type: Number, required: true, min: 0 },
-  dimensions: {
-    width: { type: Number, required: true },
-    height: { type: Number, required: true },
-    depth: { type: Number, required: true },
-  },
-  warrantyInformation: { type: String, required: true, trim: true },
-  shippingInformation: { type: String, required: true, trim: true },
-  availabilityStatus: {
-    type: String,
-    enum: ["In Stock", "Low Stock", "Out of Stock"],
-    required: true,
-  },
 
-  StartLocation: {
-    type: { 
-      type: String, 
-      default: "Point",
-       enum: ["Point"]},
-    coordinates: [Number],
-    address: { type: String },
-    description: { type: String },
-  },
+    StartLocation: {
+      type: {
+        type: String,
+        default: "Point",
+        enum: ["Point"],
+      },
+      coordinates: [Number],
+      address: { type: String },
+      description: { type: String },
+    },
 
-  location: {
-    type: { 
-      type: String, 
-      default: "Point",
-      enum: ["Point"] },
-    coordinates: [Number],
-    address: { type: String },
-    description: { type: String },
-    day: { type: Number },
-  },
-  reviews: [
-    {
-      reviewerName: { type: String, required: true },
-      reviewerEmail: { type: String, required: true },
-      rating: { type: Number, min: 1, max: 5, required: true },
-      comment: { type: String, required: true },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: "Point",
+          enum: ["Point"],
+        },
+        coordinates: [Number],
+        address: { type: String },
+        description: { type: String },
+        day: { type: Number },
+      },
+    ],
+    // reviews: [
+    //   {
+    //     reviewerName: { type: String, required: true },
+    //     reviewerEmail: { type: String, required: true },
+    //     rating: { type: Number, min: 1, max: 5, required: true },
+    //     comment: { type: String, required: true },
+    //     createdAt: { type: Date, default: Date.now },
+    //     User:{
+    //       type: mongoose.Schema.Types.ObjectId, ref: 'User'
+    //     },
+    //     Product:{
+    //       type:mongoose.Schema.ObjectId,ref:'Product'
+    //     }
+    //   },
+    // ], // Nested reviews
+    returnPolicy: { type: String, required: true, trim: true },
+    minimumOrderQuantity: { type: Number, default: 1 },
+    meta: {
       createdAt: { type: Date, default: Date.now },
+      updatedAt: { type: Date, default: Date.now },
+      barcode: { type: String, required: true, unique: true },
+      qrCode: { type: String }, // Optional
     },
-  ], // Nested reviews
-  returnPolicy: { type: String, required: true, trim: true },
-  minimumOrderQuantity: { type: Number, default: 1 },
-  meta: {
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
-    barcode: { type: String, required: true, unique: true },
-    qrCode: { type: String }, // Optional
+    images: [
+      {
+        id: { type: String, required: false },
+        detail: { type: String, required: false },
+        link: { type: String, required: false },
+      },
+    ], // Array of image objects
+    salesPerson: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
+    thumbnail: { type: String, required: true },
+    userSecretCode: { type: String, required: true }, // User's secret code
+    invoiceDetails: invoiceSchema, // Embedded invoice schema
   },
-  images: [
-    {
-      id: { type: String, required: false },
-      detail: { type: String, required: false },
-      link: { type: String, required: false },
-    },
-  ], // Array of image objects
-  thumbnail: { type: String, required: true },
-  userSecretCode: { type: String, required: true }, // User's secret code
-  invoiceDetails: invoiceSchema, // Embedded invoice schema
-});
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
+  { timestamps: true }
+);
 
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
 
-const Product = mongoose.model("Product", productSchema);
+// productSchema.virtual('durationWeek').get(function () {
+//   return this.duration / 7;
+// });
 
+//it automaticallluy populate the sales person
+productSchema.pre("save", function (next) {
+  this.populate({
+    path: "salesPerson",
+    select: "-__v -createdAt", // Exclude the `__v` and `createdAt` fields from thr shalesperson key
+  });
+});
+
+productSchema.virtual("finalPrice").get(function () {
+  return this.price - (this.price * this.discountPercentage) / 100;
+});
+
+productSchema.pre("save", function (next) {
+  this.slug = slugify(this.title, { lower: true });
+  next();
+});
+
+// productSchema.pre('save',async function(next){
+//   const salesPersonpromise= this.salesPerson.map(async id=> await User.findById(id))
+//   this.salesPerson=await promise.all(salesPersonpromise)
+//   next()
+// })
+
+productSchema.post(/^find/, function (docs, next) {
+  // console.log(docs);
+  next();
+});
+
+const Product = mongoose.model("Product", productSchema);
 module.exports = Product;
 
 // const mongoose = require("mongoose");

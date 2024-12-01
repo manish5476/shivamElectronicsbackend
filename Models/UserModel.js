@@ -54,7 +54,7 @@ userSchema.pre("save", async function (next) {
 
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
-  this.passwordChangedAt = Date.now() - 1000; 
+  this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
@@ -86,7 +86,7 @@ userSchema.methods.createInstancePasswordToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  console.log("resetToken", resetToken, this.passwordResetToken);
+  // console.log("resetToken", resetToken, this.passwordResetToken);
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
   console.log("passwordResetToken", this.passwordResetExpires);
@@ -98,12 +98,12 @@ userSchema.methods.createInstancePasswordToken = function () {
 //   next();
 // })
 
-userSchema.pre('find', function(next) {
+userSchema.pre("find", function (next) {
   this.find({ active: { $ne: false } }); // Filter out inactive users (active: false)
   next();
 });
 
-userSchema.pre('findOne', function(next) {
+userSchema.pre("findOne", function (next) {
   this.findOne({ active: { $ne: false } }); // Filter out inactive user for findOne
   next();
 });
