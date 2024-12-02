@@ -7,7 +7,6 @@ const catchAsync = require("../Utils/catchAsyncModule");
 
 exports.getAllReviews = catchAsync(async (req, res, next) => {
   const review = await Review.find();
-
   res.status(200).json({
     status: "success",
     result: review.lengh,
@@ -16,7 +15,7 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.newReview = catchAsync(async (req, res, next) => {
-  const newReview = new Review(req.body);
+  const newReview = await Review.create(req.body);
   res.status(201).json({
     status: "success",
     result: newReview.lengh,

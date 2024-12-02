@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const User = require("./UserModel");
 const slugify = require("slugify");
+const Review = require("./ReviewSchema");
 // Sub-schema for Distributor Details
 const distributorSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -88,21 +89,6 @@ const productSchema = new mongoose.Schema(
         day: { type: Number },
       },
     ],
-    // reviews: [
-    //   {
-    //     reviewerName: { type: String, required: true },
-    //     reviewerEmail: { type: String, required: true },
-    //     rating: { type: Number, min: 1, max: 5, required: true },
-    //     comment: { type: String, required: true },
-    //     createdAt: { type: Date, default: Date.now },
-    //     User:{
-    //       type: mongoose.Schema.Types.ObjectId, ref: 'User'
-    //     },
-    //     Product:{
-    //       type:mongoose.Schema.ObjectId,ref:'Product'
-    //     }
-    //   },
-    // ], // Nested reviews
     returnPolicy: { type: String, required: true, trim: true },
     minimumOrderQuantity: { type: Number, default: 1 },
     meta: {
@@ -117,16 +103,16 @@ const productSchema = new mongoose.Schema(
         detail: { type: String, required: false },
         link: { type: String, required: false },
       },
-    ], // Array of image objects
+    ],
+    thumbnail: { type: String, required: true },
+    userSecretCode: { type: String, required: true }, // User's secret code
+    invoiceDetails: invoiceSchema,
     salesPerson: [
       {
         type: mongoose.Schema.ObjectId,
         ref: "User",
       },
     ],
-    thumbnail: { type: String, required: true },
-    userSecretCode: { type: String, required: true }, // User's secret code
-    invoiceDetails: invoiceSchema, // Embedded invoice schema
   },
   {
     toJSON: { virtuals: true },
@@ -138,20 +124,30 @@ const productSchema = new mongoose.Schema(
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
 
-// productSchema.virtual('durationWeek').get(function () {
-//   return this.duration / 7;
-// });
-
-//it automaticallluy populate the sales person
 productSchema.pre("save", function (next) {
   this.populate({
     path: "salesPerson",
     select: "-__v -createdAt", // Exclude the `__v` and `createdAt` fields from thr shalesperson key
   });
+  next();
+});
+
+productSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "salesPerson",
+    select: "name email",
+  });
+  next();
 });
 
 productSchema.virtual("finalPrice").get(function () {
   return this.price - (this.price * this.discountPercentage) / 100;
+});
+
+productSchema.virtual("reviews", {
+  ref: "Review",
+  foreignField: "Product",
+  localField: "_id",
 });
 
 productSchema.pre("save", function (next) {

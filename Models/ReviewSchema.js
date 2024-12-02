@@ -23,7 +23,24 @@ const ReviewSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+// ReviewSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: "User",
+//     select: "name email", // Only fetch the required fields
+//   }).populate({
+//     path: "Product",
+//     select: "title price",
+//   });
+//   next();
+// });
 
+ReviewSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "User",
+    select: "name email", // Only fetch the required fields
+  });
+  next();
+});
 module.exports = mongoose.model("Review", ReviewSchema);
 // reviewerName: { type: String, required: true },
 // reviewerEmail: { type: String, required: true },

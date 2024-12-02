@@ -22,15 +22,11 @@ exports.getAllProduct = catchAsync(async (req, res, next) => {
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
 exports.getProductById = catchAsync(async (req, res, next) => {
-  const product = await Product.findById(req.params.id);
-  // .populate({
-  //   path: 'salesPerson',
-  //   select: '-__v -createdAt', // Exclude the `__v` and `createdAt` fields from thr shalesperson key
-  // });
-  console.log(product);
+  const product = await Product.findById(req.params.id).populate("reviews");
   if (!product) {
     return next(new AppError("Product not found with Id", 404));
   }
+
   res.status(200).json({
     status: "success",
     data: product,
