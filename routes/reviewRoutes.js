@@ -8,7 +8,7 @@ router
   .post(
     authController.protect,
     authController.restrictTo("user"),
-    reviewController.newReview
+    reviewController.createReview
   );
 
 module.exports = router;

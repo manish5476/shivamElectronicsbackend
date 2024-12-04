@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 const productControl = require("./../Controllers/productController");
 const authController = require("./../Controllers/authController");
-
+const reviewController = require("../Controllers/reviewController")
 router
   .route("/")
   .get(authController.protect, productControl.getAllProduct)
@@ -23,5 +23,8 @@ router
 
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 
+// 
+//reiew
+router.route("/:tourId/reviews").post(authController.protect,authController.restrictTo('user'),reviewController.createReview)
 // too heavy  watch  this route
 module.exports = router;

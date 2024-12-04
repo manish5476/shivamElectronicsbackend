@@ -23,6 +23,8 @@ const ReviewSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// in this the both tour nad user getting populated in review which we dont need that why we are using only review
 // ReviewSchema.pre(/^find/, function (next) {
 //   this.populate({
 //     path: "User",
