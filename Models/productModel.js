@@ -147,7 +147,7 @@ productSchema.virtual("finalPrice").get(function () {
 //two way virtual binding to get the data  virtuala populalte the data
 productSchema.virtual("reviews", {
   ref: "Review",//here it is showing review model
-  foreignField: "Product",//here this field describr th key in Review
+  foreignField: "product",//here this field describr th key in Review
   localField: "_id",
 });
 
