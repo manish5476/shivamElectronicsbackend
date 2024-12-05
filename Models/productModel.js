@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const User = require("./UserModel");
 const slugify = require("slugify");
-const Review = require("./ReviewSchema");
+const Review = require("./ReviewModel");
 // Sub-schema for Distributor Details
 const distributorSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -146,8 +146,8 @@ productSchema.virtual("finalPrice").get(function () {
 
 //two way virtual binding to get the data  virtuala populalte the data
 productSchema.virtual("reviews", {
-  ref: "Review",//here it is showing review model
-  foreignField: "product",//here this field describr th key in Review
+  ref: "Review", //here it is showing review model
+  foreignField: "product", //here this field describr th key in Review
   localField: "_id",
 });
 
