@@ -4,12 +4,12 @@ const User = require("./UserModel");
 
 const ReviewSchema = new mongoose.Schema(
   {
-    User: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       require: [true, "A review must be given by User."],
     },
-    Product: {
+    product: {
       type: mongoose.Schema.ObjectId,
       ref: "Product",
       require: [true, "A review must belong to Product."],
@@ -23,9 +23,11 @@ const ReviewSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// in this the both tour nad user getting populated in review which we dont need that why we are using only review
 // ReviewSchema.pre(/^find/, function (next) {
 //   this.populate({
-//     path: "User",
+//     path: "user",
 //     select: "name email", // Only fetch the required fields
 //   }).populate({
 //     path: "Product",
@@ -36,7 +38,7 @@ const ReviewSchema = new mongoose.Schema(
 
 ReviewSchema.pre(/^find/, function (next) {
   this.populate({
-    path: "User",
+    path: "user",
     select: "name email", // Only fetch the required fields
   });
   next();
