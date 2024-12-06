@@ -3,6 +3,8 @@ const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
+// const reviewRoutes = require('../routes/reviewRoutes');  // Import reviewRoutes
+
 //get all data on the basis of the product
 // ---------------------------------------------------------------------------------------------------------------------------------------
 

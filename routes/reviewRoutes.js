@@ -1,11 +1,12 @@
 const express = require("express");
 const reviewController = require("../Controllers/reviewController");
+const router = express.Router({ mergeParams: true });  // <-- This line is correct
 const authController = require("../Controllers/authController");
-const router = express.Router({ mergeParams: true });
 
+// Route to handle reviews
 router
   .route("/")
-  .get(reviewController.getAllReviews)
+  .get(reviewController.getAllReviews)  
   .post(
     authController.protect,
     authController.restrictTo("user"),
@@ -13,3 +14,18 @@ router
   );
 
 module.exports = router;
+
+// const express = require("express");
+// const reviewController = require("../Controllers/reviewController");
+// const router = express.Router({mergeParams:true});
+// const authController = require("../Controllers/authController");
+// router
+//   .route("/")
+//   .get(reviewController.getAllReviews)
+//   .post(
+//     authController.protect,
+//     authController.restrictTo("user"),
+//     reviewController.createReview
+//   );
+
+// module.exports = router;
