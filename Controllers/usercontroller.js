@@ -27,6 +27,11 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 //
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+//
 exports.updateMe = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, "name", "email");
   //create a error if user try to u pdate the password
@@ -52,6 +57,7 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     data: "null",
   });
 });
+
 exports.getAllUsers = handleFactory.getAll(User);
 exports.getAllUsersById = handleFactory.getOne(User);
 exports.deleteUser = handleFactory.deleteOne(User);

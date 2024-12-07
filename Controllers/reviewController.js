@@ -15,7 +15,6 @@ exports.setUserProductIds = (req, res, next) => {
   }
   next();
 };
-
 exports.getAllReviews = handleFactory.getAll(Review);
 exports.reviewById = handleFactory.getOne(Review, { path: "product" });
 exports.createReview = handleFactory.newOne(Review);
@@ -73,8 +72,11 @@ exports.deleteReview = handleFactory.deleteOne(Review);
 //     },
 //   });
 // });
-
 // exports.getAllReviews = catchAsync(async (req, res, next) => {
+// let filter = {};
+// if (req.params.productId) filter = { product: req.params.productID };
+// const reviews = await Review.find(filter);
+
 //   const productId = req.params.productId;
 //   const reviews = await Review.find({ product: productId });
 //   res.status(200).json({

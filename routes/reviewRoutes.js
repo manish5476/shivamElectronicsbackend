@@ -16,9 +16,15 @@ router
 
 router
   .route("/:id")
-  .patch(reviewController.updateReview)
-  .delete(reviewController.deleteReview)
-  .get(reviewController.reviewById);
+  .patch(
+    authController.restrictTo("user", "admin"),
+    reviewController.updateReview
+  )
+  .delete(
+    authController.restrictTo("user", "admin"),
+    reviewController.deleteReview
+  )
+  .get(authController.restrictTo("user", "admin"), reviewController.reviewById);
 module.exports = router;
 
 // const express = require("express");

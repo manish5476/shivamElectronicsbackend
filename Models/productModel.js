@@ -27,8 +27,8 @@ const invoiceSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   totalAmount: { type: Number, required: true },
   gstAmount: { type: Number, required: true },
-  distributorDetails: distributorSchema, // Embedded distributor details
-  companyDetails: companySchema, // Embedded company details
+  // distributorDetails: distributorSchema, // Embedded distributor details
+  // companyDetails: companySchema, // Embedded company details
 });
 
 // Main Product Schema
@@ -43,11 +43,10 @@ const productSchema = new mongoose.Schema(
         detail: { type: String, required: true },
       },
     ],
-
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
-    rating: { type: Number, min: 0, max: 5, default: 0 },
+    // rating: { type: Number, min: 0, max: 5, default: 0 },
     stock: { type: Number, required: true, min: 0 },
     tags: [{ type: String, trim: true }],
     brand: { type: String, required: true, trim: true },
@@ -65,7 +64,6 @@ const productSchema = new mongoose.Schema(
       enum: ["In Stock", "Low Stock", "Out of Stock"],
       required: true,
     },
-
     StartLocation: {
       type: {
         type: String,
@@ -76,7 +74,6 @@ const productSchema = new mongoose.Schema(
       address: { type: String },
       description: { type: String },
     },
-
     locations: [
       {
         type: {
@@ -106,8 +103,8 @@ const productSchema = new mongoose.Schema(
       },
     ],
     thumbnail: { type: String, required: true },
-    userSecretCode: { type: String, required: true }, // User's secret code
-    invoiceDetails: invoiceSchema,
+    // userSecretCode: { type: String, required: true }, // User's secret code
+    // invoiceDetails: invoiceSchema,
     salesPerson: [
       {
         type: mongoose.Schema.ObjectId,
@@ -121,6 +118,10 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// productSchema.index({ price: 1 });
+productSchema.index({ price: 1 }, { "reviews.rating": -1 });
+productSchema.index({ slug: 1 });
 
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
