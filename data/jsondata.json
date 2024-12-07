@@ -1,101 +1,105 @@
-[{
-  "title": "Smartphone XYZ Pro",
-  "description": "A premium smartphone with advanced features.",
-  "detailedDescriptions": [
-    { "id": "1", "detail": "6.7-inch AMOLED Display" },
-    { "id": "2", "detail": "128GB Storage, 8GB RAM" }
-  ],
-  "category": "Electronics",
-  "price": 50000,
-  "discountPercentage": 10,
-  "finalPrice": 45000,
-  "rating": 4.5,
-  "stock": 50,
-  "tags": ["smartphone", "electronics", "latest"],
-  "brand": "XYZ",
-  "sku": "XYZPRO128",
-  "weight": 180,
-  "dimensions": { "width": 75.1, "height": 165.5, "depth": 8.3 },
-  "warrantyInformation": "1-year manufacturer warranty.",
-  "shippingInformation": "Free delivery within 3-5 business days.",
-  "availabilityStatus": "In Stock",
-  "StartLocation": {
-    "type": "Point",
-    "coordinates": [72.8777, 19.076],
-    "address": "Mumbai, Maharashtra",
-    "description": "Warehouse Location"
-  },
-  "location": [
+[
   {
-    "type": "Point",
-    "coordinates": [77.5946, 12.9716],
-    "address": "Bangalore, Karnataka",
-    "description": "Delivery Hub",
-    "day": 2
-  },
-  { 
-    "type": "Point",
-  "coordinates": [77.5946, 12.9716],
-  "address": "surat, Karnataka",
-  "description": "Delivery Hub",
-  "day": 3}],
-  "reviews": [
-    {
-      "reviewerName": "John Doe",
-      "reviewerEmail": "john.doe@example.com",
-      "rating": 5,
-      "comment": "Excellent product with great features.",
-      "createdAt": "2024-11-29T12:00:00.000Z"
+    "title": "Smartphone XYZ Pro",
+    "description": "A premium smartphone with advanced features.",
+    "detailedDescriptions": [
+      { "id": "1", "detail": "6.7-inch AMOLED Display" },
+      { "id": "2", "detail": "128GB Storage, 8GB RAM" }
+    ],
+    "category": "Electronics",
+    "price": 50000,
+    "discountPercentage": 10,
+    "finalPrice": 45000,
+    "rating": 4.5,
+    "stock": 50,
+    "tags": ["smartphone", "electronics", "latest"],
+    "brand": "XYZ",
+    "sku": "XYZPRO128",
+    "weight": 180,
+    "dimensions": { "width": 75.1, "height": 165.5, "depth": 8.3 },
+    "warrantyInformation": "1-year manufacturer warranty.",
+    "shippingInformation": "Free delivery within 3-5 business days.",
+    "availabilityStatus": "In Stock",
+    "StartLocation": {
+      "type": "Point",
+      "coordinates": [72.8777, 19.076],
+      "address": "Mumbai, Maharashtra",
+      "description": "Warehouse Location"
     },
-    {
-      "reviewerName": "Jane Smith",
-      "reviewerEmail": "jane.smith@example.com",
-      "rating": 4,
-      "comment": "Good value for money.",
-      "createdAt": "2024-11-28T10:00:00.000Z"
-    }
-  ],
-  "returnPolicy": "Returns accepted within 15 days of purchase.",
-  "minimumOrderQuantity": 1,
-  "meta": {
-    "createdAt": "2024-11-29T09:00:00.000Z",
-    "updatedAt": "2024-11-30T10:00:00.000Z",
-    "barcode": "123456789012",
-    "qrCode": "http://example.com/qr-code/xyzpro128"
-  },
-  "images": [
-    {
-      "id": "img1",
-      "detail": "Front view",
-      "link": "https://example.com/images/xyzpro-front.jpg"
+    "location": [
+      {
+        "type": "Point",
+        "coordinates": [77.5946, 12.9716],
+        "address": "Bangalore, Karnataka",
+        "description": "Delivery Hub",
+        "day": 2
+      },
+      {
+        "type": "Point",
+        "coordinates": [77.5946, 12.9716],
+        "address": "surat, Karnataka",
+        "description": "Delivery Hub",
+        "day": 3
+      }
+    ],
+    "reviews": [
+      {
+        "reviewerName": "John Doe",
+        "reviewerEmail": "john.doe@example.com",
+        "rating": 5,
+        "comment": "Excellent product with great features.",
+        "createdAt": "2024-11-29T12:00:00.000Z"
+      },
+      {
+        "reviewerName": "Jane Smith",
+        "reviewerEmail": "jane.smith@example.com",
+        "rating": 4,
+        "comment": "Good value for money.",
+        "createdAt": "2024-11-28T10:00:00.000Z"
+      }
+    ],
+    "returnPolicy": "Returns accepted within 15 days of purchase.",
+    "minimumOrderQuantity": 1,
+    "meta": {
+      "createdAt": "2024-11-29T09:00:00.000Z",
+      "updatedAt": "2024-11-30T10:00:00.000Z",
+      "barcode": "123456789012",
+      "qrCode": "http://example.com/qr-code/xyzpro128"
     },
-    {
-      "id": "img2",
-      "detail": "Back view",
-      "link": "https://example.com/images/xyzpro-back.jpg"
-    }
-  ],
-  "thumbnail": "https://example.com/images/xyzpro-thumbnail.jpg",
-  "userSecretCode": "ABCD1234",
-  "invoiceDetails": {
-    "invoiceNumber": "INV20241130001",
-    "date": "2024-11-30T10:30:00.000Z",
-    "totalAmount": 45000,
-    "gstAmount": 6750,
-    "distributorDetails": {
-      "name": "ABC Distributors",
-      "contactNumber": "+91-9876543210",
-      "email": "contact@abcdist.com",
-      "gstNumber": "27ABCDE1234F1Z5",
-      "address": "123, Market Street, Mumbai, Maharashtra"
-    },
-    "companyDetails": {
-      "name": "XYZ Pvt. Ltd.",
-      "contactNumber": "+91-9123456789",
-      "email": "support@xyzcompany.com",
-      "address": "456, Corporate Tower, Delhi",
-      "gstNumber": "29XYZCO5678G1A1",
-      "website": "https://xyzcompany.com"
+    "images": [
+      {
+        "id": "img1",
+        "detail": "Front view",
+        "link": "https://example.com/images/xyzpro-front.jpg"
+      },
+      {
+        "id": "img2",
+        "detail": "Back view",
+        "link": "https://example.com/images/xyzpro-back.jpg"
+      }
+    ],
+    "thumbnail": "https://example.com/images/xyzpro-thumbnail.jpg",
+    "userSecretCode": "ABCD1234",
+    "invoiceDetails": {
+      "invoiceNumber": "INV20241130001",
+      "date": "2024-11-30T10:30:00.000Z",
+      "totalAmount": 45000,
+      "gstAmount": 6750,
+      "distributorDetails": {
+        "name": "ABC Distributors",
+        "contactNumber": "+91-9876543210",
+        "email": "contact@abcdist.com",
+        "gstNumber": "27ABCDE1234F1Z5",
+        "address": "123, Market Street, Mumbai, Maharashtra"
+      },
+      "companyDetails": {
+        "name": "XYZ Pvt. Ltd.",
+        "contactNumber": "+91-9123456789",
+        "email": "support@xyzcompany.com",
+        "address": "456, Corporate Tower, Delhi",
+        "gstNumber": "29XYZCO5678G1A1",
+        "website": "https://xyzcompany.com"
+      }
     }
   }
-}]
+]

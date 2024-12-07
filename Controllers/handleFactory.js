@@ -63,17 +63,21 @@ exports.getOne = (Model, autoPopulateOptions) => {
 
 exports.getAll = (Model, autoPopulateOptions) => {
   return catchAsync(async (req, res, next) => {
-    let query;
+    // small hack for nested routing
+    let filter = {};
+    if (req.params.productId) filter = { product: req.params.productID };
+
     if (autoPopulateOptions) {
-      query = new ApiFeatures(
-        Model.find().populate(autoPopulateOptions),
+      feature = new ApiFeatures(
+        Model.find(filter).populate(autoPopulateOptions),
         req.query
       );
     } else {
-      query = new ApiFeatures(Model.find(), req.query);
+      feature = new ApiFeatures(Model.find(), req.query);
     }
-    const data = query.filter().limitFields().sort().paginate();
+    const data = feature.filter().limitFields().sort().paginate();
     const doc = await data.query;
+    // const doc = await data.query.explain();
     res.status(200).json({
       status: "success",
       result: doc.length,
@@ -81,6 +85,7 @@ exports.getAll = (Model, autoPopulateOptions) => {
     });
   });
 };
+
 // //
 // exports.deleteOne = (Model) =>
 //   catchAsync(async (req, res, next) => {

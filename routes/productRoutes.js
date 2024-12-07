@@ -9,25 +9,27 @@ const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
 // Product routes
 router
   .route("/")
-  .get(authController.protect, productControl.getAllProduct)
-  .post(productControl.findDuplicateProduct, productControl.newProduct);
+  .get(productControl.getAllProduct)
+  .post(
+    authController.protect,
+    authController.restrictTo("admin", "staff"),
+    productControl.findDuplicateProduct,
+    productControl.newProduct
+  );
 router
   .route("/:id")
-  .get(authController.protect, productControl.getProductById)
-  .patch(productControl.updateProduct)
+  .get(productControl.getProductById)
+  .patch(
+    authController.restrictTo("admin", "staff"),
+    productControl.updateProduct
+  )
   .delete(
     authController.protect,
     authController.restrictTo("admin"),
     productControl.deleteProduct
   );
-
-// Product dropdown route
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
-
-// Use the reviewRoutes under the /:productId/reviews route,
-// This makes sure the productId is available in the reviewRoutes
 router.use("/:productId/reviews", reviewRoutes); // <-- Important part
-
 module.exports = router;
 
 // // const fs = require('fs');
