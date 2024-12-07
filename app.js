@@ -7,7 +7,7 @@ const mongoSanatize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const globalErrorhandler = require("./Controllers/errorController");
 const AppError = require("./Utils/appError");
-const productRoutes = require("./routes/product");
+const productRoutes = require("./routes/productRoutes");
 const usersRoutes = require("./routes/UserRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const cors = require("cors");
@@ -26,7 +26,7 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again in an hour", // default message
 });
 
-//global error handler middleware
+//global error hand  ler middleware
 app.use("/api", limiter); //limiter
 
 //body parser readign data from body req.body
