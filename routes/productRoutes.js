@@ -4,14 +4,13 @@ const app = express();
 app.use(express.json());
 const productControl = require("./../Controllers/productController");
 const authController = require("./../Controllers/authController");
-const reviewRoutes = require('../routes/reviewRoutes');  // Import reviewRoutes
+const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
 
 // Product routes
 router
   .route("/")
   .get(authController.protect, productControl.getAllProduct)
-  .post(productControl.newProduct);
-
+  .post(productControl.findDuplicateProduct, productControl.newProduct);
 router
   .route("/:id")
   .get(authController.protect, productControl.getProductById)
@@ -25,9 +24,9 @@ router
 // Product dropdown route
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 
-// Use the reviewRoutes under the /:productId/reviews route, 
+// Use the reviewRoutes under the /:productId/reviews route,
 // This makes sure the productId is available in the reviewRoutes
-router.use('/:productId/reviews', reviewRoutes);  // <-- Important part
+router.use("/:productId/reviews", reviewRoutes); // <-- Important part
 
 module.exports = router;
 

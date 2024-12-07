@@ -42,7 +42,8 @@ const productSchema = new mongoose.Schema(
         id: { type: String, required: true },
         detail: { type: String, required: true },
       },
-    ], // Array of objects for detailed descriptions
+    ],
+
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     discountPercentage: { type: Number, default: 0, min: 0, max: 100 },

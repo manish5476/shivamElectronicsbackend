@@ -26,7 +26,7 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again in an hour", // default message
 });
 
-//global error handler middleware
+//global error hand  ler middleware
 app.use("/api", limiter); //limiter
 
 //body parser readign data from body req.body

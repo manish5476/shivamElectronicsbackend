@@ -4,34 +4,23 @@ const Product = require("./../Models/productModel");
 const ApiFeatures = require("../Utils/ApiFeatures");
 const AppError = require("../Utils/appError");
 const catchAsync = require("../Utils/catchAsyncModule");
+const handleFactory = require("./handleFactory");
 
-exports.getAllReviews = catchAsync(async (req, res, next) => {
-  const productId = req.params.productId;
-  const reviews = await Review.find({ product: productId });  
-  res.status(200).json({
-    status: "success",
-    result: reviews.length,
-    data: { reviews },
-  });
-});
-
-exports.createReview = catchAsync(async (req, res, next) => {
+exports.setUserProductIds = (req, res, next) => {
   if (!req.body.product) {
-    req.body.product = req.params.productId;  
+    req.body.product = req.params.productId;
   }
-
   if (!req.body.user) {
-    req.body.user = req.user.id; }
-    console.log(req.body.user)
-  const newReview = await Review.create(req.body);
-  res.status(201).json({
-    status: "success",
-    result: newReview.length,
-    data: {
-      review: newReview,
-    },
-  });
-});
+    req.body.user = req.user.id;
+  }
+  next();
+};
+
+exports.getAllReviews = handleFactory.getAll(Review);
+exports.reviewById = handleFactory.getOne(Review, { path: "product" });
+exports.createReview = handleFactory.newOne(Review);
+exports.updateReview = handleFactory.updateOne(Review);
+exports.deleteReview = handleFactory.deleteOne(Review);
 
 // const { query } = require("express");
 // const Review = require("../Models/ReviewSchema");
@@ -65,5 +54,32 @@ exports.createReview = catchAsync(async (req, res, next) => {
 //     data: {
 //       review: newReview,
 //     },
+//   });
+// });
+// exports.createReview = catchAsync(async (req, res, next) => {
+//   if (!req.body.product) {
+//     req.body.product = req.params.productId;
+//   }
+//   if (!req.body.user) {
+//     req.body.user = req.user.id;
+//   }
+//   console.log(req.body.user);
+//   const newReview = await Review.create(req.body);
+//   res.status(201).json({
+//     status: "success",
+//     result: newReview.length,
+//     data: {
+//       review: newReview,
+//     },
+//   });
+// });
+
+// exports.getAllReviews = catchAsync(async (req, res, next) => {
+//   const productId = req.params.productId;
+//   const reviews = await Review.find({ product: productId });
+//   res.status(200).json({
+//     status: "success",
+//     result: reviews.length,
+//     data: { reviews },
 //   });
 // });
