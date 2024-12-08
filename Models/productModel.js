@@ -46,7 +46,8 @@ const productSchema = new mongoose.Schema(
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
-    // rating: { type: Number, min: 0, max: 5, default: 0 },
+    ratingAverage: { type: Number, min: 0, max: 5, default: 0 },
+    ratingQuantity: { type: Number, min: 0 },
     stock: { type: Number, required: true, min: 0 },
     tags: [{ type: String, trim: true }],
     brand: { type: String, required: true, trim: true },
@@ -64,7 +65,7 @@ const productSchema = new mongoose.Schema(
       enum: ["In Stock", "Low Stock", "Out of Stock"],
       required: true,
     },
-    StartLocation: {
+    startLocation: {
       type: {
         type: String,
         default: "Point",
@@ -122,6 +123,7 @@ const productSchema = new mongoose.Schema(
 // productSchema.index({ price: 1 });
 productSchema.index({ price: 1 }, { "reviews.rating": -1 });
 productSchema.index({ slug: 1 });
+productSchema.index({ startLocation: "2dsphere" });
 
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
