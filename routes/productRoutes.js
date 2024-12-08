@@ -16,6 +16,11 @@ router
     productControl.findDuplicateProduct,
     productControl.newProduct
   );
+
+router
+  .route("/product-within/:distance/center/:latlng/unit/:unit")
+  .get(productControl.getProductWithIn);
+
 router
   .route("/:id")
   .get(productControl.getProductById)

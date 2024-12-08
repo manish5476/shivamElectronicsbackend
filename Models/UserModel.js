@@ -108,15 +108,4 @@ userSchema.pre("findOne", function (next) {
   next();
 });
 
-// userSchema.methods.changePasswordAfter = async function (JWTTimestamp) {
-//   // if (this.isModified("password")) return await false;
-//   console.log(this);
-//   if (this.passwordChangedAt) {
-//     const passwordChangedtimestamp= parseInt(this.passwordChangedAt.getTime()/1000,10)
-//     console.log("password Changed",passwordChangedtimestamp, "at", JWTTimestamp);
-//     return JWTTimestamp<passwordChangedtimestamp
-//   }
-//   return false;
-// };
-
 module.exports = mongoose.model("User", userSchema);

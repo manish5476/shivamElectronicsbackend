@@ -5,6 +5,7 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
 // const reviewRoutes = require('../routes/reviewRoutes');  // Import reviewRoutes
 const handleFactory = require("./handleFactory");
+const { Status } = require("git");
 //get all data on the basis of the product
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -51,6 +52,37 @@ exports.findDuplicateProduct = catchAsync(async (req, res, next) => {
     );
   }
   next();
+});
+
+//
+exports.getProductWithIn = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+
+  // Split latitude and longitude
+  const [lat, lng] = latlng.split(",");
+
+  const radius = unit === "mi" ? distance / 3963.2 : distance / 6378.1;
+  // Validate latitude and longitude
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        "Please provide latitude and longitude in the format lat,lng.",
+        400
+      )
+    );
+  }
+
+  const products = await Product.find({
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+  res.status(200).json({
+    Status: "success",
+    results: products.length,
+    data: {
+      products,
+    },
+  });
+  console.log(distance, lat, lng, unit);
 });
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
