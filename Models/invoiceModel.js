@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const Seller=require('./Seller')
+const Seller = require('./Seller')
 const Product = require("./productModel");
 const User = require("./UserModel");
 // Main Invoice Schema
@@ -82,37 +82,34 @@ invoiceSchema.pre(/^find/, function (next) {
 /////
 
 invoiceSchema.pre('save', async function (next) {
-    const Product = mongoose.model('Product'); // Assuming 'Product' is the model name
-      // Populate item fields from the product schema
-    for (const item of this.items) {
-      if (!item.rate || !item.gstRate) {
-        const product = await Product.findById(item.product).select(
-          'price cgst sgst gstRate'
-        );
-          if (!product) {
-          return next(new Error(`Product with ID ${item.product} not found`));
-        }
-        // Populate defaults from the product schema if not overridden
-        item.rate = item.rate || product.price;
-        item.gstRate = item.gstRate || product.gstRate;
-        item.taxableValue = item.taxableValue || item.quantity * item.rate;
-        item.gstAmount =
-          item.gstAmount || (item.taxableValue * item.gstRate) / 100;
-        item.amount = item.amount || item.taxableValue + item.gstAmount;
+  const Product = mongoose.model('Product'); // Assuming 'Product' is the model name
+  // Populate item fields from the product schema
+  for (const item of this.items) {
+    if (!item.rate || !item.gstRate) {
+      const product = await Product.findById(item.product).select(
+        'price cgst sgst gstRate'
+      );
+      if (!product) {
+        return next(new Error(`Product with ID ${item.product} not found`));
       }
+      // Populate defaults from the product schema if not overridden
+      item.rate = item.rate || product.price;
+      item.gstRate = item.gstRate || product.gstRate;
+      item.taxableValue = item.taxableValue || item.quantity * item.rate;
+      item.gstAmount =
+        item.gstAmount || (item.taxableValue * item.gstRate) / 100;
+      item.amount = item.amount || item.taxableValue + item.gstAmount;
     }
-  
-    // Calculate invoice totals
-    this.subTotal = this.items.reduce((sum, item) => sum + item.taxableValue, 0);
-    this.totalAmount = this.items.reduce((sum, item) => sum + item.amount, 0);
-  
-    next();
-  });
-  
+  }
 
+  // Calculate invoice totals
+  this.subTotal = this.items.reduce((sum, item) => sum + item.taxableValue, 0);
+  this.totalAmount = this.items.reduce((sum, item) => sum + item.amount, 0);
+
+  next();
+});
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
-
 module.exports = Invoice;
 
 // import mongoose, { Schema, Document } from 'mongoose';

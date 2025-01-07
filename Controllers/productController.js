@@ -136,6 +136,7 @@ exports.deleteProduct = handleFactory.deleteOne(Product);
 exports.updateProduct = handleFactory.updateOne(Product);
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
+
 // exports.getProductById = catchAsync(async (req, res, next) => {
 //   const product = await Product.findById(req.params.id).populate("reviews"); //here we are doing virtual populate with review
 //   if (!product) {

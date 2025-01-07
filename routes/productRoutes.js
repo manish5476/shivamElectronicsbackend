@@ -17,8 +17,6 @@ router
     productControl.newProduct
   );
 
-router.route("/distances/:latlng/unit/:unit").get(productControl.getDistances);
-
 router
   .route("/product-within/:distance/center/:latlng/unit/:unit")
   .get(productControl.getProductWithIn);
