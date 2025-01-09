@@ -22,7 +22,6 @@ const productSchema = new mongoose.Schema(
     discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
     ratingAverage: { type: Number, min: 0, max: 5, default: 0 },
     ratingQuantity: { type: Number, min: 0 },
-
     stock: { type: Number, required: true, min: 0 },
     tags: [{ type: String, trim: true }],
     brand: { type: String, required: true, trim: true },

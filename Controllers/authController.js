@@ -131,7 +131,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   //   return next(new AppError("Token has expired. Please log in again.", 401));
   // }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // we use promisify here because it act as a promise and give resust as per promise like we done in every where
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); 
   // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
   const currentUser = await User.findById(decoded.id);
   if (!currentUser) {
