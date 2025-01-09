@@ -3,33 +3,68 @@ const crypto = require("crypto");
 const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
-const ApiFeatures = require("../Utils/ApiFeatures");
 const sendEmail = require("../Utils/email");
 const jwt = require("jsonwebtoken");
+const cors = require('cors');
+
+// CORS Configuration
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
+// const cookieOptions = {
+//   expires: new Date(
+//     Date.now() + process.env.JWT_Cookie_EXPIRES_IN * 24 * 60 * 60 * 1000
+//   ),
+//   secure: true,
+//   httpOnly: true,
+// };
 
+// const signToken = (id) => {
+//   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN,
+//   });
+// };
+// // ---------------------------------------------------------------------------------------------------------------------------------------
+
+// const createSendToken = (user, statusCode, res) => {
+//   const token = signToken(user._id);
+//   if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+//   res.cookie("jwt", token, cookieOptions);
+//   user.password = undefined;
+//   // Send the response
+//   res.status(statusCode).json({
+//     status: "success",
+//     token,
+//     data: {
+//       user: user,
+//     },
+//   });
+// };
 const cookieOptions = {
-  expires: new Date(
-    Date.now() + process.env.JWT_Cookie_EXPIRES_IN * 24 * 60 * 60 * 1000
-  ),
-  secure: true,
-  httpOnly: true,
+  expires: new Date(Date.now() + process.env.JWT_Cookie_EXPIRES_IN * 24 * 60 * 60 * 1000),
+  httpOnly: true,  // Cookie can't be accessed via JavaScript (important for security)
 };
 
+// Sign JWT token
 const signToken = (id) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: process.env.JWT_EXPIRES_IN,  // JWT expiration time
   });
 };
-// ---------------------------------------------------------------------------------------------------------------------------------------
 
+// Function to send JWT token in a cookie
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
+
+  // Set `secure: true` only if in production (HTTPS)
   if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+
+  // Send JWT token in the response as a cookie
   res.cookie("jwt", token, cookieOptions);
+
+  // Remove the password from the response
   user.password = undefined;
-  // Send the response
+
+  // Send success response
   res.status(statusCode).json({
     status: "success",
     token,
@@ -39,13 +74,9 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-//
-
 // ---------------------------------------------------------------------------------------------------------------------------------------
-
 exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, passwordChangedAt, role } =
-    req.body;
+  const { name, email, password, passwordConfirm, passwordChangedAt, role } =    req.body;
   // Check if passwords match before proceeding
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
@@ -61,34 +92,21 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
   createSendToken(newUser, 201, res);
 });
-// ---------------------------------------------------------------------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   console.log(email, password);
   // console.log(email, password);
-
   if (!email || !password) {
     return next(new AppError("Please provide an email and  a password", 400));
   }
   const user = await User.findOne({ email }).select("+password");
-
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Invalid emai and  password", 400));
   }
 
   createSendToken(user, 200, res);
-
-  // const token = signToken(user._id);
-  // console.log("Generated token:", token); // Log the token to verify it
-  // Check if passwords match before proceeding
-  // res.status(200).json({
-  //   status: "successsss",
-  //   token: token,
-  //   // data: {
-  //   //   users,
-  //   // },
-  // });
 });
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
@@ -110,13 +128,51 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // better prctive is the send the token wiht header
+// exports.protect = catchAsync(async (req, res, next) => {
+//   console.log(req,"---------------------------------------------------------------")
+//   let token;
+//   console.log(req.headers.authorization); // This should print "Bearer <token>"
+
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//     console.log("000000000000000000000000000000000000000000000000000000000000000000000000000000000",token);
+//   }
+//   if (!token) {
+//     return next(
+//       new AppError("You are not logged in! Please log in to get access.", 401)
+//     );
+//   }
+//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); 
+//   // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
+//   const currentUser = await User.findById(decoded.id);
+//   if (!currentUser) {
+//     return next(
+//       new AppError("The user belonging to this Id no longer exists.", 401)
+//     );
+//   }
+
+//   if (currentUser.changePasswordAfter(decoded.iat)) {
+//     return next(
+//       new AppError("User recently changed the pssword Log IN Again", 401)
+//     );
+//   }
+//   req.user = currentUser;
+//   next();
+// });
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
+  console.log("Authorization Header:", req.headers.authorization); // Log header directly
+
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
-    token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(" ")[1];  // Extract token part after "Bearer"
+    token = token.replace(/['"]+/g, '');  // Remove any quotes around the token
+    console.log("Token extracted:", token);  // Log the extracted token without quotes
   }
 
   if (!token) {
@@ -125,28 +181,25 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
 
-  // try {
-  //   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  // } catch (err) {
-  //   return next(new AppError("Token has expired. Please log in again.", 401));
-  // }
+  try {
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next(
+        new AppError("The user belonging to this Id no longer exists.", 401)
+      );
+    }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); 
-  // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
-  const currentUser = await User.findById(decoded.id);
-  if (!currentUser) {
-    return next(
-      new AppError("The user belonging to this Id no longer exists.", 401)
-    );
+    if (currentUser.changePasswordAfter(decoded.iat)) {
+      return next(
+        new AppError("User recently changed the password. Log in again.", 401)
+      );
+    }
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    return next(new AppError("Invalid or expired token.", 401));  // Handle JWT verification errors
   }
-
-  if (currentUser.changePasswordAfter(decoded.iat)) {
-    return next(
-      new AppError("User recently changed the pssword Log IN Again", 401)
-    );
-  }
-  req.user = currentUser;
-  next();
 });
 
 //

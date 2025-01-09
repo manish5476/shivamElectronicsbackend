@@ -12,7 +12,7 @@ router
   .get(productControl.getAllProduct)
   .post(
     authController.protect,
-    authController.restrictTo("admin", "staff"),
+    // authController.restrictTo("admin", "staff"),
     productControl.findDuplicateProduct,
     productControl.newProduct
   );
