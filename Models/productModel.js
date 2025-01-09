@@ -78,7 +78,7 @@ const productSchema = new mongoose.Schema(
       },
     ],
     thumbnail: { type: String, required: true },
-   
+
     salesPerson: [
       {
         type: mongoose.Schema.ObjectId,

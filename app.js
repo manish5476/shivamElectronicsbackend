@@ -10,6 +10,7 @@ const AppError = require("./Utils/appError");
 const productRoutes = require("./routes/productRoutes");
 const usersRoutes = require("./routes/UserRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 const cors = require("cors");
 const hpp = require("hpp");
 app.use(helmet());
@@ -69,6 +70,8 @@ app.use((req, res, next) => {
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/customer", customerRoutes);
+// app.use("/api/v1/invoice", invoiceRoutes);
 
 app.all("*", (req, res, next) => {
   next(

@@ -83,7 +83,7 @@ module.exports = (err, req, res, next) => {
     if (error.name === "TokenExpiredError") error = sendTokenExpireError(error);
   }
   
-  sendErrorProd(error, res);
+  sendErrorProd(err, res);
   next(); // Ensure the middleware chain continues if needed
 };
 

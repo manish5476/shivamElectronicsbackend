@@ -84,6 +84,49 @@ exports.getProductWithIn = catchAsync(async (req, res, next) => {
   });
   console.log(distance, lat, lng, unit);
 });
+//
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+
+  // Split latitude and longitude
+  const [lat, lng] = latlng.split(",");
+
+  // Validate latitude and longitude
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        "Please provide latitude and longitude in the format lat,lng.",
+        400
+      )
+    );
+  }
+
+  const distances = await Product.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [lng * 1, lat * 1],
+        },
+        distanceField: "distance",
+        distanceMultiplier: 0.001,
+      },
+    },
+    {
+      $project: {
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+  res.status(200).json({
+    Status: "success",
+    results: products.length,
+    data: {
+      distances,
+    },
+  });
+});
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.getAllProduct = handleFactory.getAll(Product, { path: "reviews" });
