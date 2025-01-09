@@ -15,6 +15,13 @@ const cors = require("cors");
 const hpp = require("hpp");
 app.use(helmet());
 
+const corsOptions = {
+  origin: 'http://localhost:4200', // Allow the Angular app's origin
+  credentials: true, // Allow credentials (cookies) to be sent with the request
+};
+
+app.use(cors(corsOptions));
+
 //development mode
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -33,7 +40,6 @@ app.use("/api", limiter); //limiter
 //body parser readign data from body req.body
 
 app.use(express.json({ limit: "10kb" }));
-app.use(cors());
 
 app.use(morgan("combined"));
 

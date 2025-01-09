@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema(
     description: { type: String, required: true, trim: true, maxlength: 500 },
     detailedDescriptions: [
       {
-        id: { type: String, required: true },
+        id: { type: String },
         detail: { type: String, required: true },
       },
     ],
@@ -39,29 +39,29 @@ const productSchema = new mongoose.Schema(
       enum: ["In Stock", "Low Stock", "Out of Stock"],
       required: true,
     },
-    startLocation: {
-      type: {
-        type: String,
-        default: "Point",
-        enum: ["Point"],
-      },
-      coordinates: [Number],
-      address: { type: String },
-      description: { type: String },
-    },
-    locations: [
-      {
-        type: {
-          type: String,
-          default: "Point",
-          enum: ["Point"],
-        },
-        coordinates: [Number],
-        address: { type: String },
-        description: { type: String },
-        day: { type: Number },
-      },
-    ],
+    // startLocation: {
+    //   type: {
+    //     type: String,
+    //     default: "Point",
+    //     enum: ["Point"],
+    //   },
+    //   coordinates: [Number],
+    //   address: { type: String },
+    //   description: { type: String },
+    // },
+    // locations: [
+    //   {
+    //     type: {
+    //       type: String,
+    //       default: "Point",
+    //       enum: ["Point"],
+    //     },
+    //     coordinates: [Number],
+    //     address: { type: String },
+    //     description: { type: String },
+    //     day: { type: Number },
+    //   },
+    // ],
     returnPolicy: { type: String, required: true, trim: true },
     minimumOrderQuantity: { type: Number, default: 1 },
     meta: {
@@ -72,7 +72,7 @@ const productSchema = new mongoose.Schema(
     },
     images: [
       {
-        id: { type: String, required: false },
+        id: { type: String,  },
         detail: { type: String, required: false },
         link: { type: String, required: false },
       },
