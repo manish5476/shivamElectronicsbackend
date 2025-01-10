@@ -7,10 +7,7 @@ const authController = require("./../Controllers/authController");
 const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
 const MasterController = require("../Controllers/MasterliastController");
 
-router.route("/productstitle").get(MasterController.getMasterList);
-
-
-
+router.route("/autopopulate").get(MasterController.getMasterList);
 // Product routes
 router.route("/").get(productControl.getAllProduct)
   .post(authController.protect,
@@ -20,7 +17,7 @@ router.route("/").get(productControl.getAllProduct)
   );
 router.route("/MasterController").get(productControl.getProductDropDownWithId);
 router.route("/product-within/:distance/center/:latlng/unit/:unit").get(productControl.getProductWithIn);
-router.route("/:id") .get(productControl.getProductById) .patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteProduct);
+router.route("/:id").get(productControl.getProductById).patch(productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteProduct);
 router.route("/DropdownData").get(productControl.getProductDropDownWithId);
 router.use("/:productId/reviews", reviewRoutes); // <-- Important part
 module.exports = router;
