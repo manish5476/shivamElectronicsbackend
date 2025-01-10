@@ -15,12 +15,12 @@ const cors = require("cors");
 const hpp = require("hpp");
 app.use(helmet());
 
-const corsOptions = {
-  origin: 'http://localhost:4200', // Allow the Angular app's origin
-  credentials: true, // Allow credentials (cookies) to be sent with the request
-};
+// const corsOptions = {
+//   origin: 'https://4000-idx-shivamelectronicsbackendgit-1736444920605.cluster-a3grjzek65cxex762e4mwrzl46.cloudworkstations.dev/', // Allow the Angular app's origin
+//   credentials: true, // Allow credentials (cookies) to be sent with the request
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 //development mode
 if (process.env.NODE_ENV === "development") {
@@ -61,6 +61,8 @@ app.use((req, res, next) => {
   req.getTime = new Date().toISOString();
   next();
 });
+
+app.use(cors());
 
 //testing middleware
 app.use((req, res, next) => {
