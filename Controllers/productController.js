@@ -20,7 +20,6 @@ exports.getProductDropDownWithId = catchAsync(async (req, res, next) => {
   });
 });
 
-//get product stats
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.getProductStats = catchAsync(async (req, res, next) => {
   const stat = await Product.aggregate([

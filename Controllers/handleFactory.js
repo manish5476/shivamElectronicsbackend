@@ -86,6 +86,38 @@ exports.getAll = (Model, autoPopulateOptions) => {
   });
 };
 
+exports.createList = (Model, keys) => {
+  return catchAsync(async (req, res, next) => {
+    let aggregationPipeline = [];
+
+    // Project stage (select only the specified keys/fields)
+    if (keys && Array.isArray(keys) && keys.length > 0) {
+      const projection = keys.reduce((acc, key) => {
+        acc[key] = 1; // Include the specified fields in the result
+        return acc;
+      }, {});
+      aggregationPipeline.push({ $project: projection });
+    }
+
+    // Execute the aggregation pipeline
+    const docs = await Model.aggregate(aggregationPipeline);
+
+    // If no documents are found
+    if (!docs || docs.length === 0) {
+      return next(new AppError("No documents found", 404));
+    }
+
+    // Respond with the results
+    res.status(200).json({
+      status: "success",
+      result: docs.length,
+      data: docs,
+    });
+  });
+};
+
+
+
 // //
 // exports.deleteOne = (Model) =>
 //   catchAsync(async (req, res, next) => {

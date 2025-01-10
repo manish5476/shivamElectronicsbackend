@@ -81,8 +81,9 @@ const productSchema = new mongoose.Schema(
 
     salesPerson: [
       {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
+        // type: mongoose.Schema.ObjectId,
+        type:String,
+        // ref: "User",
       },
     ],
   },
