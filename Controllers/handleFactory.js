@@ -16,6 +16,50 @@ exports.deleteOne = (Model) =>
     });
   });
 
+  exports.deleteMany = (Model) =>
+  catchAsync(async (req, res, next) => {
+    try {
+      // 1. Get the IDs from the request (e.g., from the request body)
+      const idsToDelete = req.body.ids; // Assuming you send an array of IDs in the body
+      console.log(req.dody)
+
+      // 2. Validate the IDs (important!)
+      if (!idsToDelete || !Array.isArray(idsToDelete) || idsToDelete.length === 0) {
+        return next(new AppError("No IDs provided for deletion.", 400)); // Bad Request
+      }
+
+      // Convert string IDs to ObjectIds (if necessary)
+      const objectIds = idsToDelete.map(id => {
+        try {
+          return new mongoose.Types.ObjectId(id); // Attempt conversion
+        } catch (error) {
+          return null; // Handle invalid IDs
+        }
+      }).filter(id => id !== null); //remove null from array if any invalid id
+
+      if (objectIds.length !== idsToDelete.length) {
+        return next(new AppError("Invalid IDs provided for deletion.", 400));
+      }
+
+      // 3. Delete the documents using deleteMany
+      const result = await Model.deleteMany({ _id: { $in: objectIds } });
+
+      if (result.deletedCount === 0) {
+        return next(new AppError("No documents found with the provided IDs.", 404));
+      }
+
+      // 4. Send a success response
+      res.status(200).json({
+        status: "success",
+        message: `${result.deletedCount} documents deleted successfully.`,
+        data: null, // Important for security
+      });
+    } catch (err) {
+      next(err); // Pass any errors to the error handling middleware
+    }
+  });
+
+
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.findByIdAndUpdate(req.params.id, req.body);

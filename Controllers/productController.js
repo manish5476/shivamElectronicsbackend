@@ -133,7 +133,7 @@ exports.getProductById = handleFactory.getOne(Product, { path: "reviews" });
 exports.newProduct = handleFactory.newOne(Product);
 exports.deleteProduct = handleFactory.deleteOne(Product);
 exports.updateProduct = handleFactory.updateOne(Product);
-
+exports.deleteMultipleProduct = handleFactory.deleteMany(Product)
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
 // exports.getProductById = catchAsync(async (req, res, next) => {
