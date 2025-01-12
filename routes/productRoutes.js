@@ -19,7 +19,7 @@ router.route("/").get(productControl.getAllProduct)
   );
 router.route("/MasterController").get(productControl.getProductDropDownWithId);
 router.route("/product-within/:distance/center/:latlng/unit/:unit").get(productControl.getProductWithIn);
-router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete(productControl.deleteProduct);
+router.route("/:id").get(productControl.getProductById).patch(productControl.updateProduct).delete(productControl.deleteProduct);
 
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteProduct);
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteMultipleProduct);

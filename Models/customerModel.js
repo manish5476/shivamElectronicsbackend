@@ -22,16 +22,9 @@ const cartItemSchema = new Schema({
 // Define the Customer Schema
 const customerSchema = new Schema(
   {
-    customerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      // unique: true
+    customerId: {type: mongoose.Schema.Types.ObjectId, // unique: true
     },
-    createdAt: {
-      type: Date,
-      required: true,
-      default: Date.now,
-    },
+    createdAt: { type: Date, required: true, default: Date.now, },
     updatedAt: {
       type: Date,
       required: true,
@@ -54,15 +47,6 @@ const customerSchema = new Schema(
     },
     lastName: {
       type: String,
-      required: true,
-    },
-    birthDate: {
-      type: Date,
-      required: true,
-    },
-    gender: {
-      type: String,
-      enum: ["male", "female", "other", "prefer not to say"],
       required: true,
     },
     phoneNumbers: [
