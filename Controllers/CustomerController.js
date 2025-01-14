@@ -11,9 +11,9 @@ const { Status } = require("git");
 
 
 exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
-    console.log("Checking for duplicate with SKU:", req.body.sku);
+    // console.log("Checking for duplicate with SKU:", req.body.sku);
     const existingCustomer = await Customer.findOne({ sku: req.body.sku });
-    console.log("Existing Customer:", existingCustomer);
+    // console.log("Existing Customer:", existingCustomer);
     if (existingCustomer) {
         return next(
             new AppError(

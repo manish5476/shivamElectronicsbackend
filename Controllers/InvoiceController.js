@@ -9,9 +9,9 @@ const { Status } = require("git");
 
 
 exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
-    console.log("Checking for duplicate with SKU:", req.body.sku);
+    // console.log("Checking for duplicate with SKU:", req.body.sku);
     const existingInvoice = await Invoice.findOne({ sku: req.body.sku });
-    console.log("Existing Invoice:", existingInvoice);
+    // console.log("Existing Invoice:", existingInvoice);
     if (existingInvoice) {
         return next(
             new AppError(
