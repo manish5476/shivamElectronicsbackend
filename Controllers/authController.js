@@ -64,19 +64,25 @@ const createSendToken = (user, statusCode, res) => {
   // Remove the password from the response
   user.password = undefined;
 
+  const userData = {
+    name: user.name,
+    email: user.email,
+    role: user.role
+  };
+
   // Send success response
   res.status(statusCode).json({
     status: "success",
     token,
     data: {
-      user: user,
+      user: userData,
     },
   });
 };
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, passwordChangedAt, role } =    req.body;
+  const { name, email, password, passwordConfirm, passwordChangedAt, role } = req.body;
   // Check if passwords match before proceeding
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
@@ -96,7 +102,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email, password);
+  // console.log(req);
+  // console.log(email, password);
   // console.log(email, password);
   if (!email || !password) {
     return next(new AppError("Please provide an email and  a password", 400));
@@ -126,43 +133,9 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-// ---------------------------------------------------------------------------------------------------------------------------------------
-// better prctive is the send the token wiht header
-// exports.protect = catchAsync(async (req, res, next) => {
-//   console.log(req,"---------------------------------------------------------------")
-//   let token;
-//   console.log(req.headers.authorization); // This should print "Bearer <token>"
 
-//   if (
-//     req.headers.authorization &&
-//     req.headers.authorization.startsWith("Bearer")
-//   ) {
-//     token = req.headers.authorization.split(" ")[1];
-//     console.log("000000000000000000000000000000000000000000000000000000000000000000000000000000000",token);
-//   }
-//   if (!token) {
-//     return next(
-//       new AppError("You are not logged in! Please log in to get access.", 401)
-//     );
-//   }
-//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); 
-//   // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
-//   const currentUser = await User.findById(decoded.id);
-//   if (!currentUser) {
-//     return next(
-//       new AppError("The user belonging to this Id no longer exists.", 401)
-//     );
-//   }
-
-//   if (currentUser.changePasswordAfter(decoded.iat)) {
-//     return next(
-//       new AppError("User recently changed the pssword Log IN Again", 401)
-//     );
-//   }
-//   req.user = currentUser;
-//   next();
-// });
 exports.protect = catchAsync(async (req, res, next) => {
+  console.log(req, "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
   let token;
   console.log("Authorization Header:", req.headers.authorization); // Log header directly
 
@@ -205,7 +178,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 //
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    console.log(req.user.role);
+    console.log(req.user.role, "llllllllllllllllllllllllllllllll");
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError("You do not have permission to perform this action", 403)
@@ -267,7 +240,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     .createHash("sha256")
     .update(req.params.token)
     .digest("hex");
-  console.log("Hashed token:", hashedToken);
+  // console.log("Hashed token:", hashedToken);
   console.log("Received token:", req.params.token);
 
   // Find the user with valid reset token and expiry
@@ -305,6 +278,42 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // });
 });
 
+// ---------------------------------------------------------------------------------------------------------------------------------------
+// better prctive is the send the token wiht header
+// exports.protect = catchAsync(async (req, res, next) => {
+//   console.log(req,"---------------------------------------------------------------")
+//   let token;
+//   console.log(req.headers.authorization); // This should print "Bearer <token>"
+
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//     console.log("000000000000000000000000000000000000000000000000000000000000000000000000000000000",token);
+//   }
+//   if (!token) {
+//     return next(
+//       new AppError("You are not logged in! Please log in to get access.", 401)
+//     );
+//   }
+//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+//   // if user get change after the password change we need to chjeck if user exists and helps with login means password change token change
+//   const currentUser = await User.findById(decoded.id);
+//   if (!currentUser) {
+//     return next(
+//       new AppError("The user belonging to this Id no longer exists.", 401)
+//     );
+//   }
+
+//   if (currentUser.changePasswordAfter(decoded.iat)) {
+//     return next(
+//       new AppError("User recently changed the pssword Log IN Again", 401)
+//     );
+//   }
+//   req.user = currentUser;
+//   next();
+// });
 // exports.getAllUsers = catchAsync(async (req, res, next) => {
 //   const features = new ApiFeatures(User.find(), req.query)
 //     .filter()

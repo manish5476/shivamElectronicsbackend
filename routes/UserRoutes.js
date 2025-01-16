@@ -12,7 +12,9 @@ router.post("/forgotPassword", authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 
 router.use(authController.protect);
-router.get("/me", usercontroller.getMe, usercontroller.getAllUsers);
+// router.get("/me", usercontroller.getMe, usercontroller.getAllUsers);
+router.get("/me", usercontroller.getMe);
+router.get("/allusers", usercontroller.getAllUsers);
 router.patch("/updatePassword", authController.updateUserPassword);
 router.route("/updateMe").patch(usercontroller.updateMe);
 router.route("/deleteMe").delete(usercontroller.deleteMe);

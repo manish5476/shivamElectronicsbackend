@@ -22,6 +22,7 @@ const User = require("../Models/UserModel");
 const catchAsync = require("../Utils/catchAsyncModule");
 
 exports.getMasterList = catchAsync(async (req, res, next) => { // Use catchAsync here
+    
     const productPromise = Product.find().select('title sku _id');
     const userPromise = User.find().select('name email _id');
     const [products, users] = await Promise.all([productPromise, userPromise]);

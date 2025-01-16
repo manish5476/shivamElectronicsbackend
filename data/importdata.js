@@ -7,7 +7,8 @@ const fs= require('fs')
 // Connect to MongoDB
 mongoose
   .connect(process.env.DATABASE)
-  .then(() => {console.log("MongoDB connection successful!");
+  .then(() => {
+    // console.log("MongoDB connection successful!");
   })
   .catch((error) => console.error("MongoDB connection error:", error));
   // 
@@ -19,9 +20,9 @@ const productsData = JSON.parse(
 const importData = async () => {
   try {
     await Product.create(productsData);
-    console.log("data oaded succesfully imported");
+    // console.log("data oaded succesfully imported");
   } catch (err) {
-    console.log(err.message);
+    // console.log(err.message);
   }
   process.exit();
 };
@@ -29,9 +30,9 @@ const importData = async () => {
 const deleteData = async () => {
   try {
     await Product.deleteMany();
-    console.log("data deleted successfully");
+    // console.log("data deleted successfully");
   } catch (err) {
-    console.log(err.message);
+    // console.log(err.message);
   }
   process.exit();
 };
@@ -41,7 +42,7 @@ if (process.argv[2] == "--import") {
 } else if (process.argv[2] == "--delete") {
   deleteData();
 }
-console.log(process.argv);
+// console.log(process.argv);
 
 // const mongoose = require("mongoose");
 // const dotenv = require("dotenv");

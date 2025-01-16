@@ -39,9 +39,9 @@ exports.getProductStats = catchAsync(async (req, res, next) => {
 });
 // ------------------------
 exports.findDuplicateProduct = catchAsync(async (req, res, next) => {
-  console.log("Checking for duplicate with SKU:", req.body.sku);
+  // console.log("Checking for duplicate with SKU:", req.body.sku);
   const existingProduct = await Product.findOne({ sku: req.body.sku });
-  console.log("Existing Product:", existingProduct);
+  // console.log("Existing Product:", existingProduct);
   if (existingProduct) {
     return next(
       new AppError(
@@ -81,7 +81,7 @@ exports.getProductWithIn = catchAsync(async (req, res, next) => {
       products,
     },
   });
-  console.log(distance, lat, lng, unit);
+  // console.log(distance, lat, lng, unit);
 });
 //
 exports.getDistances = catchAsync(async (req, res, next) => {

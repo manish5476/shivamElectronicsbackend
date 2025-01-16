@@ -8,22 +8,18 @@ const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
 const MasterController = require("../Controllers/MasterliastController");
 
 router.route("/autopopulate").get(MasterController.getMasterList);
-router.route("/deletemany").delete(productControl.deleteMultipleProduct);
+router.route("/deletemany").delete(authController.protect, authController.restrictTo("admin", "staff"),productControl.deleteMultipleProduct);
 
 // Product routes
-router.route("/").get(productControl.getAllProduct)
-  .post(authController.protect,
-    // authController.restrictTo("admin", "staff"),
-    productControl.findDuplicateProduct,
-    productControl.newProduct
-  );
+router.route("/").get(authController.protect,authController.restrictTo("admin", "staff"),productControl.getAllProduct).post( productControl.newProduct);
+// router.route("/").get(productControl.getAllProduct).post(authController.protect,authController.restrictTo("admin", "staff"), productControl.findDuplicateProduct,  productControl.newProduct);
+
 router.route("/MasterController").get(productControl.getProductDropDownWithId);
 router.route("/product-within/:distance/center/:latlng/unit/:unit").get(productControl.getProductWithIn);
-router.route("/:id").get(productControl.getProductById).patch(productControl.updateProduct).delete(productControl.deleteProduct);
-
+router.route("/:id").get(productControl.getProductById).patch(authController.restrictTo("admin", "staff"),productControl.updateProduct).delete(authController.restrictTo("admin", "staff"),productControl.deleteProduct);
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteProduct);
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteMultipleProduct);
-router.route("/DropdownData").get(productControl.getProductDropDownWithId);
+router.route("/DropdownData").get(authController.restrictTo("admin", "staff"),productControl.getProductDropDownWithId);
 router.use("/:productId/reviews", reviewRoutes); // <-- Important part
 module.exports = router;
 

@@ -74,6 +74,7 @@ exports.updateOne = (Model) =>
 
 exports.newOne = (Model) =>
   catchAsync(async (req, res, next) => {
+    console.log(req);
     const doc = await Model.create(req.body);
     if (!doc) {
       return next(new AppError("Failed to create product", 400));
@@ -107,6 +108,7 @@ exports.getOne = (Model, autoPopulateOptions) => {
 
 exports.getAll = (Model, autoPopulateOptions) => {
   return catchAsync(async (req, res, next) => {
+    console.log(req);
     // small hack for nested routing
     let filter = {};
     if (req.params.productId) filter = { product: req.params.productID };
