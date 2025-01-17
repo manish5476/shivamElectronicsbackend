@@ -25,7 +25,7 @@ exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
     next();
 });
 
-
+exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer)
 exports.getAllCustomer = handleFactory.getAll(Customer);
 exports.getCustomerById = handleFactory.getOne(Customer);
 exports.newCustomer = handleFactory.newOne(Customer);

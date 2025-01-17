@@ -1,27 +1,23 @@
 
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const paymentSchema=require('./paymentModel')
-const cartItemSchema=require('./cartmodel')
-const Payment = mongoose.model("Payment", paymentSchema);
+// const paymentSchema=require('./paymentModel')
+// const cartItemSchema=require('./cartmodel')
+// const Payment = mongoose.model("Payment", paymentSchema);
 
+const cartItemSchema = new Schema({
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product",  },
+    invoiceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Invoice" }],
+});
 const customerSchema = new Schema({
     customerId: { type: mongoose.Schema.Types.ObjectId },
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
-    status: {
-        type: String,
-        enum: ["active", "inactive", "pending", "suspended", "blocked"],
-        default: "pending",
-    },
+    status: {type: String, enum: ["active", "inactive", "pending", "suspended", "blocked"], default: "pending",},
     email: { type: String, unique: true, match: /.+\@.+\..+/ },
     fullname: { type: String, required: true },
-    phoneNumbers: [
-        { number: { type: String, required: true }, type: { type: String, enum: ["home", "mobile", "work"], required: true }, primary: { type: Boolean, default: false } },
-    ],
-    addresses: [
-        { street: { type: String, required: true }, city: { type: String, required: true }, state: { type: String, required: true }, zipCode: { type: String, required: true }, country: { type: String, required: true }, type: { type: String, enum: ["billing", "shipping", "home", "work"], required: true }, isDefault: { type: Boolean, default: false } },
-    ],
+    phoneNumbers: [{ number: { type: String, required: true }, type: { type: String, enum: ["home", "mobile", "work"], required: true }, primary: { type: Boolean, default: false } },],
+    addresses: [{ street: { type: String, required: true }, city: { type: String, required: true }, state: { type: String, required: true }, zipCode: { type: String, required: true }, country: { type: String, required: true }, type: { type: String, enum: ["billing", "shipping", "home", "work"], required: true }, isDefault: { type: Boolean, default: false } },],
     cart: { items: [cartItemSchema] },
     guaranteerId: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
     totalPurchasedAmount: { type: Number, default: 0 },
@@ -53,7 +49,7 @@ customerSchema.post('findOneAndDelete', async function (doc) {
 });
 async function calculateTotalPurchasedAmount(customerId) {
     try {
-        const customer = await Customer.findById(customerId).populate({
+        const customer = await Customer.findById(customerId).populate({ 
             path: "cart.items.invoiceIds",
             select: "amount",
         });
@@ -103,7 +99,7 @@ async function calculateRemainingAmount(customerId) {
 
 const Customer = mongoose.model("Customer", customerSchema);
 
-module.exports = { Customer, Payment };
+module.exports = { Customer };
 // ================================================================================
 /*
 const mongoose = require("mongoose");

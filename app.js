@@ -12,7 +12,7 @@ const productRoutes = require("./routes/productRoutes");
 const usersRoutes = require("./routes/UserRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const customerRoutes = require("./routes/customerRoutes");
-
+const paymentRoutes =require("./routes/paymentRoutes")
 const app = express();
 
 // === Security Middleware ===
@@ -78,7 +78,8 @@ app.use((req, res, next) => {
 app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
-app.use("/api/v1/customer", customerRoutes);
+app.use("/api/v1/customers", customerRoutes);
+app.use("/api/v1/payments",paymentRoutes)
 
 // === Catch-All Route for Undefined Routes ===
 app.all("*", (req, res, next) => {

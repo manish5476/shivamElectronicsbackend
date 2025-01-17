@@ -56,7 +56,6 @@ exports.findDuplicateProduct = catchAsync(async (req, res, next) => {
 //
 exports.getProductWithIn = catchAsync(async (req, res, next) => {
   const { distance, latlng, unit } = req.params;
-
   // Split latitude and longitude
   const [lat, lng] = latlng.split(",");
 

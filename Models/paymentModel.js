@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
+
 const paymentSchema = new Schema({
     customer: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", required: true },
     paymentDate: { type: Date, required: true },

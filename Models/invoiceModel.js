@@ -1,30 +1,31 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-// Invoice Item Subdocument Schema (for better organization)
+// Invoice Item Subdocument Schema (with cgst and sgst at item level)
 const invoiceItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     quantity: { type: Number, required: true, min: 1 },
     discount: { type: Number, default: 0, min: 0 },
     rate: { type: Number, required: true, min: 0 },
     taxableValue: { type: Number, required: true, min: 0 },
-    gstRate: { type: Number, required: true, min: 0 },
-    gstAmount: { type: Number, required: true, min: 0 },
+    cgstRate: { type: Number, required: true, min: 0 }, // Item-level CGST rate
+    sgstRate: { type: Number, required: true, min: 0 }, // Item-level SGST rate
+    cgstAmount: { type: Number, required: true, min: 0 }, // Item-level CGST amount
+    sgstAmount: { type: Number, required: true, min: 0 }, // Item-level SGST amount
     amount: { type: Number, required: true, min: 0 },
 });
 
-// Invoice Schema (Advanced)
+// Invoice Schema
 const invoiceSchema = new Schema({
     invoiceNumber: { type: String, required: true, unique: true },
     invoiceDate: { type: Date, required: true },
     dueDate: { type: Date },
     seller: { type: Schema.Types.ObjectId, ref: 'Seller', required: true },
     buyer: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
-    items: [invoiceItemSchema], // Use the subdocument schema
+    items: [invoiceItemSchema],
     subTotal: { type: Number, required: true, min: 0 },
     totalDiscount: { type: Number, default: 0, min: 0 },
-    cgst: { type: Number, default: 0, min: 0 },
-    sgst: { type: Number, default: 0, min: 0 },
+    // Removed overall cgst and sgst as they are now calculated at the item level
     igst: { type: Number, default: 0, min: 0 },
     cess: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true, min: 0 },
@@ -35,7 +36,7 @@ const invoiceSchema = new Schema({
     metadata: { type: Map, of: Schema.Types.Mixed },
 }, { timestamps: true });
 
-// Pre-save Middleware (Advanced with Error Handling and Transactions)
+// Pre-save Middleware (Updated Calculations)
 invoiceSchema.pre('save', async function (next) {
     if (!this.dueDate) {
         this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -44,42 +45,44 @@ invoiceSchema.pre('save', async function (next) {
     const Product = mongoose.model('Product');
     let subTotal = 0;
     let totalDiscount = 0;
-    let cgst = 0;
-    let sgst = 0;
+    let totalCgst = 0; // Accumulate item-level CGST
+    let totalSgst = 0; // Accumulate item-level SGST
     let igst = 0;
     let cess = 0;
 
     try {
-      // Use a for...of loop for async operations inside the loop
         for (const item of this.items) {
-            const product = await Product.findById(item.product).select('price cgst sgst gstRate');
+            const product = await Product.findById(item.product).select('price'); // Only need price now
             if (!product) throw new Error(`Product with ID ${item.product} not found`);
 
             item.rate = item.rate || product.price;
-            item.gstRate = item.gstRate || product.gstRate || 0;
             item.taxableValue = item.quantity * item.rate;
-            item.gstAmount = (item.taxableValue * item.gstRate) / 100;
+
+            // Calculate CGST and SGST amounts based on rates
+            item.cgstAmount = (item.taxableValue * item.cgstRate) / 100;
+            item.sgstAmount = (item.taxableValue * item.sgstRate) / 100;
+            item.gstAmount = item.cgstAmount + item.sgstAmount; // Total GST amount
             item.amount = item.taxableValue + item.gstAmount;
 
             subTotal += item.taxableValue;
             totalDiscount += item.discount;
-            cgst += (product.cgst || 0) * item.gstAmount / item.gstRate;
-            sgst += (product.sgst || 0) * item.gstAmount / item.gstRate;
-            igst += (product.gstRate || 0) * item.gstAmount / item.gstRate;
+            totalCgst += item.cgstAmount; // Accumulate
+            totalSgst += item.sgstAmount; // Accumulate
+            igst += 0; // Keep igst logic if needed
             cess += 0;
         }
 
         this.subTotal = subTotal;
         this.totalDiscount = totalDiscount;
-        this.cgst = cgst;
-        this.sgst = sgst;
+        this.cgst = totalCgst; // Set the invoice-level CGST
+        this.sgst = totalSgst; // Set the invoice-level SGST
         this.igst = igst;
         this.cess = cess;
         this.totalAmount = this.subTotal + this.cgst + this.sgst + this.igst + this.cess - this.totalDiscount;
 
         next();
     } catch (error) {
-        next(error); // Pass the error to the error handling middleware
+        next(error);
     }
 });
 
