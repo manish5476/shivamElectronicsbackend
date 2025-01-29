@@ -43,12 +43,10 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-// Pre-save hook to hash password
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next(); // Only hash if the password is modified
-  this.password = await bcrypt.hash(this.password, 12); // Hash password  // " npm i bcrypt "
-  this.passwordConfirm = undefined; // Remove passwordConfirm from the schema after hashing
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined; 
   next();
 });
 
@@ -58,10 +56,7 @@ userSchema.pre("save", function (next) {
   next();
 });
 
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userpassword
-) {
+userSchema.methods.correctPassword = async function ( candidatePassword, userpassword) {
   return await bcrypt.compare(candidatePassword, userpassword); // "npm i bcrypt "
 };
 

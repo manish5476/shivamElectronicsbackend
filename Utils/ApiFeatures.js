@@ -26,9 +26,9 @@ class ApiFeatures {
   //   //     query[key] = { $in: query[key].split(',') };
   //   //   }
   //   // });
-  
+
   //   // this.query = this.query.find(query);
-  
+
   //   // Update the query with filtering applied
   //   this.query = this.query.find(JSON.parse(queryStr));
 
@@ -40,31 +40,30 @@ class ApiFeatures {
     if (!this.query) {
       this.query = {}; // Initialize as an empty object if not already defined
     }
-  
+
     const queryObj = { ...this.queryString };
     const excludedFields = ["page", "sort", "limit", "fields"];
     excludedFields.forEach((el) => delete queryObj[el]);
-  
+
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-  
+
     const query = JSON.parse(queryStr);
-  
+
     // Dynamically handle multiple values for any field
     Object.keys(query).forEach((key) => {
       if (typeof query[key] === 'string' && query[key].includes(',')) {
         query[key] = { $in: query[key].split(',') };
       }
     });
-  
+
     this.query = this.query.find(query);
-  
+
     return this;
   }
-    // Method to handle sorting
+  // Method to handle sorting
   sort() {
     if (this.queryString.sort) {
-      // console.log(this.queryString.sort,"this.queryString.sort")
       // Convert the comma-separated sort parameter to space-separated for Mongoose
       const sortBy = this.queryString.sort.split(",").join(" ");
       // Apply the sorting to the query

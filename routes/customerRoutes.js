@@ -10,7 +10,7 @@ router.route("/deletemany").delete(authController.protect, authController.restri
 router.route("/").get(customerController.getAllCustomer).post(authController.protect,authController.restrictTo("admin", "staff"),customerController.findDuplicateCustomer,customerController.newCustomer);
 router.route("/:id").get(customerController.getCustomerById).patch(authController.restrictTo("admin", "staff"),customerController.updateCustomer).delete(authController.protect,authController.restrictTo("admin"),customerController.deleteCustomer);
 // router.route("/DropdownData").get(CustomerControl.getCustomerDropDownWithId);
-router.use("/:CustomerId/reviews", reviewRoutes); // <-- Important part
+router.use("/:CustomerId/reviews", reviewRoutes); 
 module.exports = router;
 
 // const express = require("express");

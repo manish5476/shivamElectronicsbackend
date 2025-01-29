@@ -1,6 +1,7 @@
 
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const Invoice=require('./invoiceModel')
 // const paymentSchema=require('./paymentModel')
 // const cartItemSchema=require('./cartmodel')
 // const Payment = mongoose.model("Payment", paymentSchema);
@@ -10,7 +11,7 @@ const cartItemSchema = new Schema({
     invoiceIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Invoice" }],
 });
 const customerSchema = new Schema({
-    customerId: { type: mongoose.Schema.Types.ObjectId },
+    // customerId: { type: mongoose.Schema.Types.ObjectId },
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     status: {type: String, enum: ["active", "inactive", "pending", "suspended", "blocked"], default: "pending",},
@@ -19,12 +20,14 @@ const customerSchema = new Schema({
     phoneNumbers: [{ number: { type: String, required: true }, type: { type: String, enum: ["home", "mobile", "work"], required: true }, primary: { type: Boolean, default: false } },],
     addresses: [{ street: { type: String, required: true }, city: { type: String, required: true }, state: { type: String, required: true }, zipCode: { type: String, required: true }, country: { type: String, required: true }, type: { type: String, enum: ["billing", "shipping", "home", "work"], required: true }, isDefault: { type: Boolean, default: false } },],
     cart: { items: [cartItemSchema] },
-    guaranteerId: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
+    guaranteerId: { type: mongoose.Schema.Types.ObjectId, ref: "Customer",required:false },
     totalPurchasedAmount: { type: Number, default: 0 },
     remainingAmount: { type: Number },
     paymentHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Payment" }],
     metadata: { type: Map, of: Schema.Types.Mixed },
 }, { timestamps: true });
+
+
 customerSchema.pre(/^find/, async function (next) {
     this.populate({ path: "cart.items.productId", select: "-__v" });
     this.populate({ path: "cart.items.invoiceIds", select: "amount" });
@@ -47,6 +50,7 @@ customerSchema.post('findOneAndDelete', async function (doc) {
         await calculateRemainingAmount(doc._id);
     }
 });
+
 async function calculateTotalPurchasedAmount(customerId) {
     try {
         const customer = await Customer.findById(customerId).populate({ 
@@ -96,10 +100,7 @@ async function calculateRemainingAmount(customerId) {
         console.log("error in calculating remaining amount", err);
     }
 }
-
-const Customer = mongoose.model("Customer", customerSchema);
-
-module.exports = { Customer };
+module.exports= mongoose.model("Customer", customerSchema);
 // ================================================================================
 /*
 const mongoose = require("mongoose");
@@ -220,7 +221,6 @@ const Customer = mongoose.model("Customer", customerSchema);
 module.exports = { Customer, Payment };
 
 */
-
 // 
 // const mongoose = require("mongoose");
 // const Schema = mongoose.Schema;
