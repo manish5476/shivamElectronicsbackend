@@ -16,14 +16,13 @@ router.route("/").get(authController.protect,authController.restrictTo("admin", 
 
 router.route("/MasterController").get(productControl.getProductDropDownWithId);
 router.route("/product-within/:distance/center/:latlng/unit/:unit").get(productControl.getProductWithIn);
-router.route("/:id").get(productControl.getProductById).patch(authController.restrictTo("admin", "staff"),productControl.updateProduct).delete(authController.restrictTo("admin", "staff"),productControl.deleteProduct);
+router.route("/:id").get(productControl.getProductById).patch(productControl.updateProduct).delete(authController.restrictTo("admin", "staff"),productControl.deleteProduct);
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteProduct);
 // router.route("/:id").get(productControl.getProductById).patch( authController.restrictTo("admin", "staff"), productControl.updateProduct).delete( authController.protect, authController.restrictTo("admin"), productControl.deleteMultipleProduct);
 router.route("/DropdownData").get(authController.restrictTo("admin", "staff"),productControl.getProductDropDownWithId);
-router.use("/:productId/reviews", reviewRoutes); // <-- Important part
+router.use("/:productId/reviews", reviewRoutes); 
+// <-- Important part
 module.exports = router;
-
-
 
 // // // const fs = require('fs');
 // // const express = require("express");
