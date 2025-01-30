@@ -1,33 +1,91 @@
 
-const { query } = require("express");
+
 const Customer = require("./../Models/customerModel");
-const ApiFeatures = require("../Utils/ApiFeatures");
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
-// const reviewRoutes = require('../routes/reviewRoutes');  // Import reviewRoutes
 const handleFactory = require("./handleFactory");
-const { Status } = require("git");
 
-
-
+// Check for duplicate customer by phone number
 exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
-    // console.log("Checking for duplicate with SKU:", req.body.sku);
-    const existingCustomer = await Customer.findOne({ sku: req.body.sku });
-    // console.log("Existing Customer:", existingCustomer);
+    // Check if phoneNumbers are provided
+    const phoneNumbers = req.body.phoneNumbers;
+    if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+      return next(new AppError("Phone numbers are required to check for duplicates.", 400));
+    }
+  
+    // Extract all phone numbers from the payload
+    const numbersToCheck = phoneNumbers.map((item) => item.number);
+  
+    // Check if any of the numbers exist in the database
+    const existingCustomer = await Customer.findOne({
+      phoneNumbers: { $elemMatch: { number: { $in: numbersToCheck } } },
+    });
+  
+    // If a match is found, return an error
     if (existingCustomer) {
-        return next(
-            new AppError(
-                `Customer with this name already exists: ${req.body.sku}`,
-                400
-            )
-        );
+      return next(
+        new AppError(
+          `Customer with one of these phone numbers already exists: ${numbersToCheck.join(", ")}`,
+          400
+        )
+      );
     }
     next();
-});
-
-exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer)
+  });
+  // CRUD operations using handleFactory
 exports.getAllCustomer = handleFactory.getAll(Customer);
 exports.getCustomerById = handleFactory.getOne(Customer);
 exports.newCustomer = handleFactory.newOne(Customer);
-exports.deleteCustomer = handleFactory.deleteOne(Customer);
 exports.updateCustomer = handleFactory.updateOne(Customer);
+exports.deleteCustomer = handleFactory.deleteOne(Customer);
+exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer);
+
+// const { query } = require("express");
+// const Customer = require("./../Models/customerModel");
+// const catchAsync = require("../Utils/catchAsyncModule");
+// const AppError = require("../Utils/appError");
+// // const reviewRoutes = require('../routes/reviewRoutes');  // Import reviewRoutes
+// const handleFactory = require("./handleFactory");
+// const { Status } = require("git");
+
+
+// exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
+//     if (!req.body.phone) {
+//       return next(new AppError("Phone number is required to check for duplicates.", 400));
+//     }
+  
+//     const existingCustomer = await Customer.findOne({ phone: req.body.phone });
+//     if (existingCustomer) {
+//       return next(
+//         new AppError(
+//           `Customer with this phone number already exists: ${req.body.phone}`,
+//           400
+//         )
+//       );
+//     }
+  
+//     next();
+//   });
+  
+
+
+// // exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
+// //     // console.log("Checking for duplicate with SKU:", req.body.sku);
+// //     const existingCustomer = await Customer.findOne({ sku: req.body.sku });
+// //     // console.log("Existing Customer:", existingCustomer);
+// //     if (existingCustomer) {
+// //         return next(
+// //             new AppError(
+// //                 `Customer with this name already exists: ${req.body.sku}`,
+// //                 400
+// //             )
+// //         );
+// //     }
+// // });
+
+// exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer)
+// exports.getAllCustomer = handleFactory.getAll(Customer);
+// exports.getCustomerById = handleFactory.getOne(Customer);
+// exports.newCustomer = handleFactory.newOne(Customer);
+// exports.deleteCustomer = handleFactory.deleteOne(Customer);
+// exports.updateCustomer = handleFactory.updateOne(Customer);

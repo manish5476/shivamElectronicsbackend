@@ -20,7 +20,8 @@ app.use(helmet()); // Adds security headers
 
 // === CORS Configuration ===
 const corsOptions = {
-  origin: "https://4200-idx-frontend-1737021882096.cluster-fu5knmr55rd44vy7k7pxk74ams.cloudworkstations.dev", // Update with your Angular app's URL
+  // origin: "https://4200-idx-frontend-1737021882096.cluster-fu5knmr55rd44vy7k7pxk74ams.cloudworkstations.dev", http://localhost:4200/// Update with your Angular app's URL
+  origin:"http://localhost:4200",   
   methods: "GET,POST,PATCH,DELETE,OPTIONS",
   allowedHeaders: "Content-Type,Authorization",
   credentials: true, // Allow cookies if needed
@@ -64,7 +65,7 @@ app.use(express.static(`${__dirname}/public/`));
 
 // === Middleware for Debugging Headers ===
 app.use((req, res, next) => {
-  console.log("Incoming Headers:", req.headers); // Debug incoming headers
+  // console.log("Incoming Headers:", req.headers); // Debug incoming headers
   next();
 });
 
@@ -88,7 +89,6 @@ app.all("*", (req, res, next) => {
 
 // === Global Error Handler ===
 app.use(globalErrorHandler);
-
 module.exports = app;
 
 // const express = require("express");

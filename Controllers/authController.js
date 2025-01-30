@@ -5,10 +5,8 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError"); // Make sure this is available for error handling
 const sendEmail = require("../Utils/email");
 const jwt = require("jsonwebtoken");
-const cors = require('cors');
 
 // CORS Configuration
-
 // ---------------------------------------------------------------------------------------------------------------------------------------
 // const cookieOptions = {
 //   expires: new Date(
@@ -54,23 +52,15 @@ const signToken = (id) => {
 // Function to send JWT token in a cookie
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
-
-  // Set `secure: true` only if in production (HTTPS)
   if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
-
-  // Send JWT token in the response as a cookie
   res.cookie("jwt", token, cookieOptions);
-
-  // Remove the password from the response
   user.password = undefined;
-
   const userData = {
     name: user.name,
     email: user.email,
     role: user.role
   };
-
-  // Send success response
+  
   res.status(statusCode).json({
     status: "success",
     token,
@@ -87,7 +77,6 @@ exports.signup = catchAsync(async (req, res, next) => {
   if (password !== passwordConfirm) {
     return next(new AppError("Passwords do not match", 400));
   }
-  // Create the new user
   const newUser = await User.create({
     name,
     email,
@@ -100,60 +89,57 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
+// exports.login = catchAsync(async (req, res, next) => {
+//   const { email, password } = req.body;
+//   if (!email || !password) {
+//     return next(new AppError("Please provide an email and  a password", 400));
+//   }
+//   const user = await User.findOne({ email }).select("+password");
+//   if (!user || !(await user.correctPassword(password, user.password))) {
+//     return next(new AppError("Invalid emai and  password", 400));
+//   }
+
+//   createSendToken(user, 200, res);
+// });
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  // console.log(req);
-  // console.log(email, password);
-  // console.log(email, password);
   if (!email || !password) {
-    return next(new AppError("Please provide an email and  a password", 400));
-  }
-  const user = await User.findOne({ email }).select("+password");
-  if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError("Invalid emai and  password", 400));
+    return next(new AppError("Please provide an email and a password", 400));
   }
 
-  createSendToken(user, 200, res);
+  const user = await User.findOne({ email }).select("+password");
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError("Invalid email or password", 400));
+  }
+
+  return createSendToken(user, 200, res);  
 });
 
 // ---------------------------------------------------------------------------------------------------------------------------------------
 exports.updateUserPassword = catchAsync(async (req, res, next) => {
-  //get user from collection
   const user = await User.findById(req.user.id).select("+password");
-  //check if the logged user is correct
   if (!user.correctPassword(req.body.currentPassword, user.password)) {
     return next(AppError("password is innocorrect", 401));
   }
-  //if so update the password
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   await user.save();
-  //using findby id and the
-  //og user in ,send jwt
   createSendToken(user, 200, res);
 });
 
 
 exports.protect = catchAsync(async (req, res, next) => {
-  console.log(req, "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
   let token;
-  console.log("Authorization Header:", req.headers.authorization); // Log header directly
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
+  if (  req.headers.authorization && req.headers.authorization.startsWith("Bearer") )
+  {
     token = req.headers.authorization.split(" ")[1];  // Extract token part after "Bearer"
     token = token.replace(/['"]+/g, '');  // Remove any quotes around the token
-    console.log("Token extracted:", token);  // Log the extracted token without quotes
   }
-
   if (!token) {
     return next(
       new AppError("You are not logged in! Please log in to get access.", 401)
     );
   }
-
   try {
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
     const currentUser = await User.findById(decoded.id);
@@ -178,7 +164,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 //
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    console.log(req.user.role, "llllllllllllllllllllllllllllllll");
+    if (!req.user) {
+      return next(new AppError("User authentication required.", 401));
+    }
+
     if (!roles.includes(req.user.role)) {
       return next(
         new AppError("You do not have permission to perform this action", 403)
@@ -187,6 +176,7 @@ exports.restrictTo = (...roles) => {
     next();
   };
 };
+
 // ---------------------------------------------------------------------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////
@@ -235,13 +225,13 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  console.log(req.params.token, "available tokens");
+  // console.log(req.params.token, "available tokens");
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
     .digest("hex");
   // console.log("Hashed token:", hashedToken);
-  console.log("Received token:", req.params.token);
+  // console.log("Received token:", req.params.token);
 
   // Find the user with valid reset token and expiry
   const user = await User.findOne({
@@ -260,7 +250,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Passwords do not match", 400));
   }
 
-  console.log("Password reset expires:", user.passwordResetExpires);
+  // console.log("Password reset expires:", user.passwordResetExpires);
   // Update the user password
   // user.currentPassword=req.body.currentPassword
   user.password = req.body.password;
@@ -312,7 +302,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 //     );
 //   }
 //   req.user = currentUser;
-//   next();
 // });
 // exports.getAllUsers = catchAsync(async (req, res, next) => {
 //   const features = new ApiFeatures(User.find(), req.query)
