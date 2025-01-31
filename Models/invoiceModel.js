@@ -1,4 +1,149 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const invoiceSchema = new Schema({
+  invoiceNo: { type: String, required: true, unique: true },
+  invoiceDate: { type: Date, required: true },
+  dueDate: { type: Date },
+  billedDate: { type: Date },
+  businessLogo: { type: String },
+  billedBy: {
+    country: { type: String },
+    state: { type: String },
+    businessName: { type: String, required: true },
+    phone: { type: String },
+    email: { type: String },
+    gstin: { type: String },
+    address: { type: String },
+    city: { type: String },
+    postalCode: { type: String },
+    additionalEmails: [{ type: String }],
+    pan: { type: String }
+  },
+  billedTo: {
+    country: { type: String },
+    state: { type: String },
+    businessName: { type: String, required: true },
+    phone: { type: String },
+    email: { type: String },
+    gstin: { type: String },
+    address: { type: String },
+    city: { type: String },
+    postalCode: { type: String },
+    additionalEmails: [{ type: String }],
+    pan: { type: String }
+  },
+  currency: { type: String, default: 'INR' },
+  items: [{
+    item: { type: String, required: true },
+    gst: { type: Number, default: 0}, // GST percentage, default 0
+    quantity: { type: Number, required: true },
+    rate: { type: Number, required: true },
+    amount: { type: Number, required: true },
+    cgst: { type: Number, default: 0 }, // CGST amount, default 0
+    sgst: { type: Number, default: 0 }, // SGST amount, default 0
+    total: { type: Number, required: true }
+  }],
+  roundUp: { type: Boolean, default: false },
+  roundDown: { type: Boolean, default: false },
+  additionalCharges: [{
+    description: { type: String },
+    amount: { type: Number }
+  }],
+  subTotal: { type: Number, default: 0 },
+  sgstTotal: { type: Number, default: 0 },
+  cgstTotal: { type: Number, default: 0 },
+  total: { type: Number, required: true },
+  totalInWords: { type: String }
+}, { timestamps: true });
+
+// Pre-save middleware for calculations
+invoiceSchema.pre('save', function(next) {
+    let subTotal = 0;
+    let sgstTotal = 0;
+    let cgstTotal = 0;
+
+    this.items.forEach(item => {
+        subTotal += item.quantity * item.rate;
+        cgstTotal += item.cgst || 0; // Use provided cgst or default to 0
+        sgstTotal += item.sgst || 0; // Use provided sgst or default to 0
+        item.amount = (item.quantity * item.rate) + (item.cgst || 0) + (item.sgst || 0); // Calculate item total
+        item.total = item.amount; // Ensure item.total is also set
+
+    });
+
+    this.subTotal = subTotal;
+    this.cgstTotal = cgstTotal;
+    this.sgstTotal = sgstTotal;
+    this.total = subTotal + cgstTotal + sgstTotal; // Calculate overall total
+
+    next();
+});
+
+
+module.exports = mongoose.model('Invoice', invoiceSchema);
+
+/*
+const mongoose = require('mongoose');
+
+const invoiceSchema = new mongoose.Schema({
+  invoiceNo: { type: String, required: true, unique: true }, // Invoice number, unique
+  invoiceDate: { type: Date, required: true },
+  dueDate: { type: Date },
+  billedDate: { type: Date },
+  businessLogo: { type: String }, // Store the logo URL or path
+  billedBy: {
+    country: { type: String },
+    state: { type: String },
+    businessName: { type: String, required: true },
+    phone: { type: String }, // Consider a separate country code field
+    email: { type: String },
+    gstin: { type: String },
+    address: { type: String },
+    city: { type: String },
+    postalCode: { type: String },
+    additionalEmails: [{ type: String }], // Array for multiple emails
+    pan: { type: String } // PAN number
+  },
+  billedTo: {  // Client details
+    country: { type: String },
+    state: { type: String },
+    businessName: { type: String, required: true },
+    phone: { type: String },
+    email: { type: String },
+    gstin: { type: String },
+    address: { type: String },
+    city: { type: String },
+    postalCode: { type: String },
+    additionalEmails: [{ type: String }],
+    pan: { type: String }
+  },
+  currency: { type: String, default: 'INR' }, // Currency used
+  items: [{  // Array of invoice items
+    item: { type: String, required: true },
+    gst: { type: Number }, // GST percentage
+    quantity: { type: Number, required: true },
+    rate: { type: Number, required: true },
+    amount: { type: Number, required: true },
+    cgst: { type: Number },
+    sgst: { type: Number },
+    total: { type: Number, required: true }
+  }],
+  roundUp: { type: Boolean, default: false },
+  roundDown: { type: Boolean, default: false },
+  additionalCharges: [{ // For discounts or other charges
+    description: { type: String },
+    amount: { type: Number }
+  }],
+  subTotal: { type: Number }, // Calculated subtotal
+  sgstTotal: { type: Number },
+  cgstTotal: { type: Number },
+  total: { type: Number, required: true }, // Final total
+  totalInWords: { type: String } // Total amount in words (optional)
+}, { timestamps: true }); // Add timestamps for creation and updates
+
+module.exports = mongoose.model('Invoice', invoiceSchema);
+const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 // Invoice Item Subdocument Schema (with cgst and sgst at item level)
@@ -98,6 +243,8 @@ invoiceSchema.pre(/^find/, function (next) {
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 module.exports = Invoice;
+
+*/
 // const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 
