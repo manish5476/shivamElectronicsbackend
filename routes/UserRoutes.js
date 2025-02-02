@@ -2,9 +2,9 @@
 const express = require("express");
 const router = express.Router();
 const app = express();
-app.use(express.json());
 const authController = require("../Controllers/authController");
 const usercontroller = require("../Controllers/usercontroller");
+app.use(express.json());
 
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
@@ -20,16 +20,9 @@ router.route("/updateMe").patch(usercontroller.updateMe);
 router.route("/deleteMe").delete(usercontroller.deleteMe);
 
 // do not update password with this
-router
-  .route("/updateUser/:id")
-  .patch(
-    authController.restrictTo("admin", "staff"),
-    usercontroller.updateUser
-  );
+router.route("/updateUser/:id").patch( authController.restrictTo("admin", "staff"), usercontroller.updateUser);
 router.route("/").get(usercontroller.getAllUsers);
 router.route("/:id").get(usercontroller.getAllUsersById);
-router
-  .route("/deleteUser/:id")
-  .delete(authController.restrictTo("admin"), usercontroller.deleteUser);
+router.route("/deleteUser/:id").delete(authController.restrictTo("admin"), usercontroller.deleteUser);
 
 module.exports = router;

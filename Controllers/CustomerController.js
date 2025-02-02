@@ -5,18 +5,13 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
 const handleFactory = require("./handleFactory");
 
-// Check for duplicate customer by phone number
 exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
-    // Check if phoneNumbers are provided
     const phoneNumbers = req.body.phoneNumbers;
     if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
       return next(new AppError("Phone numbers are required to check for duplicates.", 400));
     }
+      const numbersToCheck = phoneNumbers.map((item) => item.number);
   
-    // Extract all phone numbers from the payload
-    const numbersToCheck = phoneNumbers.map((item) => item.number);
-  
-    // Check if any of the numbers exist in the database
     const existingCustomer = await Customer.findOne({
       phoneNumbers: { $elemMatch: { number: { $in: numbersToCheck } } },
     });
