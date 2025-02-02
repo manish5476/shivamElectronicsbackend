@@ -13,6 +13,7 @@ const usersRoutes = require("./routes/UserRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const paymentRoutes =require("./routes/paymentRoutes")
+const sellerRoutes = require("./routes/sellerRoutes");
 const app = express();
 
 // === Security Middleware ===
@@ -82,7 +83,7 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/payments",paymentRoutes)
-
+app.use("/api/v1/sellers",sellerRoutes)
 // === Catch-All Route for Undefined Routes ===
 app.all("*", (req, res, next) => {
   next(new AppError(`Cannot find ${req.originalUrl} on this server`, 404));
