@@ -10,7 +10,7 @@ exports.deleteOne = (Model) =>
     }
     res.status(200).json({
       status: "success",
-      message: "Customer deleted successfully.",
+      message: `${Model} deleted successfully`,
       data: null,
     });
   });
@@ -22,7 +22,7 @@ exports.updateOne = (Model) =>
       runValidators: true,
     });
     if (!doc) {
-      return next(new AppError(`Customer not found with Id ${req.params.id}`, 404));
+      return next(new AppError(` ${Model} not found with Id ${req.params.id}`, 404));
     }
     res.status(201).json({
       status: "success",
@@ -34,7 +34,7 @@ exports.newOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const doc = await Model.create(req.body);
     if (!doc) {
-      return next(new AppError("Failed to create customer", 400));
+      return next(new AppError(` Failed to create ${Model}`, 400));
     }
     res.status(201).json({
       status: "success",
@@ -52,7 +52,7 @@ exports.getOne = (Model, autoPopulateOptions) =>
     }
     const doc = await query;
     if (!doc) {
-      return next(new AppError("Customer not found with Id", 404));
+      return next(new AppError(`${Model} not found with Id`, 404));
     }
     res.status(200).json({
       status: "success",
@@ -89,12 +89,12 @@ exports.deleteMultipleProduct = (Model) =>
 
     const result = await Model.deleteMany({ _id: { $in: validIds } });
     if (result.deletedCount === 0) {
-      return next(new AppError("No customers found with the provided IDs.", 404));
+      return next(new AppError(`No ${Model} found with the provided IDs.`, 404));
     }
 
     res.status(200).json({
       status: "success",
-      message: `${result.deletedCount} customers deleted successfully.`,
+      message: `${result.deletedCount} ${Model} deleted successfully.`,
     });
   });
 // exports.deleteOne = (Model) =>

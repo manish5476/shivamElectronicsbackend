@@ -59,16 +59,13 @@ invoiceSchema.pre('save', async function (next) {
         for (const item of this.items) {
             const product = await Product.findById(item.product).select('price'); // Only need price now
             if (!product) throw new Error(`Product with ID ${item.product} not found`);
-
             item.rate = item.rate || product.price;
             item.taxableValue = item.quantity * item.rate;
-
             // Calculate CGST and SGST amounts based on rates
             item.cgstAmount = (item.taxableValue * item.cgstRate) / 100;
             item.sgstAmount = (item.taxableValue * item.sgstRate) / 100;
             item.gstAmount = item.cgstAmount + item.sgstAmount; // Total GST amount
             item.amount = item.taxableValue + item.gstAmount;
-
             subTotal += item.taxableValue;
             totalDiscount += item.discount;
             totalCgst += item.cgstAmount; 
@@ -116,6 +113,71 @@ invoiceSchema.pre(/^find/, function (next) {
         .populate('itemDetails', '-__v');
     next();
 });
+
+invoiceSchema.post('save', async function (doc, next) {
+    try {
+        // 1. Find the customer (buyer) associated with this invoice
+        const customer = await Customer.findById(doc.buyer);
+
+        if (!customer) {
+            return next(new Error('Customer not found'));
+        }
+
+        // 2. Iterate through the items in the invoice and update the customer's cart
+        for (const item of doc.items) {
+            const cartItem = customer.cart.items.find(
+                (cartItem) => cartItem.productId.toString() === item.product.toString()
+            );
+
+            if (cartItem) {
+                cartItem.invoiceIds.push(doc._id);
+            } else {
+                customer.cart.items.push({
+                    productId: item.product,
+                    invoiceIds: [doc._id],
+                }); 
+            }
+        }
+        // 3. Save the updated customer document
+        await customer.save();
+
+        next();  // Continue with other operations
+    } catch (error) {
+        next(error);  // Pass the error to the error handler
+    }
+
+});
+
+
+invoiceSchema.post('save', async function (doc, next) {
+    try {
+        // Update Seller's Sales History
+        const seller = await Seller.findById(doc.seller);
+        if (!seller) {
+            return next(new Error('Seller not found'));
+        }
+
+        // Add sales history records to seller's salesHistory
+        for (const item of doc.items) {
+            seller.salesHistory.push({
+                customer: doc.buyer,  // The customer buying the product
+                product: item.product,  // The product being sold
+                quantity: item.quantity,  // Quantity of the product
+                salePrice: item.rate,  // Price of each product sold
+                totalAmount: item.amount  // Total sale amount for this product
+            });
+        }
+
+        // Save the updated seller's sales history
+        await seller.save();
+
+        next();  // Continue with other operations
+    } catch (error) {
+        next(error);  // Pass the error to the error handler
+    }
+});
+
+
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 module.exports = Invoice;
