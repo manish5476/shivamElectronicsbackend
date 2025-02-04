@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
+const Seller = require("./Seller");
+const Customer = require("./customerModel");
 
 // Invoice Item Subdocument Schema (with cgst and sgst at item level)
 const invoiceItemSchema = new Schema({
@@ -25,7 +27,6 @@ const invoiceSchema = new Schema({
     items: [invoiceItemSchema],
     subTotal: { type: Number, required: true, min: 0 },
     totalDiscount: { type: Number, default: 0, min: 0 },
-    // Removed overall cgst and sgst as they are now calculated at the item level
     igst: { type: Number, default: 0, min: 0 },
     cess: { type: Number, default: 0, min: 0 },
     totalAmount: { type: Number, required: true, min: 0 },
@@ -34,19 +35,23 @@ const invoiceSchema = new Schema({
     placeOfSupply: { type: String, required: true },
     status: { type: String, enum: ['paid', 'unpaid', 'partially paid', 'cancelled'], default: 'unpaid' },
     metadata: { type: Map, of: Schema.Types.Mixed },
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true }, 
+    toObject: { virtuals: true }
+});
 
 // Pre-save Middleware (Updated Calculations)
 invoiceSchema.pre('save', async function (next) {
     if (!this.dueDate) {
-        this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Default to 7 days after invoice date
     }
 
     const Product = mongoose.model('Product');
     let subTotal = 0;
     let totalDiscount = 0;
-    let totalCgst = 0; // Accumulate item-level CGST
-    let totalSgst = 0; // Accumulate item-level SGST
+    let totalCgst = 0; 
+    let totalSgst = 0; 
     let igst = 0;
     let cess = 0;
 
@@ -66,9 +71,9 @@ invoiceSchema.pre('save', async function (next) {
 
             subTotal += item.taxableValue;
             totalDiscount += item.discount;
-            totalCgst += item.cgstAmount; // Accumulate
-            totalSgst += item.sgstAmount; // Accumulate
-            igst += 0; // Keep igst logic if needed
+            totalCgst += item.cgstAmount; 
+            totalSgst += item.sgstAmount; 
+            igst += 0; 
             cess += 0;
         }
 
@@ -86,13 +91,29 @@ invoiceSchema.pre('save', async function (next) {
     }
 });
 
-// Virtuals and Pre-find (No changes needed)
-invoiceSchema.virtual('sellerDetails', { ref: 'Seller', localField: 'seller', foreignField: '_id', justOne: true });
-invoiceSchema.virtual('buyerDetails', { ref: 'Customer', localField: 'buyer', foreignField: '_id', justOne: true });
-invoiceSchema.virtual('itemDetails', { ref: 'Product', localField: 'items.product', foreignField: '_id' });
+// Virtuals and Pre-find (for populating)
+invoiceSchema.virtual('sellerDetails', { 
+    ref: 'Seller', 
+    localField: 'seller', 
+    foreignField: '_id', 
+    justOne: true 
+});
+invoiceSchema.virtual('buyerDetails', { 
+    ref: 'Customer', 
+    localField: 'buyer', 
+    foreignField: '_id', 
+    justOne: true 
+});
+invoiceSchema.virtual('itemDetails', { 
+    ref: 'Product', 
+    localField: 'items.product', 
+    foreignField: '_id' 
+});
 
 invoiceSchema.pre(/^find/, function (next) {
-    this.populate('sellerDetails', '-__v').populate('buyerDetails', '-__v').populate('itemDetails', '-__v');
+    this.populate('sellerDetails', '-__v')  // Exclude __v field
+        .populate('buyerDetails', '-__v')
+        .populate('itemDetails', '-__v');
     next();
 });
 

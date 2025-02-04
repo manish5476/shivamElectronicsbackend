@@ -12,16 +12,10 @@ const paymentSchema = new Schema({
     required: [true, 'Amount is required'],
     min: [0, 'Amount cannot be negative']
   },
-  currency: {
-    type: String,
-    default: 'USD',
-    enum: ['USD', 'EUR', 'GBP', 'INR', 'JPY'],
-    uppercase: true
-  },
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['credit_card', 'debit_card', 'paypal', 'crypto', 'bank_transfer']
+    enum: ['credit_card', 'debit_card', 'upi', 'crypto', 'bank_transfer']
   },
   status: {
     type: String,
@@ -31,7 +25,7 @@ const paymentSchema = new Schema({
   transactionId: {
     type: String,
     unique: true,
-    sparse: true // Allows null values but ensures uniqueness for non-null values
+    sparse: true 
   },
   createdAt: {
     type: Date,
