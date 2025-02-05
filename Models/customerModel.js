@@ -22,6 +22,7 @@ const customerSchema = new Schema({
         enum: ["active", "inactive", "pending", "suspended", "blocked"],
         default: "pending",
     },
+    profileImg:{type:String},
     email: { type: String, unique: true, match: /.+\@.+\..+/ },
     fullname: { type: String, required: true },
     phoneNumbers: [{
@@ -46,7 +47,9 @@ const customerSchema = new Schema({
     remainingAmount: { type: Number, default: 0 },  // Default to 0 if not set
     paymentHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Payment" }],
     metadata: { type: Map, of: Schema.Types.Mixed },
-}, { timestamps: true });
+    
+}, 
+{ timestamps: true });
 
 // Pre-find Hook to populate cart items, products, and invoices
 customerSchema.pre(/^find/, async function(next) {

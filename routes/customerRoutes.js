@@ -11,6 +11,16 @@ router.route("/").get(customerController.getAllCustomer).post(authController.pro
 router.route("/:id").get(customerController.getCustomerById).patch(authController.restrictTo("admin", "staff"),customerController.updateCustomer).delete(authController.protect,authController.restrictTo("admin"),customerController.deleteCustomer);
 // router.route("/DropdownData").get(CustomerControl.getCustomerDropDownWithId);
 router.use("/:CustomerId/reviews", reviewRoutes); 
+
+
+// const { uploadProfileImage, upload } = require('../controllers/customerController');
+
+// Upload Profile Image Route
+
+
+// Route to handle the file upload request
+router.post('/:id/profile-image', customerController.upload.single('image'), customerController.uploadProfileImage);
+
 module.exports = router;
 
 // const express = require("express");

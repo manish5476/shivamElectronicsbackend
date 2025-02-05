@@ -20,24 +20,20 @@ const handleFactory = require("./handleFactory");
 const Product = require("../Models/productModel");
 const User = require("../Models/UserModel");
 const Seller = require("../Models/Seller");
-
 const catchAsync = require("../Utils/catchAsyncModule");
+const Customer = require("../Models/customerModel")
 
-exports.getMasterList = catchAsync(async (req, res, next) => { // Use catchAsync here
-    
+exports.getMasterList = catchAsync(async (req, res, next) => { 
     const productPromise = Product.find().select('title sku _id');
     const userPromise = User.find().select('name email _id');
     const sellers = Seller.find().select('name shopname _id')
-    const Customer = Customer.find().select('name phoneNumbers _id')
-    const [products, users] = await Promise.all([productPromise,Customer, userPromise,sellers]);
+    const customer = Customer.find().select('name phoneNumbers _id')
+    const [productsdrop,customersdrop, usersdrop,sellersdrop] = await Promise.all([productPromise,customer, userPromise,sellers]);
     
     res.status(200).json({
         status: 'success',
         data: {
-            products,
-            sellers,
-            Customer,
-            users,
+            productsdrop,customersdrop, usersdrop,sellersdrop
         },
     });
 });
