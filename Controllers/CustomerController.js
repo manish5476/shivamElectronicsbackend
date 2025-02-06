@@ -127,12 +127,97 @@ exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
     }
     next();
   });
+
+//   exports.deleteCustomer = catchAsync(async (req, res, next) => {
+//     await Customer.findByIdAndUpdate(
+//         req.params.id, 
+//         { status: "inactive" },  // Use "inactive" as a string
+//         { new: true }  // Optional: Returns the updated document
+//     );
+
+//     res.status(204).json({
+//         message: 'Customer deleted successfully.',
+//         status: "success",
+//         data: null,  // Change "null" (string) to null (actual value)
+//     });
+//     next();
+// });
+
+exports.deleteCustomer = catchAsync(async (req, res, next) => {
+    const doc = await Customer.findByIdAndUpdate(req.params.id,
+              { status: "inactive" }, 
+              { new: true } );
+    if (!doc) {
+      return next(new AppError(`${Customer} not found with Id`, 404));
+    }
+    res.status(200).json({
+      status: "success",
+      messages: `Customer deleted successfully`,
+      data: null,
+    });
+  });
+
+
+  
+  // Update customer status to inactive if they try to create again
+  exports.newCustomer = catchAsync(async (req, res, next) => {
+      const { email, phoneNumbers, fullname, ...otherData } = req.body;
+  
+      // Check if a customer with the same email exists
+      let existingCustomer = await Customer.findOne({ email: email });
+  
+      if (existingCustomer) {
+          // If the customer is inactive, reactivate them
+          if (existingCustomer.status === 'inactive') {
+              const updatedCustomer = await Customer.findByIdAndUpdate(
+                  existingCustomer._id,
+                  { 
+                      status: 'active', 
+                      phoneNumbers: phoneNumbers,  // Optionally, update the phone numbers
+                      fullname: fullname,  // Optionally, update the fullname
+                      ...otherData  // Any other updates needed
+                  },
+                  { new: true }  // Return the updated document
+              );
+  
+              if (!updatedCustomer) {
+                  return next(new AppError('Failed to reactivate the customer', 500));
+              }
+  
+              return res.status(200).json({
+                  status: 'success',
+                  message: 'Customer reactivated successfully',
+                  data: updatedCustomer,
+              });
+          } else {
+              return next(new AppError('Customer is already active', 400));
+          }
+      } else {
+          // If no existing customer, create a new one
+          const newCustomer = new Customer({
+              email,
+              phoneNumbers,
+              fullname,
+              ...otherData
+          });
+  
+          await newCustomer.save();
+  
+          res.status(201).json({
+              status: 'success',
+              message: 'Customer created successfully',
+              data: newCustomer,
+          });
+      }
+  });
+  
+  
   // CRUD operations using handleFactory
 exports.getAllCustomer = handleFactory.getAll(Customer);
 exports.getCustomerById = handleFactory.getOne(Customer);
-exports.newCustomer = handleFactory.newOne(Customer);
+// exports.newCustomer = handleFactory.newOne(Customer);
 exports.updateCustomer = handleFactory.updateOne(Customer);
-exports.deleteCustomer = handleFactory.deleteOne(Customer);
+// exports.deleteCustomer = handleFactory.deleteOne(Customer);
 exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer);
 
 // const { query } = require("express");

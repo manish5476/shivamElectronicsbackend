@@ -51,6 +51,10 @@ const customerSchema = new Schema({
 }, 
 { timestamps: true });
 
+
+
+module.exports = mongoose.model('Customer', customerSchema);
+
 // Pre-find Hook to populate cart items, products, and invoices
 customerSchema.pre(/^find/, async function(next) {
     this.populate({
@@ -86,6 +90,8 @@ customerSchema.post('findOneAndUpdate', async function (doc) {
         }
     }
 });
+
+
 
 // Function to calculate the total purchased amount
 async function calculateTotalPurchasedAmount(customerId) {
@@ -141,7 +147,6 @@ async function calculateRemainingAmount(customerId) {
     }
 }
 
-module.exports = mongoose.model('Customer', customerSchema);
 
 
 // const cartItemSchema = new Schema({
