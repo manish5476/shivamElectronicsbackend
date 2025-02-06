@@ -35,7 +35,6 @@ const sendTokenExpireError = (err) => {
   return new AppError("invalid token or token expired so log in again", 401);
 };
 
-// //
 //
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -47,6 +46,7 @@ const sendErrorDev = (err, res) => {
 };
 
 const sendErrorProd = (err, res) => {
+  
   if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
@@ -56,34 +56,51 @@ const sendErrorProd = (err, res) => {
     console.error("ERROR IN PRODUCTION:", err);
     res.status(500).json({
       status: "error",
-      message: "Some error occurred!",
+      message: "Some error occurred in prod!",
     });
   }
 };
 
 module.exports = (err, req, res, next) => {
-  console.error(err.stack);
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
+
   if (process.env.NODE_ENV === "development") {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "production") {
-    let error = {
-      ...err,
-      message: err.message,
-      name: err.name,
-      stack: err.stack,
-    };
-    if (error.name === "CastError") error = handleCastErrorDB(error);
-    if (error.code === 11000) error = sendDuplicateErorDB(error);
-    if (err.name === "validationError") error = sendValidationError(error);
-    if (error.name === "JsonWebTokenError") error = sendTokenError(error);
-    if (error.name === "TokenExpiredError") error = sendTokenExpireError(error);
+    // DO NOT CREATE A NEW OBJECT. Modify err directly
+    if (err.name === "CastError") err = handleCastErrorDB(err); // Reassign to err
+    if (err.code === 11000) err = sendDuplicateErorDB(err);    // Reassign to err
+    if (err.name === "ValidationError") err = sendValidationError(err); // Reassign to err
+    if (err.name === "JsonWebTokenError") err = sendTokenError(err); // Reassign to err
+    if (err.name === "TokenExpiredError") err = sendTokenExpireError(err); // Reassign to err
+    sendErrorProd(err, res); // Now err is correctly updated
   }
-  
-  sendErrorProd(err, res);
-  next(); // Ensure the middleware chain continues if needed
+  next();
 };
+// module.exports = (err, req, res, next) => {
+//   // console.error(err.stack);
+//   err.statusCode = err.statusCode || 500;
+//   err.status = err.status || "error";
+//   if (process.env.NODE_ENV === "development") {
+//     sendErrorDev(err, res);
+//   } else if (process.env.NODE_ENV === "production") {
+//     let error = {
+//       ...err,
+//       message: err.message,
+//       name: err.name,
+//       stack: err.stack,
+//     };
+//     if (error.name === "CastError") error = handleCastErrorDB(error);
+//     if (error.code === 11000) error = sendDuplicateErorDB(error);
+//     if (err.name === "validationError") error = sendValidationError(error);
+//     if (error.name === "JsonWebTokenError") error = sendTokenError(error);
+//     if (error.name === "TokenExpiredError") error = sendTokenExpireError(error);
+//   }
+  
+//   sendErrorProd(err, res);
+//   next(); // Ensure the middleware chain continues if needed
+// };
 
 // const AppError = require("../Utils/appError");
 
