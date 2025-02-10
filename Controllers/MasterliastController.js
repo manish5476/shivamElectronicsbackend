@@ -22,18 +22,21 @@ const User = require("../Models/UserModel");
 const Seller = require("../Models/Seller");
 const catchAsync = require("../Utils/catchAsyncModule");
 const Customer = require("../Models/customerModel")
-
+const Payment = require("../Models/paymentModel")
+const Invoice = require("../Models/invoiceModel")
 exports.getMasterList = catchAsync(async (req, res, next) => { 
     const productPromise = Product.find().select('title sku _id');
     const userPromise = User.find().select('name email _id');
     const sellers = Seller.find().select('name shopname _id')
-    const customer = Customer.find().select('name phoneNumbers _id')
-    const [productsdrop,customersdrop, usersdrop,sellersdrop] = await Promise.all([productPromise,customer, userPromise,sellers]);
+    const customer = Customer.find().select('fullname phoneNumbers _id')
+    const Paymentsdrop = Payment.find().select('customerId customerName phoneNumbers')
+    const Invoicedata = Invoice.find().select('invoiceNumber seller buyer')
+    const [productsdrop,customersdrop, usersdrop,sellersdrop,Paymentdrop,InvoiceDrop] = await Promise.all([productPromise,customer, userPromise,sellers,Paymentsdrop,Invoicedata]);
     
     res.status(200).json({
         status: 'success',
         data: {
-            productsdrop,customersdrop, usersdrop,sellersdrop
+            productsdrop,customersdrop, usersdrop,sellersdrop,Paymentdrop,InvoiceDrop
         },
     });
 });

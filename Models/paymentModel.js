@@ -37,6 +37,12 @@ const paymentSchema = new Schema({
     ref: 'Customer',
     required: true
   },
+  customerName:{
+    type :String
+  },
+  phoneNumbers:{
+    type:String
+  },
   metadata: {
     type: Schema.Types.Mixed,
     default: {}
