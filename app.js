@@ -44,7 +44,7 @@ if (process.env.NODE_ENV === "development") {
 
 // === Rate Limiter ===
 const limiter = rateLimit({
-  max: 100, // Limit to 100 requests per hour
+  max: 200, // Limit to 100 requests per hour
   windowMs: 60 * 60 * 1000, // 1-hour window
   message: "Too many requests from this IP, please try again in an hour",
 });
@@ -86,7 +86,7 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/payments",paymentRoutes)
 app.use("/api/v1/sellers",sellerRoutes)
-app.use("/api/v1/invoice",invoiceRoutes)
+app.use("/api/v1/invoices",invoiceRoutes)
 
 // === Catch-All Route for Undefined Routes ===
 app.all("*", (req, res, next) => {

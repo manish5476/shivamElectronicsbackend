@@ -7,9 +7,10 @@ const authController = require("./../Controllers/authController");
 const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
 const MasterController = require("../Controllers/MasterliastController");
 
+
+// ///////////////////////////////////////////////////////////////
 router.route("/autopopulate").get(MasterController.getMasterList);
 router.route("/deletemany").delete(authController.protect, authController.restrictTo("admin", "staff"),productControl.deleteMultipleProduct);
-
 // Product routes
 router.route("/").get(authController.protect,authController.restrictTo("admin", "staff"),productControl.getAllProduct).post( productControl.newProduct);
 // router.route("/").get(productControl.getAllProduct).post(authController.protect,authController.restrictTo("admin", "staff"), productControl.findDuplicateProduct,  productControl.newProduct);
