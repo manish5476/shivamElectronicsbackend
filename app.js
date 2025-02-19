@@ -12,9 +12,9 @@ const productRoutes = require("./routes/productRoutes");
 const usersRoutes = require("./routes/UserRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const customerRoutes = require("./routes/customerRoutes");
-const paymentRoutes =require("./routes/paymentRoutes")
+const paymentRoutes = require("./routes/paymentRoutes")
 const sellerRoutes = require("./routes/sellerRoutes");
-const invoiceRoutes=require("./routes/InvoiceRoutes");
+const invoiceRoutes = require("./routes/InvoiceRoutes");
 
 const app = express();
 
@@ -24,7 +24,7 @@ app.use(helmet()); // Adds security headers
 // === CORS Configuration ===
 const corsOptions = {
   // origin: "https://4200-idx-frontend-1737021882096.cluster-fu5knmr55rd44vy7k7pxk74ams.cloudworkstations.dev", http://localhost:4200/// Update with your Angular app's URL
-  origin:"http://localhost:4200",   
+  origin: "http://localhost:4200",
   // origin: "https://4200-idx-frontend-1737021882096.cluster-fu5knmr55rd44vy7k7pxk74ams.cloudworkstations.dev",
   methods: "GET,POST,PATCH,DELETE,OPTIONS",
   allowedHeaders: "Content-Type,Authorization",
@@ -84,9 +84,9 @@ app.use("/api/v1/users", usersRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/customers", customerRoutes);
-app.use("/api/v1/payments",paymentRoutes)
-app.use("/api/v1/sellers",sellerRoutes)
-app.use("/api/v1/invoices",invoiceRoutes)
+app.use("/api/v1/payments", paymentRoutes)
+app.use("/api/v1/sellers", sellerRoutes)
+app.use("/api/v1/invoices", invoiceRoutes)
 
 // === Catch-All Route for Undefined Routes ===
 app.all("*", (req, res, next) => {
@@ -113,7 +113,7 @@ module.exports = app;
 // const cors = require("cors");
 // const hpp = require("hpp");
 
-// // 
+// //
 // app.use(helmet());
 
 // // const corsOptions = {

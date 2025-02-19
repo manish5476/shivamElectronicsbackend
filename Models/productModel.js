@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const slugify = require("slugify");
-
+const Review = require('./ReviewModel')
 const productSchema = new mongoose.Schema(
   {
     // --- Basic Product Information ---
@@ -126,7 +126,7 @@ const productSchema = new mongoose.Schema(
     // --- Sales Person ---
     salesPerson: [
       {
-        type: String, // Or mongoose.Schema.Types.ObjectId, ref: 'User' if you want to link to User model directly
+        type: String,
       },
     ],
 

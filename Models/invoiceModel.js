@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const Seller = require("./Seller");
 const Customer = require("./customerModel");
-
+const Product = require('./productModel')
 // Invoice Item Subdocument Schema (Simplified GST - using only gstRate)
 const invoiceItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -31,7 +31,7 @@ const invoiceSchema = new Schema({
     totalAmount: { type: Number, required: true, min: 0 }, // Total invoice amount
     paymentTerms: { type: String },
     notes: { type: String },
-    placeOfSupply: { type: String, required: true },
+    placeOfSupply: { type: String, },
     status: { type: String, enum: ['paid', 'unpaid', 'partially paid', 'cancelled'], default: 'unpaid' },
     metadata: { type: Map, of: Schema.Types.Mixed },
 }, {
@@ -98,7 +98,7 @@ invoiceSchema.virtual('buyerDetails', {
     justOne: true
 });
 invoiceSchema.virtual('itemDetails', {
-    ref: 'Product',
+    ref: Product,
     localField: 'items.product',
     foreignField: '_id'
 });
@@ -176,6 +176,7 @@ invoiceSchema.post('save', async function (doc, next) {
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 module.exports = Invoice;
+
 // const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 // const Seller = require("./Seller");

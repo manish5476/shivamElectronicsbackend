@@ -6,11 +6,11 @@ const customerController = require("../Controllers/CustomerController");
 const authController = require("../Controllers/authController");
 const reviewRoutes = require("./reviewRoutes"); // Import reviewRoutes
 // Product routes
-router.route("/deletemany").delete(authController.protect, authController.restrictTo("admin", "staff"),customerController.deleteMultipleCustomer);
-router.route("/").get(customerController.getAllCustomer).post(authController.protect,authController.restrictTo("admin", "staff"),customerController.findDuplicateCustomer,customerController.newCustomer);
-router.route("/:id").get(customerController.getCustomerById).patch(authController.restrictTo("admin", "staff"),customerController.updateCustomer).delete(authController.protect,authController.restrictTo("admin"),customerController.deleteCustomer);
+router.route("/deletemany").delete(authController.protect, authController.restrictTo("admin", "staff"), customerController.deleteMultipleCustomer);
+router.route("/").get(customerController.getAllCustomer).post(authController.protect, authController.restrictTo("admin", "staff"), customerController.findDuplicateCustomer, customerController.newCustomer);
+router.route("/:id").get(customerController.getCustomerById).patch(authController.restrictTo("admin", "staff"), customerController.updateCustomer).delete(authController.protect, authController.restrictTo("admin"), customerController.deleteCustomer);
 // router.route("/DropdownData").get(CustomerControl.getCustomerDropDownWithId);
-router.use("/:CustomerId/reviews", reviewRoutes); 
+router.use("/:CustomerId/reviews", reviewRoutes);
 
 
 // const { uploadProfileImage, upload } = require('../controllers/customerController');
@@ -19,7 +19,7 @@ router.use("/:CustomerId/reviews", reviewRoutes);
 
 
 // Route to handle the file upload request
-router.post('/:id/profile-image', customerController.upload.single('image'), customerController.uploadProfileImage);
+// router.post('/:id/profile-image', customerController.upload.single('image'), customerController.uploadProfileImage);
 
 module.exports = router;
 
