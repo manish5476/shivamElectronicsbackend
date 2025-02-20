@@ -1,33 +1,18 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const app = express();
-app.use(express.json());
-const productControl = require("../Controllers/productController");
-const invoiceController = require("../Controllers/InvoiceController")
-const authController = require("../Controllers/authController");
-const reviewRoutes = require("./reviewRoutes"); // Import reviewRoutes
+const authController = require('../Controllers/authController');
+const invoiceController = require('../Controllers/InvoiceController');
 
-// Product routes
-router
-    .route("/")
-    .get(invoiceController.getAllInvoice)
-    .post(
-        authController.protect,
-        authController.restrictTo("admin", "staff"),
-        invoiceController.findDuplicateInvoice,
-        invoiceController.newInvoice
-    );
+// Protected routes (require authentication)
+router.use(authController.protect);
 
-router
-    .route("/:id")
-    .get(invoiceController.getInvoiceById)
-    .patch(authController.restrictTo("admin", "staff"),
-        invoiceController.updateInvoice)
-    .delete(
-        authController.protect,
-        authController.restrictTo("admin"),
-        invoiceController.deleteInvoice
-    );
-// router.route("/DropdownData").get(InvoiceControl.getInvoiceDropDownWithId);
-router.use("/:InvoiceId/reviews", reviewRoutes); // <-- Important part
+// User-accessible routes
+router.get('/:id', invoiceController.getInvoiceById); // Users can view their invoice
+
+// Admin/staff-only routes
+router.get('/', authController.restrictTo('admin', 'staff'), invoiceController.getAllInvoice); // View all invoices
+router.post('/', authController.restrictTo('admin', 'staff'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); // Create invoice
+router.patch('/:id', authController.restrictTo('admin', 'staff'), invoiceController.updateInvoice); // Update invoice
+router.delete('/:id', authController.restrictTo('admin', 'staff'), invoiceController.deleteInvoice); // Delete invoice
+
 module.exports = router;

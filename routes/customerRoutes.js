@@ -1,59 +1,20 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const app = express();
-app.use(express.json());
-const customerController = require("../Controllers/CustomerController");
-const authController = require("../Controllers/authController");
-const reviewRoutes = require("./reviewRoutes"); // Import reviewRoutes
-// Product routes
-router.route("/deletemany").delete(authController.protect, authController.restrictTo("admin", "staff"), customerController.deleteMultipleCustomer);
-router.route("/").get(customerController.getAllCustomer).post(authController.protect, authController.restrictTo("admin", "staff"), customerController.findDuplicateCustomer, customerController.newCustomer);
-router.route("/:id").get(customerController.getCustomerById).patch(authController.restrictTo("admin", "staff"), customerController.updateCustomer).delete(authController.protect, authController.restrictTo("admin"), customerController.deleteCustomer);
-// router.route("/DropdownData").get(CustomerControl.getCustomerDropDownWithId);
-router.use("/:CustomerId/reviews", reviewRoutes);
+const authController = require('../Controllers/authController');
+const customerController = require('../Controllers/CustomerController');
 
+// Protected routes (require authentication)
+router.use(authController.protect);
 
-// const { uploadProfileImage, upload } = require('../controllers/customerController');
+// User-accessible routes
+router.get('/:id', customerController.getCustomerById); // Users can view their own profile (assumes ID matches authenticated user)
 
-// Upload Profile Image Route
-
-
-// Route to handle the file upload request
-// router.post('/:id/profile-image', customerController.upload.single('image'), customerController.uploadProfileImage);
+// Admin/staff-only routes
+router.get('/', authController.restrictTo('admin', 'staff'), customerController.getAllCustomer); // View all customers
+router.post('/', authController.restrictTo('admin', 'staff'), customerController.findDuplicateCustomer, customerController.newCustomer); // Create customer
+router.patch('/:id', authController.restrictTo('admin', 'staff'), customerController.updateCustomer); // Update customer
+router.delete('/:id', authController.restrictTo('admin', 'staff'), customerController.deleteCustomer); // Delete customer
+// router.delete('/deletemany', authController.restrictTo('admin', 'staff'), customerController.deleteMultipleCustomer); // Delete multiple customers
+router.get('/dropdown', authController.restrictTo('admin', 'staff'), customerController.getCustomerDropdown); // Dropdown for admins
 
 module.exports = router;
-
-// const express = require("express");
-// const router = express.Router();
-// const app = express();
-// app.use(express.json());
-// const productControl = require("../Controllers/productController");
-// const customerController = require("../Controllers/CustomerController");
-
-// const authController = require("../Controllers/authController");
-// const reviewRoutes = require("./reviewRoutes"); // Import reviewRoutes
-
-// // Product routes
-// router
-//     .route("/")
-//     .get(customerController.getAllCustomer)
-//     .post(
-//         authController.protect,
-//         authController.restrictTo("admin", "staff"),
-//         customerController.findDuplicateCustomer,
-//         customerController.newCustomer
-//     );
-
-// router
-//     .route("/:id")
-//     .get(customerController.getCustomerById)
-//     .patch(authController.restrictTo("admin", "staff"),
-//         customerController.updateCustomer)
-//     .delete(
-//         authController.protect,
-//         authController.restrictTo("admin"),
-//         customerController.deleteCustomer
-//     );
-// // router.route("/DropdownData").get(CustomerControl.getCustomerDropDownWithId);
-// router.use("/:CustomerId/reviews", reviewRoutes); // <-- Important part
-// module.exports = router;

@@ -9,10 +9,10 @@ const cartItemSchema = new Schema({
         ref: "Product",  // Link to the Product schema
         required: true 
     },
-    invoiceIds: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Invoice"  // Link to the Invoice schema
-    },
+    invoiceIds: [{  // Array of ObjectIds - **IS IT DEFINED LIKE THIS?**
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Invoice"
+    }],
 });
 
 const customerSchema = new Schema({
@@ -56,6 +56,53 @@ const customerSchema = new Schema({
 
 module.exports = mongoose.model('Customer', customerSchema);
 
+customerSchema.pre(/^find/, function (next) {
+    this.populate({
+        path: 'cart.items.productId',
+        select: 'title finalPrice thumbnail -_id', // Exclude _id if not needed
+    })
+        .populate({
+            path: 'cart.items.invoiceIds',
+            select: 'invoiceNumber totalAmount -_id',
+        })
+        .populate({
+            path: 'paymentHistory',
+            select: 'amount status -_id',
+        });
+    next();
+});
+// customerSchema.pre(/^find/, function (next) {
+//     this.populate({
+//         path: 'cart.items.productId',
+//         select: 'title finalPrice thumbnail description', // Match your Product schema
+//     })
+//         .populate({
+//             path: 'cart.items.invoiceIds',
+//             select: 'invoiceNumber totalAmount invoiceDate status', // Match your Invoice schema
+//         })
+//         .populate({
+//             path: 'paymentHistory',
+//             select: 'amount status createdAt transactionId', // Match your Payment schema
+//         });
+//     next();
+// });
+
+// Ensure findById triggers the hook
+customerSchema.pre('findOne', function (next) {
+    this.populate({
+        path: 'cart.items.productId',
+        select: 'title finalPrice thumbnail description',
+    })
+        .populate({
+            path: 'cart.items.invoiceIds',
+            select: 'invoiceNumber totalAmount invoiceDate status',
+        })
+        .populate({
+            path: 'paymentHistory',
+            select: 'amount status createdAt transactionId',
+        });
+    next();
+});
 // Pre-find Hook to populate cart items, products, and invoices
 // customerSchema.pre(/^find/, async function(next) {
 //     this.populate({
@@ -69,18 +116,18 @@ module.exports = mongoose.model('Customer', customerSchema);
 //     .populate("paymentHistory");  // Populate paymentHistory if needed
 //     next();
 // });
-customerSchema.pre(/^find/, function (next) {
-    this.populate({
-        path: "cart.items.productId",
-        select: "name price", // Populate product data
-    })
-        .populate({
-            path: "cart.items.invoiceIds",
-            select: "amount date", // Populate invoice data
-        })
-        .populate("paymentHistory");
-    next();
-});
+// customerSchema.pre(/^find/, function (next) {
+//     this.populate({
+//         path: "cart.items.productId",
+//         select: "name price", // Populate product data
+//     })
+//         .populate({
+//             path: "cart.items.invoiceIds",
+//             select: "amount date", // Populate invoice data
+//         })
+//         .populate("paymentHistory");
+//     next();
+// });
 
 // Post-save Hook to recalculate the total and remaining amounts
 customerSchema.post('save', async function (doc) {

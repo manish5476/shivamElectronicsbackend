@@ -1,15 +1,18 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const app = express();
-app.use(express.json());
-const paymentController= require("./../Controllers/paymentController");
-const authController = require("./../Controllers/authController");
-const reviewRoutes = require("../routes/reviewRoutes"); // Import reviewRoutes
+const authController = require('../Controllers/authController');
+const paymentController = require('../Controllers/paymentController');
 
+// Protected routes (require authentication)
+router.use(authController.protect);
 
-// Product routes
-router.route("/").get(authController.protect,authController.restrictTo("admin", "staff"),paymentController.getAllPayment).post(paymentController.newPayment);
-router.route("/:id").get(paymentController.getPaymentById).patch(authController.restrictTo("admin", "staff"),paymentController.updatePayment).delete(authController.restrictTo("admin", "staff"),paymentController.deletePayment);
-router.use("/:productId/reviews", reviewRoutes); // <-- Important part
+// User-accessible routes
+router.post('/', paymentController.newPayment); // Users can create payments
+router.get('/:id', paymentController.getPaymentById); // Users can view their payment
+
+// Admin/staff-only routes
+router.get('/', authController.restrictTo('admin', 'staff'), paymentController.getAllPayment); // View all payments
+router.patch('/:id', authController.restrictTo('admin', 'staff'), paymentController.updatePayment); // Update payment
+router.delete('/:id', authController.restrictTo('admin', 'staff'), paymentController.deletePayment); // Delete payment
+
 module.exports = router;
-
