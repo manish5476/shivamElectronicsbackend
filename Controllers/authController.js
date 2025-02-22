@@ -37,22 +37,56 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
+// exports.signup = catchAsync(async (req, res, next) => {
+//   const { name, email, password, passwordConfirm, passwordChangedAt, role } = req.body;
+//   // Check if passwords match before proceeding
+//   if (password !== passwordConfirm) {
+//     return next(new AppError("Passwords do not match", 400));
+//   }
+//   const newUser = await User.create({
+//     name,
+//     email,
+//     password,
+//     passwordConfirm,
+//     passwordChangedAt,
+//     role,
+//   });
+//   createSendToken(newUser, 201, res);
+// });
+
 exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body;
+  const { name, email, password, passwordConfirm,role } = req.body;
   if (password !== passwordConfirm) {
     return next(new AppError('Passwords do not match', 400));
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
   const newUser = await User.create({
     name,
     email,
-    password: hashedPassword,
-    role: 'user', // Default role, admin set manually
+    password: hashedPassword, // Store the hashed password
+    passwordConfirm: hashedPassword, // Corrected: Store hashed password for passwordConfirm as well (or remove passwordConfirm from schema if not needed)
+    role,
   });
-
   createSendToken(newUser, 201, res);
 });
+
+// exports.signup = catchAsync(async (req, res, next) => {
+//   console.log(req.body);
+//   const { name, email, password, passwordConfirm } = req.body;
+//   if (password !== passwordConfirm) {
+//     return next(new AppError('Passwords do not match', 400));
+//   }
+//   // const hashedPassword = await bcrypt.hash(password, 10);
+//   const newUser = await User.create({
+//     name,
+//     email,
+//     password,
+//     passwordConfirm:hashedPassword,
+//     role: 'user', 
+//   });
+
+//   createSendToken(newUser, 201, res);
+// });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;

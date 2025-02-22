@@ -1,12 +1,12 @@
 {
   "name": "shivamelectronicsbackend",
   "version": "1.0.0",
-  "description": "��",
+  "description": "Backend for Shivam Electronics",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon Server.js",
-    "start:prod": "NODE_ENV=production nodemon server.js",
-    "dev": "nodemon app.js",
+    "start:dev": "nodemon Server.js .env.dev",
+    "start:qa": "nodemon Server.js .env.qa",
+    "start:prod": "nodemon Server.js .env.prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

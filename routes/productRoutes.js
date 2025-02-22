@@ -3,15 +3,15 @@ const router = express.Router();
 const productControl = require('../Controllers/productController');
 const authController = require('../Controllers/authController');
 const reviewRoutes = require('./reviewRoutes');
-
+const getMasterList = require('../Controllers/MasterliastController')
 // Protected routes (require authentication)
-router.use(authController.protect);
+router.get('/DropdownData', productControl.getProductDropdownWithId); // Users can get dropdown data
+router.get('/autopopulate', getMasterList.getMasterList); // Users can get dropdown data
 
+router.use(authController.protect);
 // User-accessible routes
 router.get('/', productControl.getAllProduct); // Users can view all products
 router.get('/:id', productControl.getProductById); // Users can view a specific product
-router.get('/DropdownData', productControl.getProductDropdownWithId); // Users can get dropdown data
-
 // Admin/staff-only routes
 router.post('/', authController.restrictTo('admin', 'staff'), productControl.findDuplicateProduct, productControl.newProduct); // Create product
 router.patch('/:id', authController.restrictTo('admin', 'staff'), productControl.updateProduct); // Update product

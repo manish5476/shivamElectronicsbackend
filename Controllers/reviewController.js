@@ -20,7 +20,7 @@ exports.reviewById = handleFactory.getOne(Review, { path: "product" });
 exports.createReview = handleFactory.newOne(Review);
 exports.updateReview = handleFactory.updateOne(Review);
 exports.deleteReview = handleFactory.deleteOne(Review);
- 
+
 // const { query } = require("express");
 // const Review = require("../Models/ReviewSchema");
 // const Product = require("./../Models/productModel");
