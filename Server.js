@@ -8,10 +8,9 @@ mongoose
   .connect(
     process.env.DATABASE
   )
-  .then((con) => {});
+  .then((con) => { });
 
-const cors = require("cors");
-app.use(cors());
+
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => {

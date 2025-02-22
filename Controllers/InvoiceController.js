@@ -67,6 +67,7 @@ exports.deleteInvoice = catchAsync(async (req, res, next) => {
         data: null,
     });
 });
+
 // const { query } = require("express");
 // const Invoice = require("./../Models/invoiceModel");
 // const catchAsync = require("../Utils/catchAsyncModule");
