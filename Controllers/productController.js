@@ -2,6 +2,7 @@ const Product = require('../Models/productModel');
 const catchAsync = require('../Utils/catchAsyncModule');
 const AppError = require('../Utils/appError');
 const { body, validationResult } = require('express-validator');
+const handleFactory = require("./handleFactory");
 
 exports.findDuplicateProduct = catchAsync(async (req, res, next) => {
   const existingProduct = await Product.findOne({ sku: req.body.sku });
@@ -76,6 +77,9 @@ exports.getProductDropdownWithId = catchAsync(async (req, res, next) => {
     data: { products },
   });
 });
+
+exports.deleteMultipleProduct = handleFactory.deleteMultipleProduct(Product)
+
 // const { query } = require("express");
 // const Product = require("./../Models/productModel");
 // const ApiFeatures = require("../Utils/ApiFeatures");
@@ -210,7 +214,6 @@ exports.getProductDropdownWithId = catchAsync(async (req, res, next) => {
 // exports.newProduct = handleFactory.newOne(Product);
 // exports.deleteProduct = handleFactory.deleteOne(Product);
 // exports.updateProduct = handleFactory.updateOne(Product);
-// exports.deleteMultipleProduct = handleFactory.deleteMultipleProduct(Product)
 // // ---------------------------------------------------------------------------------------------------------------------------------------
 
 // // exports.getProductById = catchAsync(async (req, res, next) => {

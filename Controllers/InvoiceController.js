@@ -2,7 +2,7 @@ const Invoice = require('../Models/invoiceModel');
 const catchAsync = require('../Utils/catchAsyncModule');
 const AppError = require('../Utils/appError');
 const { body, validationResult } = require('express-validator');
-
+// const handleFactory = require('./handleFactory')
 exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
     const existingInvoice = await Invoice.findOne({ invoiceNumber: req.body.invoiceNumber });
     if (existingInvoice) {
@@ -10,6 +10,8 @@ exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
     }
     next();
 });
+
+// exports.newInvoice = handleFactory.newOne(Invoice);
 
 exports.newInvoice = [
     body('invoiceNumber').notEmpty().withMessage('Invoice number is required'),

@@ -16,7 +16,7 @@ router.get('/:id', productControl.getProductById); // Users can view a specific 
 router.post('/', authController.restrictTo('admin', 'staff'), productControl.findDuplicateProduct, productControl.newProduct); // Create product
 router.patch('/:id', authController.restrictTo('admin', 'staff'), productControl.updateProduct); // Update product
 router.delete('/:id', authController.restrictTo('admin', 'staff'), productControl.deleteProduct); // Delete product
-// router.delete('/deletemany', authController.restrictTo('admin', 'staff'), productControl.deleteMultipleProduct); // Delete multiple products
+router.delete('/deletemany', authController.restrictTo('admin', 'staff'), productControl.deleteMultipleProduct); // Delete multiple products
 
 // Nested review routes (user can create reviews, controlled by reviewRoutes)
 router.use('/:productId/reviews', reviewRoutes);

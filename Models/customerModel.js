@@ -71,6 +71,130 @@ customerSchema.pre(/^find/, function (next) {
         });
     next();
 });
+customerSchema.pre('findOne', function (next) {
+    this.populate({
+        path: 'cart.items.productId',
+        select: 'title finalPrice thumbnail description',
+    })
+        .populate({
+            path: 'cart.items.invoiceIds',
+            select: 'invoiceNumber totalAmount invoiceDate status',
+        })
+        .populate({
+            path: 'paymentHistory',
+            select: 'amount status createdAt transactionId',
+        });
+    next();
+});
+
+customerSchema.post('save', async function (doc) {
+    try {
+        await calculateTotalPurchasedAmount(doc._id);
+        await calculateRemainingAmount(doc._id);
+    } catch (error) {
+        console.error("Error during post-save calculations:", error);
+    }
+});
+
+// Post-findOneAndUpdate Hook to recalculate the total and remaining amounts after update
+customerSchema.post('findOneAndUpdate', async function (doc) {
+    if (doc) {
+        try {
+            await calculateTotalPurchasedAmount(doc._id);
+            await calculateRemainingAmount(doc._id);
+        } catch (error) {
+            console.error("Error during post-update calculations:", error);
+        }
+    }
+});
+
+async function calculateTotalPurchasedAmount(customerId) {
+    try {
+        const customer = await Customer.findById(customerId).populate({
+            path: "cart.items.invoiceIds",
+            select: "totalAmount", // Select only totalAmount
+        });
+
+        if (!customer) {
+            console.error("Customer not found");
+            return;
+        }
+
+        const totalAmount = customer.cart.items.reduce((acc, item) => {
+            if (item.invoiceIds) {
+                item.invoiceIds.forEach(invoice => {
+                    // Access totalAmount from the invoice object
+                    if (invoice && invoice.totalAmount) {
+                        acc += invoice.totalAmount;
+                    }
+                });
+            }
+            return acc;
+        }, 0);
+
+        customer.totalPurchasedAmount = totalAmount;
+        await customer.save();
+    } catch (error) {
+        console.error("Error calculating total purchased amount:", error);
+    }
+}
+
+// Function to calculate the total purchased amount
+// async function calculateTotalPurchasedAmount(customerId) {
+//     try {
+//         const customer = await Customer.findById(customerId).populate({
+//             path: "cart.items.invoiceIds",
+//             select: "amount",
+//         });
+
+//         if (!customer) {
+//             console.error("Customer not found");
+//             return;
+//         }
+
+//         const totalAmount = customer.cart.items.reduce((acc, item) => {
+//             if (item.invoiceIds) {
+//                 item.invoiceIds.forEach(invoice => {
+//                     if (invoice && invoice.amount) {
+//                         acc += invoice.amount;
+//                     }
+//                 });
+//             }
+//             return acc;
+//         }, 0);
+
+//         customer.totalPurchasedAmount = totalAmount;
+//         await customer.save();
+//     } catch (error) {
+//         console.error("Error calculating total purchased amount:", error);
+//     }
+// }
+
+// Function to calculate the remaining amount
+async function calculateRemainingAmount(customerId) {
+    try {
+        const customer = await Customer.findById(customerId).populate('paymentHistory');
+        if (!customer) {
+            console.log("customer not found");
+            return;
+        }
+
+        let totalPaid = 0;
+        if (customer.paymentHistory) {
+            customer.paymentHistory.forEach(payment => {
+                totalPaid += payment.amount;
+            });
+        }
+
+        customer.remainingAmount = customer.totalPurchasedAmount - totalPaid;
+        await customer.save();
+    } catch (err) {
+        console.log("Error in calculating remaining amount", err);
+    }
+}
+
+
+
 // customerSchema.pre(/^find/, function (next) {
 //     this.populate({
 //         path: 'cart.items.productId',
@@ -88,21 +212,8 @@ customerSchema.pre(/^find/, function (next) {
 // });
 
 // Ensure findById triggers the hook
-customerSchema.pre('findOne', function (next) {
-    this.populate({
-        path: 'cart.items.productId',
-        select: 'title finalPrice thumbnail description',
-    })
-        .populate({
-            path: 'cart.items.invoiceIds',
-            select: 'invoiceNumber totalAmount invoiceDate status',
-        })
-        .populate({
-            path: 'paymentHistory',
-            select: 'amount status createdAt transactionId',
-        });
-    next();
-});
+
+
 // Pre-find Hook to populate cart items, products, and invoices
 // customerSchema.pre(/^find/, async function(next) {
 //     this.populate({
@@ -130,83 +241,6 @@ customerSchema.pre('findOne', function (next) {
 // });
 
 // Post-save Hook to recalculate the total and remaining amounts
-customerSchema.post('save', async function (doc) {
-    try {
-        await calculateTotalPurchasedAmount(doc._id);
-        await calculateRemainingAmount(doc._id);
-    } catch (error) {
-        console.error("Error during post-save calculations:", error);
-    }
-});
-
-// Post-findOneAndUpdate Hook to recalculate the total and remaining amounts after update
-customerSchema.post('findOneAndUpdate', async function (doc) {
-    if (doc) {
-        try {
-            await calculateTotalPurchasedAmount(doc._id);
-            await calculateRemainingAmount(doc._id);
-        } catch (error) {
-            console.error("Error during post-update calculations:", error);
-        }
-    }
-});
-
-
-
-// Function to calculate the total purchased amount
-async function calculateTotalPurchasedAmount(customerId) {
-    try {
-        const customer = await Customer.findById(customerId).populate({
-            path: "cart.items.invoiceIds",
-            select: "amount",
-        });
-
-        if (!customer) {
-            console.error("Customer not found");
-            return;
-        }
-
-        const totalAmount = customer.cart.items.reduce((acc, item) => {
-            if (item.invoiceIds) {
-                item.invoiceIds.forEach(invoice => {
-                    if (invoice && invoice.amount) {
-                        acc += invoice.amount;
-                    }
-                });
-            }
-            return acc;
-        }, 0);
-
-        customer.totalPurchasedAmount = totalAmount;
-        await customer.save();
-    } catch (error) {
-        console.error("Error calculating total purchased amount:", error);
-    }
-}
-
-// Function to calculate the remaining amount
-async function calculateRemainingAmount(customerId) {
-    try {
-        const customer = await Customer.findById(customerId).populate('paymentHistory');
-        if (!customer) {
-            console.log("customer not found");
-            return;
-        }
-
-        let totalPaid = 0;
-        if (customer.paymentHistory) {
-            customer.paymentHistory.forEach(payment => {
-                totalPaid += payment.amount;
-            });
-        }
-
-        customer.remainingAmount = customer.totalPurchasedAmount - totalPaid;
-        await customer.save();
-    } catch (err) {
-        console.log("Error in calculating remaining amount", err);
-    }
-}
-
 
 /**const mongoose = require('mongoose');
 const { Schema } = mongoose;

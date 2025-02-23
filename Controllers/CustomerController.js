@@ -7,7 +7,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
+const handleFactory = require('./handleFactory')
 // exports.uploadProfileImage = [
 //   upload.single('profileImg'),
 //   catchAsync(async (req, res, next) => {
@@ -46,14 +46,10 @@ exports.uploadProfileImage = [
     const { error } = await supabase.storage
       .from(process.env.SUPABASE_BUCKET)
       .upload(fileName, file.buffer, { contentType: file.mimeType, upsert: true });
-
     if (error) return next(new AppError('Failed to upload image', 500));
-
     const { publicURL } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(fileName);
     const customer = await Customer.findbyIdAndUpdate(customerId, { profileImg: publicURL }, { new: true });
-
     if (!customer) return next(new AppError('Customer not found', 404));
-
     res.status(200).json({
       status: 'success',
       message: 'Profile image uploaded successfully',
@@ -206,6 +202,34 @@ exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
     data: { customersdrop: customers },
   });
 });
+exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
+  const ids = req.body.ids;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return next(new AppError('No valid IDs provided for deactivation.', 400));
+  }
+
+  const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+  if (validIds.length === 0) {
+    return next(new AppError('No valid IDs provided.', 400));
+  }
+
+  const result = await Customer.updateMany(
+    { _id: { $in: validIds } },
+    { status: 'inactive' }
+  );
+
+  if (result.matchedCount === 0) {
+    return next(new AppError(`No customers found with the provided IDs.`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: `${result.modifiedCount} customers deactivated successfully.`,
+  });
+});
+
 // const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 
