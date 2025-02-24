@@ -1,185 +1,6 @@
-
-// const mongoose = require('mongoose');
-// const { Schema } = mongoose;
-// const Customer = require('./customerModel');
-// const Product = require('./productModel');
-
-// const invoiceItemSchema = new Schema({
-//     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-//     quantity: { type: Number, required: true, min: 1 },
-//     discount: { type: Number, default: 0, min: 0 },
-//     rate: { type: Number, required: true, min: 0 },
-//     taxableValue: { type: Number, required: true, min: 0 },
-//     gstRate: { type: Number, required: true, min: 0 },
-//     gstAmount: { type: Number, required: true, min: 0 },
-//     amount: { type: Number, required: true, min: 0 },
-// });
-
-// const invoiceSchema = new Schema({
-//     invoiceNumber: { type: String, required: true, unique: true },
-//     invoiceDate: { type: Date, required: true },
-//     dueDate: { type: Date },
-//     seller: { type: Schema.Types.ObjectId, ref: 'Seller', required: true },
-//     buyer: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
-//     items: [invoiceItemSchema],
-//     subTotal: { type: Number, required: true, min: 0 },
-//     totalDiscount: { type: Number, default: 0, min: 0 },
-//     gst: { type: Number, default: 0, min: 0 },
-//     totalAmount: { type: Number, required: true, min: 0 },
-//     status: { type: String, enum: ['paid', 'unpaid', 'partially paid', 'cancelled'], default: 'unpaid' },
-// }, {
-//     timestamps: true,
-//     toJSON: { virtuals: true },
-//     toObject: { virtuals: true },
-// });
-
-// // Pre-save: Calculate totals and update stock
-// invoiceSchema.pre('save', async function (next) {
-//     const session = await mongoose.startSession();
-//     session.startTransaction();
-//     try {
-//         if (!this.dueDate) {
-//             this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-//         }
-//         let subTotal = 0;
-//         let totalDiscount = 0;
-//         let totalGst = 0;
-
-//         for (const item of this.items) {
-//             const product = await Product.findById(item.product).session(session);
-//             if (!product) throw new Error(`Product ${item.product} not found`);
-//             if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
-
-//             item.rate = product.rate;
-//             item.gstRate = product.gstRate;
-//             item.taxableValue = item.quantity * item.rate;
-//             const discountedTaxableValue = item.taxableValue - (item.taxableValue * item.discount / 100);
-//             item.gstAmount = (discountedTaxableValue * item.gstRate) / 100;
-//             item.amount = discountedTaxableValue + item.gstAmount;
-
-//             subTotal += item.taxableValue;
-//             totalDiscount += (item.taxableValue * item.discount / 100);
-//             totalGst += item.gstAmount;
-
-//             product.stock -= item.quantity;
-//             await product.save({ session });
-//         }
-
-//         this.subTotal = subTotal;
-//         this.totalDiscount = totalDiscount;
-//         this.gst = totalGst;
-//         this.totalAmount = this.subTotal + this.gst - this.totalDiscount;
-
-//         await session.commitTransaction();
-//         next();
-//     } catch (error) {
-//         await session.abortTransaction();
-//         next(error);
-//     } finally {
-//         session.endSession();
-//     }
-// });
-
-// invoiceSchema.post('save', async function (doc, next) {
-//     try {
-//         // 1. Find the customer (buyer) associated with this invoice
-//         const customer = await Customer.findById(doc.buyer);
-
-//         if (!customer) {
-//             return next(new Error('Customer not found'));
-//         }
-
-//         // 2. Iterate through the items in the invoice and update the customer's cart
-//         for (const item of doc.items) {
-//             const cartItem = customer.cart.items.find(
-//                 (cartItem) => cartItem.productId.toString() === item.product.toString()
-//             );
-
-//             if (cartItem) {
-//                 cartItem.invoiceIds.push(doc._id);
-//             } else {
-//                 customer.cart.items.push({
-//                     productId: item.product,
-//                     invoiceIds: [doc._id],
-//                 });
-//             }
-//         }
-//         // 3. Save the updated customer document
-//         await customer.save();
-
-//         next();  // Continue with other operations
-//     } catch (error) {
-//         next(error);  // Pass the error to the error handler
-//     }
-
-// });
-// // Post-save: Update customer cart
-// // invoiceSchema.post('save', async function (doc) {
-// //     const session = await mongoose.startSession();
-// //     session.startTransaction();
-// //     try {
-// //         const customer = await Customer.findById(doc.buyer).session(session);
-// //         if (!customer) throw new Error('Customer not found');
-
-// //         for (const item of doc.items) {
-// //             const cartItem = customer.cart.items.find(
-// //                 cartItem => cartItem.productId.toString() === item.product.toString()
-// //             );
-// //             if (cartItem) {
-// //                 cartItem.invoiceIds.push(doc._id);
-// //             } else {
-// //                 customer.cart.items.push({
-// //                     productId: item.product,
-// //                     invoiceIds: [doc._id],
-// //                 });
-// //             }
-// //         }
-// //         await customer.save({ session });
-// //         await require('./customerModel').updateCustomerTotals(doc.buyer, session);
-// //         await session.commitTransaction();
-// //     } catch (error) {
-// //         await session.abortTransaction();
-// //         throw new mongoose.Error(`Failed to update customer cart: ${error.message}`);
-// //     } finally {
-// //         session.endSession();
-// //     }
-// // });
-
-
-// // Virtuals and Pre/Post hooks (no changes needed)
-// invoiceSchema.virtual('sellerDetails', {
-//     ref: 'Seller',
-//     localField: 'seller',
-//     foreignField: '_id',
-//     justOne: true
-// });
-// invoiceSchema.virtual('buyerDetails', {
-//     ref: 'Customer',
-//     localField: 'buyer',
-//     foreignField: '_id',
-//     justOne: true
-// });
-// invoiceSchema.virtual('itemDetails', {
-//     ref: Product,
-//     localField: 'items.product',
-//     foreignField: '_id'
-// });
-
-// invoiceSchema.pre(/^find/, function (next) {
-//     this.populate('sellerDetails', '-__v')
-//         .populate('buyerDetails', '-__v')
-//         .populate('itemDetails', '-__v');
-//     next();
-// });
-
-
-// const Invoice = mongoose.model('Invoice', invoiceSchema);
-// module.exports = Invoice;
-
-
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const Product = require('./productModel');
+const Product = require('./productModel'); // Avoid circular dependency with Customer
 
 const invoiceItemSchema = new Schema({
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -218,17 +39,16 @@ invoiceSchema.pre('save', async function (next) {
         if (!this.dueDate) {
             this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
         }
-        let subTotal = 0;
-        let totalDiscount = 0;
-        let totalGst = 0;
+        let subTotal = 0, totalDiscount = 0, totalGst = 0;
 
         for (const item of this.items) {
             const product = await Product.findById(item.product).session(session);
             if (!product) throw new Error(`Product ${item.product} not found`);
             if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
 
-            item.rate = product.rate;
-            item.gstRate = product.gstRate;
+            item.rate = product.rate ?? 0; // Ensure product.rate exists
+            item.gstRate = product.gstRate ?? 0;
+
             item.taxableValue = item.quantity * item.rate;
             const discountedTaxableValue = item.taxableValue - (item.taxableValue * item.discount / 100);
             item.gstAmount = (discountedTaxableValue * item.gstRate) / 100;
@@ -245,7 +65,7 @@ invoiceSchema.pre('save', async function (next) {
         this.subTotal = subTotal;
         this.totalDiscount = totalDiscount;
         this.gst = totalGst;
-        this.totalAmount = this.subTotal + this.gst - this.totalDiscount;
+        this.totalAmount = subTotal + totalGst - totalDiscount;
 
         await session.commitTransaction();
         next();
@@ -257,71 +77,46 @@ invoiceSchema.pre('save', async function (next) {
     }
 });
 
-invoiceSchema.post('save', async function (doc, next) {
+// Post-save: Update customer cart
+invoiceSchema.post('save', async function (doc) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-        // Lazy load the Customer model
-        const Customer = require('./customerModel');
+        const Customer = require('./customerModel'); // Avoid circular dependency
+        const customer = await Customer.findById(doc.buyer).session(session);
+        if (!customer) throw new Error('Customer not found');
 
-        // 1. Find the customer (buyer) associated with this invoice
-        const customer = await Customer.findById(doc.buyer);
-
-        if (!customer) {
-            return next(new Error('Customer not found'));
-        }
-
-        // 2. Iterate through the items in the invoice and update the customer's cart
         for (const item of doc.items) {
-            const cartItem = customer.cart.items.find(
-                (cartItem) => cartItem.productId.toString() === item.product.toString()
+            const cartItem = customer.cart.items.find(cartItem =>
+                cartItem.productId.toString() === item.product.toString()
             );
-
             if (cartItem) {
                 cartItem.invoiceIds.push(doc._id);
             } else {
-                customer.cart.items.push({
-                    productId: item.product,
-                    invoiceIds: [doc._id],
-                });
+                customer.cart.items.push({ productId: item.product, invoiceIds: [doc._id] });
             }
         }
-        // 3. Save the updated customer document
-        await customer.save();
 
-        next();  // Continue with other operations
+        await customer.save({ session });
+
+        if (typeof Customer.updateCustomerTotals === 'function') {
+            await Customer.updateCustomerTotals(doc.buyer, session);
+        } else {
+            console.warn("updateCustomerTotals function not found in Customer model");
+        }
+
+        await session.commitTransaction();
     } catch (error) {
-        next(error);  // Pass the error to the error handler
+        await session.abortTransaction();
+        throw new mongoose.Error(`Failed to update customer cart: ${error.message}`);
+    } finally {
+        session.endSession();
     }
-
-});
-
-// Virtuals and Pre/Post hooks (no changes needed)
-invoiceSchema.virtual('sellerDetails', {
-    ref: 'Seller',
-    localField: 'seller',
-    foreignField: '_id',
-    justOne: true
-});
-invoiceSchema.virtual('buyerDetails', {
-    ref: 'Customer',
-    localField: 'buyer',
-    foreignField: '_id',
-    justOne: true
-});
-invoiceSchema.virtual('itemDetails', {
-    ref: Product,
-    localField: 'items.product',
-    foreignField: '_id'
-});
-
-invoiceSchema.pre(/^find/, function (next) {
-    this.populate('sellerDetails', '-__v')
-        .populate('buyerDetails', '-__v')
-        .populate('itemDetails', '-__v');
-    next();
 });
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 module.exports = Invoice;
+// //////////////////////////////////////////////////////////////////////
 // const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 // const Seller = require("./Seller");

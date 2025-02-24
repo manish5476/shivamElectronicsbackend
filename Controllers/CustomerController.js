@@ -8,6 +8,10 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const handleFactory = require('./handleFactory')
+
+// const user = await Customer.getUserWithTotals({ _id:req._id  });
+// console.log(user);
+
 // exports.uploadProfileImage = [
 //   upload.single('profileImg'),
 //   catchAsync(async (req, res, next) => {
@@ -110,25 +114,18 @@ exports.newCustomer = [
   }),
 ];
 
+// In customerController.js
 exports.getCustomerById = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findById(req.params.id)
-    .populate({
-      path: 'cart.items.productId',
-      select: 'title finalPrice thumbnail description',
-    })
-    .populate({
-      path: 'cart.items.invoiceIds',
-      select: 'invoiceNumber totalAmount invoiceDate status',
-    })
-    .populate({
-      path: 'paymentHistory',
-      select: 'amount status createdAt transactionId',
-    });
+  // Get the customer with up-to-date totals first
+  let customer = await Customer.getUserWithTotals({ _id: req.params.id });
+  if (!customer) return next(new AppError('Customer not found with this Id', 404));
 
-  if (!customer) return next(new AppError('Customer not found with Id', 404));
+  // Now update the remaining amount by subtracting completed payments
+  customer = await Customer.updateRemainingAmount(customer._id);
+  if (!customer) return next(new AppError('Failed to update remaining amount', 500));
 
-  // Restrict access to own data for non-admin users
-  if (req.user.role !== 'admin' && req.user.role !== 'staff' && req.user._id.toString() !== customer._id.toString()) {
+  // Optionally, restrict access to own data for non-admin users
+  if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
     return next(new AppError('You can only view your own profile', 403));
   }
 
@@ -137,6 +134,52 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
     data: customer,
   });
 });
+
+
+// exports.getCustomerById = catchAsync(async (req, res, next) => {
+//   // Adjust query criteria as needed (e.g., using req.user._id if that is your authenticated user)
+//   const customer = await Customer.getUserWithTotals({ _id: req.params.id });
+
+//   if (!customer) return next(new AppError('Customer not found with this Id', 404));
+
+//   // Optionally, you can check user roles/permissions here
+//   if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
+//     return next(new AppError('You can only view your own profile', 403));
+//   }
+
+//   res.status(200).json({
+//     status: 'success',
+//     data: customer,
+//   });
+// });
+
+// exports.getCustomerById = catchAsync(async (req, res, next) => {
+//   const customer = await Customer.findById(req.params.id)
+//     .populate({
+//       path: 'cart.items.productId',
+//       select: 'title finalPrice thumbnail description',
+//     })
+//     .populate({
+//       path: 'cart.items.invoiceIds',
+//       select: 'invoiceNumber totalAmount invoiceDate status',
+//     })
+//     .populate({
+//       path: 'paymentHistory',
+//       select: 'amount status createdAt transactionId',
+//     });
+
+//   if (!customer) return next(new AppError('Customer not found with Id', 404));
+
+//   // Restrict access to own data for non-admin users
+//   if (req.user.role !== 'admin' && req.user.role !== 'staff' && req.user._id.toString() !== customer._id.toString()) {
+//     return next(new AppError('You can only view your own profile', 403));
+//   }
+
+//   res.status(200).json({
+//     status: 'success',
+//     data: customer,
+//   });
+// });
 
 // exports.getCustomerById = catchAsync(async (req, res, next) => {
 //   const customer = await Customer.findById(req.params.id)
