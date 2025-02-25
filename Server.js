@@ -22,17 +22,28 @@ const server = app.listen(port, () => {
   console.log(`Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
 });
 
-// Graceful shutdown for Nodemon
-process.on("SIGINT", () => {
+async function shutdown() {
   console.log("Shutting down server...");
-  server.close(() => {
-    console.log("Server closed.");
-    mongoose.connection.close(false, () => {
-      console.log("MongoDB connection closed.");
-      process.exit(0);
-    });
-  });
-});
+  await mongoose.connection.close(); // Remove callback
+  console.log("MongoDB connection closed.");
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+
+// // Graceful shutdown for Nodemon
+// process.on("SIGINT", () => {
+//   console.log("Shutting down server...");
+//   server.close(() => {
+//     console.log("Server closed.");
+//     mongoose.connection.close(false, () => {
+//       console.log("MongoDB connection closed.");
+//       process.exit(0);
+//     });
+//   });
+// });
 
 // const mongoose = require("mongoose");
 // const dotenv = require("dotenv");

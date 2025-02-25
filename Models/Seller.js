@@ -9,6 +9,14 @@ const sellerSchema = new Schema({
         required: [true, 'Seller name is required'],
         trim: true
     },
+    prifile: {
+        type: String,
+    },
+    status: {
+        type: String,
+        enum: ["active", "inactive", "pending", "suspended", "blocked"],
+        default: "pending",
+    },
     shopname: {
         type: String,
         required: [true, 'Shop name is required'],
