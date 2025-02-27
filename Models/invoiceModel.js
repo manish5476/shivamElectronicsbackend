@@ -31,6 +31,31 @@ const invoiceSchema = new Schema({
     toObject: { virtuals: true },
 });
 
+// Virtuals and Pre / Post hooks(no changes needed)
+invoiceSchema.virtual('sellerDetails', {
+    ref: 'Seller',
+    localField: 'seller',
+    foreignField: '_id',
+    justOne: true
+});
+invoiceSchema.virtual('buyerDetails', {
+    ref: 'Customer',
+    localField: 'buyer',
+    foreignField: '_id',
+    justOne: true
+});
+invoiceSchema.virtual('itemDetails', {
+    ref: Product,
+    localField: 'items.product',
+    foreignField: '_id'
+});
+
+invoiceSchema.pre(/^find/, function (next) {
+    this.populate('sellerDetails', '')
+        .populate('buyerDetails', ' fullname phoneNumbers  addresses ')
+        .populate('itemDetails', '');
+    next();
+});
 // Pre-save: Calculate totals and update stock
 invoiceSchema.pre('save', async function (next) {
     const session = await mongoose.startSession();
@@ -113,6 +138,8 @@ invoiceSchema.post('save', async function (doc) {
         session.endSession();
     }
 });
+
+
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 module.exports = Invoice;

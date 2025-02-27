@@ -62,6 +62,31 @@ customerSchema.pre(/^find/, function (next) {
     next();
 });
 
+// Virtuals and Pre / Post hooks(no changes needed)
+// customerSchema.virtual('sellerDetails', {
+//     ref: 'Product',
+//     localField: 'cart.items.productId',
+//     foreignField: '_id',
+//     justOne: true
+// });
+// customerSchema.virtual('buyerDetails', {
+//     ref: 'Invoice',
+//     localField: 'cart.items.invoiceIds',
+//     foreignField: '_id',
+//     justOne: true
+// });
+// customerSchema.virtual('paymentdetails', {
+//     ref: Product,
+//     localField: 'paymentHistory',
+//     foreignField: '_id'
+// });
+
+// customerSchema.pre(/^find/, function (next) {
+//     this.populate('sellerDetails', '-__v')
+//         .populate('buyerDetails', '-__v')
+//         .populate('paymentdetails', '-__v');
+//     next();
+// });
 // --- Aggregation functions (same as your existing ones) ---
 async function calculateTotalPurchasedAmount(customerId) {
     try {
