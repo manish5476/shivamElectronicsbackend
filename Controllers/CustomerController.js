@@ -1,13 +1,3 @@
-const Customer = require('../Models/customerModel');
-const catchAsync = require('../Utils/catchAsyncModule');
-const AppError = require('../Utils/appError');
-const { body, validationResult } = require('express-validator');
-const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-const handleFactory = require('./handleFactory')
 
 // const user = await Customer.getUserWithTotals({ _id:req._id  });
 // console.log(user);
@@ -38,6 +28,16 @@ const handleFactory = require('./handleFactory')
 //     });
 //   }),
 // ];
+const Customer = require('../Models/customerModel');
+const catchAsync = require('../Utils/catchAsyncModule');
+const AppError = require('../Utils/appError');
+const { body, validationResult } = require('express-validator');
+const multer = require('multer');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+const handleFactory = require('./handleFactory')
 
 exports.uploadProfileImage = [
   upload.single('profileImg'),
@@ -136,6 +136,81 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
 });
 
 
+
+exports.getAllCustomer = catchAsync(async (req, res, next) => {
+  const customers = await Customer.find();
+  res.status(200).json({
+    status: 'success',
+    results: customers.length,
+    data: customers,
+  });
+});
+
+exports.updateCustomer = catchAsync(async (req, res, next) => {
+  const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  if (!customer) return next(new AppError('Customer not found with Id', 404));
+  res.status(201).json({
+    status: 'success',
+    data: customer,
+  });
+});
+
+exports.deleteCustomer = catchAsync(async (req, res, next) => {
+  const customer = await Customer.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
+  if (!customer) return next(new AppError('Customer not found with Id', 404));
+  res.status(200).json({
+    status: 'success',
+    message: 'Customer deleted successfully',
+    data: null,
+  });
+});
+
+exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
+  const customers = await Customer.find({ status: { $ne: 'inactive' } })
+    .select('fullname _id email')
+    .lean();
+  res.status(200).json({
+    status: 'success',
+    results: customers.length,
+    data: { customersdrop: customers },
+  });
+});
+
+exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
+  const ids = req.body.ids;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return next(new AppError('No valid IDs provided for deactivation.', 400));
+  }
+
+  const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+  if (validIds.length === 0) {
+    return next(new AppError('No valid IDs provided.', 400));
+  }
+
+  const result = await Customer.updateMany(
+    { _id: { $in: validIds } },
+    { status: 'inactive' }
+  );
+
+  if (result.matchedCount === 0) {
+    return next(new AppError(`No customers found with the provided IDs.`, 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: `${result.modifiedCount} customers deactivated successfully.`,
+  });
+});
+
+
+
+
+
 // exports.getCustomerById = catchAsync(async (req, res, next) => {
 //   // Adjust query criteria as needed (e.g., using req.user._id if that is your authenticated user)
 //   const customer = await Customer.getUserWithTotals({ _id: req.params.id });
@@ -203,76 +278,6 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
 //     data: customer,
 //   });
 // });
-
-exports.getAllCustomer = catchAsync(async (req, res, next) => {
-  const customers = await Customer.find();
-  res.status(200).json({
-    status: 'success',
-    results: customers.length,
-    data: customers,
-  });
-});
-
-exports.updateCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-  if (!customer) return next(new AppError('Customer not found with Id', 404));
-  res.status(201).json({
-    status: 'success',
-    data: customer,
-  });
-});
-
-exports.deleteCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
-  if (!customer) return next(new AppError('Customer not found with Id', 404));
-  res.status(200).json({
-    status: 'success',
-    message: 'Customer deleted successfully',
-    data: null,
-  });
-});
-
-exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
-  const customers = await Customer.find({ status: { $ne: 'inactive' } })
-    .select('fullname _id email')
-    .lean();
-  res.status(200).json({
-    status: 'success',
-    results: customers.length,
-    data: { customersdrop: customers },
-  });
-});
-exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
-  const ids = req.body.ids;
-
-  if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return next(new AppError('No valid IDs provided for deactivation.', 400));
-  }
-
-  const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
-
-  if (validIds.length === 0) {
-    return next(new AppError('No valid IDs provided.', 400));
-  }
-
-  const result = await Customer.updateMany(
-    { _id: { $in: validIds } },
-    { status: 'inactive' }
-  );
-
-  if (result.matchedCount === 0) {
-    return next(new AppError(`No customers found with the provided IDs.`, 404));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    message: `${result.modifiedCount} customers deactivated successfully.`,
-  });
-});
-
 // const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 

@@ -14,5 +14,5 @@ router.get('/', authController.restrictTo('admin', 'staff'), invoiceController.g
 router.post('/', authController.restrictTo('admin', 'staff'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); // Create invoice
 router.patch('/:id', authController.restrictTo('admin', 'staff'), invoiceController.updateInvoice); // Update invoice
 router.delete('/:id', authController.restrictTo('admin', 'staff'), invoiceController.deleteInvoice); // Delete invoice
-
+router.post('/productSales', authController.restrictTo('admin', 'staff'), invoiceController.getProductSales); // Delete invoice
 module.exports = router;

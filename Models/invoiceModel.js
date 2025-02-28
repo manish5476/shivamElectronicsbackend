@@ -45,7 +45,7 @@ invoiceSchema.virtual('buyerDetails', {
     justOne: true
 });
 invoiceSchema.virtual('itemDetails', {
-    ref: Product,
+    ref: 'Product',
     localField: 'items.product',
     foreignField: '_id'
 });
@@ -53,7 +53,7 @@ invoiceSchema.virtual('itemDetails', {
 invoiceSchema.pre(/^find/, function (next) {
     this.populate('sellerDetails', '')
         .populate('buyerDetails', ' fullname phoneNumbers  addresses ')
-        .populate('itemDetails', '');
+        .populate('itemDetails', 'title ');
     next();
 });
 // Pre-save: Calculate totals and update stock
