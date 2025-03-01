@@ -151,6 +151,7 @@ invoiceSchema.pre(/^find/, function (next) {
 //         session.endSession();
 //     }
 // });
+
 invoiceSchema.pre('save', async function (next) {
     const session = await mongoose.startSession();
     session.startTransaction();
