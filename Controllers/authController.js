@@ -54,50 +54,55 @@ const createSendToken = (user, statusCode, res) => {
 //   createSendToken(newUser, 201, res);
 // });
 
-exports.signup = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm,role } = req.body;
-  if (password !== passwordConfirm) {
-    return next(new AppError('Passwords do not match', 400));
-  }
-  const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-  const newUser = await User.create({
-    name,
-    email,
-    password: hashedPassword, // Store the hashed password
-    passwordConfirm: hashedPassword, // Corrected: Store hashed password for passwordConfirm as well (or remove passwordConfirm from schema if not needed)
-    role,
-  });
-  createSendToken(newUser, 201, res);
-});
-
 // exports.signup = catchAsync(async (req, res, next) => {
-//   console.log(req.body);
-//   const { name, email, password, passwordConfirm } = req.body;
+//   const { name, email, password, passwordConfirm,role } = req.body;
 //   if (password !== passwordConfirm) {
 //     return next(new AppError('Passwords do not match', 400));
 //   }
-//   // const hashedPassword = await bcrypt.hash(password, 10);
+//   const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
 //   const newUser = await User.create({
 //     name,
 //     email,
-//     password,
-//     passwordConfirm:hashedPassword,
-//     role: 'user', 
+//     password: hashedPassword, // Store the hashed password
+//     passwordConfirm: hashedPassword, // Corrected: Store hashed password for passwordConfirm as well (or remove passwordConfirm from schema if not needed)
+//     role,
 //   });
-
 //   createSendToken(newUser, 201, res);
 // });
 
+exports.signup = catchAsync(async (req, res, next) => {
+  console.log(req.body);
+  const { name, email, password, passwordConfirm } = req.body;
+  if (password !== passwordConfirm) {
+    return next(new AppError('Passwords do not match', 400));
+  }
+  // const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = await User.create({
+    name,
+    email,
+    password,
+    passwordConfirm,
+    role: 'user', 
+  });
+
+  createSendToken(newUser, 201, res);
+});
+
 exports.login = catchAsync(async (req, res, next) => {
+  console.log(req.body)
   const { email, password } = req.body;
   if (!email || !password) {
     return next(new AppError('Please provide email and password', 400));
   }
 
   const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!user) {
     return next(new AppError('Invalid email or password', 401));
   }
+  // const user = await User.findOne({ email }).select('+password');
+  // if (!user || !(await bcrypt.compare(password, user.password))) {
+  //   return next(new AppError('Invalid email or password', 401));
+  // }
 
   // Optional: Add 2FA check here if enabled
   createSendToken(user, 200, res);
