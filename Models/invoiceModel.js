@@ -57,6 +57,100 @@ invoiceSchema.pre(/^find/, function (next) {
     next();
 });
 // Pre-save: Calculate totals and update stock
+// invoiceSchema.pre('save', async function (next) {
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+//     try {
+//         if (!this.dueDate) {
+//             this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+//         }
+//         let subTotal = 0, totalDiscount = 0, totalGst = 0;
+
+//         for (const item of this.items) {
+//             const product = await Product.findById(item.product).session(session);
+//             if (!product) throw new Error(`Product ${item.product} not found`);
+//             if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
+
+//             item.rate = product.rate ?? 0; // Ensure product.rate exists
+//             item.gstRate = product.gstRate ?? 0;
+
+//             item.taxableValue = item.quantity * item.rate;
+//             const discountedTaxableValue = item.taxableValue - (item.taxableValue * item.discount / 100);
+//             item.gstAmount = (discountedTaxableValue * item.gstRate) / 100;
+//             item.amount = discountedTaxableValue + item.gstAmount;
+
+//             subTotal += item.taxableValue;
+//             totalDiscount += (item.taxableValue * item.discount / 100);
+//             totalGst += item.gstAmount;
+
+//             product.stock -= item.quantity;
+//             await product.save({ session });
+//         }
+
+//         this.subTotal = subTotal;
+//         this.totalDiscount = totalDiscount;
+//         this.gst = totalGst;
+//         this.totalAmount = subTotal + totalGst - totalDiscount;
+
+//         await session.commitTransaction();
+//         next();
+//     } catch (error) {
+//         await session.abortTransaction();
+//         next(error);
+//     } finally {
+//         session.endSession();
+//     }
+// });
+
+// 
+// invoiceSchema.pre('save', async function (next) {
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+//     try {
+//         if (!this.dueDate) {
+//             this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+//         }
+//         let subTotal = 0, totalDiscount = 0, totalGst = 0;
+
+//         for (const item of this.items) {
+//             const product = await Product.findById(item.product).session(session);
+//             if (!product) throw new Error(`Product ${item.product} not found`);
+//             if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
+
+//             // Only set item.rate if it's not already set or is null/undefined
+//             if (item.rate == null || item.rate == undefined) {
+//                 item.rate = product.rate ?? 0;
+//             }
+
+//             item.gstRate = product.gstRate ?? 0;
+
+//             item.taxableValue = item.quantity * item.rate;
+//             const discountedTaxableValue = item.taxableValue - (item.taxableValue * item.discount / 100);
+//             item.gstAmount = (discountedTaxableValue * item.gstRate) / 100;
+//             item.amount = discountedTaxableValue + item.gstAmount;
+
+//             subTotal += item.taxableValue;
+//             totalDiscount += (item.taxableValue * item.discount / 100);
+//             totalGst += item.gstAmount;
+
+//             product.stock -= item.quantity;
+//             await product.save({ session });
+//         }
+
+//         this.subTotal = subTotal;
+//         this.totalDiscount = totalDiscount;
+//         this.gst = totalGst;
+//         this.totalAmount = subTotal + totalGst - totalDiscount;
+
+//         await session.commitTransaction();
+//         next();
+//     } catch (error) {
+//         await session.abortTransaction();
+//         next(error);
+//     } finally {
+//         session.endSession();
+//     }
+// });
 invoiceSchema.pre('save', async function (next) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -71,9 +165,17 @@ invoiceSchema.pre('save', async function (next) {
             if (!product) throw new Error(`Product ${item.product} not found`);
             if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
 
-            item.rate = product.rate ?? 0; // Ensure product.rate exists
-            item.gstRate = product.gstRate ?? 0;
+            // If rate is not provided, use the product rate as default.
+            if (item.rate == null || item.rate == undefined) {
+                item.rate = product.rate ?? 0;
+            }
 
+            // If gstRate is not provided, use the product gstRate as default.
+            if (item.gstRate == null || item.gstRate == undefined) {
+                item.gstRate = product.gstRate ?? 0;
+            }
+
+            // Discount is always taken from the item, no default needed.
             item.taxableValue = item.quantity * item.rate;
             const discountedTaxableValue = item.taxableValue - (item.taxableValue * item.discount / 100);
             item.gstAmount = (discountedTaxableValue * item.gstRate) / 100;
@@ -102,6 +204,10 @@ invoiceSchema.pre('save', async function (next) {
     }
 });
 
+
+
+
+// ////////////
 // Post-save: Update customer cart
 invoiceSchema.post('save', async function (doc) {
     const session = await mongoose.startSession();

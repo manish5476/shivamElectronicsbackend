@@ -10,7 +10,6 @@ exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
     }
     next();
 });
-
 // exports.newInvoice = handleFactory.newOne(Invoice);
 
 exports.newInvoice = [
@@ -124,6 +123,7 @@ const productSalesStatistics = async (startDate, endDate) => {
 
 exports.getProductSales = async (req, res, next) => {
     const { startDate, endDate } = req.body;
+
     if (!startDate || !endDate) {
         return next(new AppError('Please provide startDate and endDate in the request body', 400));
     }
