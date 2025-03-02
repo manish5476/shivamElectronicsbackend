@@ -82,10 +82,16 @@ exports.signup = catchAsync(async (req, res, next) => {
     email,
     password,
     passwordConfirm,
-    role: 'user', 
+    role, 
   });
 
-  createSendToken(newUser, 201, res);
+  userdata={
+    name:newUser.name,
+    email:newUser.email,
+    role:newUser.role,
+  }
+
+  createSendToken(userdata, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {

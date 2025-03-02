@@ -56,6 +56,7 @@ exports.uploadProfileImage = [
     if (!customer) return next(new AppError('Customer not found', 404));
     res.status(200).json({
       status: 'success',
+      statusCode:200,
       message: 'Profile image uploaded successfully',
       data: { profileImg: publicURL },
     });
@@ -98,6 +99,7 @@ exports.newCustomer = [
         );
         return res.status(200).json({
           status: 'success',
+          statusCode:200,
           message: 'Customer reactivated successfully',
           data: customer,
         });
@@ -108,6 +110,7 @@ exports.newCustomer = [
     customer = await Customer.create({ email, phoneNumbers, fullname, ...otherData });
     res.status(201).json({
       status: 'success',
+      statusCode:201,
       message: 'Customer created successfully',
       data: customer,
     });
@@ -119,18 +122,16 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
   // Get the customer with up-to-date totals first
   let customer = await Customer.getUserWithTotals({ _id: req.params.id });
   if (!customer) return next(new AppError('Customer not found with this Id', 404));
-
   // Now update the remaining amount by subtracting completed payments
   customer = await Customer.updateRemainingAmount(customer._id);
   if (!customer) return next(new AppError('Failed to update remaining amount', 500));
-
   // Optionally, restrict access to own data for non-admin users
   if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
     return next(new AppError('You can only view your own profile', 403));
   }
-
   res.status(200).json({
     status: 'success',
+    statusCode:200,
     data: customer,
   });
 });
@@ -141,6 +142,7 @@ exports.getAllCustomer = catchAsync(async (req, res, next) => {
   const customers = await Customer.find();
   res.status(200).json({
     status: 'success',
+    statusCode:200,
     results: customers.length,
     data: customers,
   });
@@ -154,6 +156,7 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   if (!customer) return next(new AppError('Customer not found with Id', 404));
   res.status(201).json({
     status: 'success',
+    statusCode:201,
     data: customer,
   });
 });
@@ -163,6 +166,7 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
   if (!customer) return next(new AppError('Customer not found with Id', 404));
   res.status(200).json({
     status: 'success',
+    statusCode:200,
     message: 'Customer deleted successfully',
     data: null,
   });
@@ -174,6 +178,7 @@ exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
     .lean();
   res.status(200).json({
     status: 'success',
+    statusCode:200,
     results: customers.length,
     data: { customersdrop: customers },
   });
@@ -181,28 +186,23 @@ exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
 
 exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
   const ids = req.body.ids;
-
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return next(new AppError('No valid IDs provided for deactivation.', 400));
   }
-
   const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
-
   if (validIds.length === 0) {
     return next(new AppError('No valid IDs provided.', 400));
   }
-
   const result = await Customer.updateMany(
     { _id: { $in: validIds } },
     { status: 'inactive' }
   );
-
   if (result.matchedCount === 0) {
     return next(new AppError(`No customers found with the provided IDs.`, 404));
   }
-
   res.status(200).json({
     status: 'success',
+    statusCode:200,
     message: `${result.modifiedCount} customers deactivated successfully.`,
   });
 });

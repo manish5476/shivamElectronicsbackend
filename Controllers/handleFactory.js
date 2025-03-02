@@ -10,6 +10,7 @@ exports.deleteOne = (Model) =>
     }
     res.status(200).json({
       status: "success",
+      statusCode: 200,
       message: `${Model} deleted successfully`,
       data: null,
     });
@@ -26,6 +27,7 @@ exports.updateOne = (Model) =>
     }
     res.status(201).json({
       status: "success",
+      statusCode: 200,
       data: doc,
     });
   });
@@ -38,6 +40,7 @@ exports.newOne = (Model) =>
     }
     res.status(201).json({
       status: "success",
+      statusCode: 200,
       data: {
         data: doc,
       },
@@ -56,6 +59,7 @@ exports.getOne = (Model, autoPopulateOptions) =>
     }
     res.status(200).json({
       status: "success",
+      statusCode: 200,
       data: doc,
     });
   });
@@ -70,6 +74,7 @@ exports.getAll = (Model) =>
     const docs = await features.query;
     res.status(200).json({
       status: "success",
+      statusCode: 200,
       results: docs.length,
       data: docs,
     });
@@ -94,6 +99,7 @@ exports.deleteMultipleProduct = (Model) =>
 
     res.status(200).json({
       status: "success",
+      statusCode: 200,
       message: `${result.deletedCount} ${Model} deleted successfully.`,
     });
   });
@@ -107,6 +113,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     }
 //     res.status(200).json({
 //       Status: "success",
+// statusCode: 200,
 //       message: "Data deleted successfully",
 //       data: null,
 //     });
@@ -147,6 +154,7 @@ exports.deleteMultipleProduct = (Model) =>
 //   //     // 4. Send a success response
 //   //     res.status(200).json({
 //   //       status: "success",
+// statusCode: 200,
 //   //       message: `${result.deletedCount} documents deleted successfully.`,
 //   //       data: null, // Important for security
 //   //     });
@@ -164,6 +172,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     }
 //     res.status(201).json({
 //       status: "Success",
+// statusCode: 200,
 //       data: doc,
 //     });
 //   });
@@ -177,6 +186,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     }
 //     res.status(201).json({
 //       status: "success",
+// statusCode: 200,
 //       data: {
 //         data: doc,
 //       },
@@ -196,6 +206,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     }
 //     res.status(200).json({
 //       status: "success",
+// statusCode: 200,
 //       length: doc.length,
 //       data: doc,
 //     });
@@ -222,6 +233,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     // const doc = await data.query.explain();
 //     res.status(200).json({
 //       status: "success",
+// statusCode: 200,
 //       result: doc.length,
 //       data: { doc },
 //     });
@@ -252,6 +264,7 @@ exports.deleteMultipleProduct = (Model) =>
 //     // Respond with the results
 //     res.status(200).json({
 //       status: "success",
+// statusCode: 200,
 //       result: docs.length,
 //       data: docs,
 //     });
@@ -276,7 +289,8 @@ exports.deleteMultipleProduct = (Model) =>
 //       if (!ids || !Array.isArray(ids) || ids.length === 0) {
 //         return res.status(400).json({
 //           status: "fail",
-//           message: "No valid IDs provided.",
+//
+// statusCode:200,           message: "No valid IDs provided.",
 //         });
 //       }
 
@@ -286,12 +300,14 @@ exports.deleteMultipleProduct = (Model) =>
 //       if (result.deletedCount > 0) {
 //         return res.status(200).json({
 //           status: "success",
+// statusCode: 200,
 //           message: `${result.deletedCount} documents deleted successfully.`,
 //         });
 //       } else {
 //         return res.status(404).json({
 //           status: "fail",
-//           message: "No documents found with the given IDs.",
+//
+// statusCode:200,           message: "No documents found with the given IDs.",
 //         });
 //       }
 //     } catch (error) {
