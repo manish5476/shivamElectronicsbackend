@@ -73,7 +73,7 @@ const productSchema = new mongoose.Schema({
 
 // Indexes
 productSchema.index({ price: 1 });
-productSchema.index({ slug: 1 });
+// productSchema.index({ slug: 1 });
 
 // Virtual for final price
 productSchema.virtual('finalPrice').get(function () {

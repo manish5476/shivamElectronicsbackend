@@ -5,7 +5,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const xss = require('xss');
 const hpp = require('hpp');
 const cors = require('cors');
 const compression = require('compression');
@@ -53,10 +53,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Rate Limiter
+// const limiter = rateLimit({
+//   max: 500,
+//   windowMs: 60 * 60 * 1000,
+//   message: 'Too many requests from this IP, please try again in an hour',
+// });
 const limiter = rateLimit({
-  max: 500,
+  limit: 500, // Changed from `max` to `limit`
   windowMs: 60 * 60 * 1000,
-  message: 'Too many requests from this IP, please try again in an hour',
+  message: { error: 'Too many requests from this IP, please try again in an hour' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/v1', limiter);
 
@@ -65,10 +72,22 @@ app.use(express.json({ limit: '10kb' }));
 app.use(compression());
 
 // Data Sanitization
-app.use(mongoSanitize());
-app.use(xss());
+// app.use(mongoSanitize());
+// app.use(xss());
+// app.use(hpp({ whitelist: ['duration', 'limit', 'average'] }));
+
+
+function sanitizeRequest(req, res, next) {
+  req.body = JSON.parse(JSON.stringify(req.body), (key, value) =>
+    typeof value === 'string' ? xss(value) : value
+  );
+  next();
+}
+
+app.use(sanitizeRequest);
 app.use(hpp({ whitelist: ['duration', 'limit', 'average'] }));
 
+// 
 // Static Files
 app.use('/public', express.static(`${__dirname}/public`, { maxAge: '1d', dotfiles: 'deny' }));
 
