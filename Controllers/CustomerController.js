@@ -116,25 +116,25 @@ exports.newCustomer = [
   }),
 ];
 
-exports.getCustomerById = handleFactory.getOne(Customer);
+// exports.getCustomerById = handleFactory.getOne(Customer);
 // In customerController.js
-// exports.getCustomerById = catchAsync(async (req, res, next) => {
-//   // Get the customer with up-to-date totals first
-//   let customer = await Customer.getUserWithTotals({ _id: req.params.id });
-//   if (!customer) return next(new AppError('Customer not found with this Id', 404));
-//   // Now update the remaining amount by subtracting completed payments
-//   customer = await Customer.updateRemainingAmount(customer._id);
-//   if (!customer) return next(new AppError('Failed to update remaining amount', 500));
-//   // Optionally, restrict access to own data for non-admin users
-//   if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
-//     return next(new AppError('You can only view your own profile', 403));
-//   }
-//   res.status(200).json({
-//     status: 'success',
-//     statusCode:200,
-//     data: customer,
-//   });
-// });
+exports.getCustomerById = catchAsync(async (req, res, next) => {
+  // Get the customer with up-to-date totals first
+  let customer = await Customer.getUserWithTotals({ _id: req.params.id });
+  if (!customer) return next(new AppError('Customer not found with this Id', 404));
+  // Now update the remaining amount by subtracting completed payments
+  customer = await Customer.updateRemainingAmount(customer._id);
+  if (!customer) return next(new AppError('Failed to update remaining amount', 500));
+  // Optionally, restrict access to own data for non-admin users
+  if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
+    return next(new AppError('You can only view your own profile', 403));
+  }
+  res.status(200).json({
+    status: 'success',
+    statusCode: 200,
+    data: customer,
+  });
+});
 
 exports.getAllCustomer = handleFactory.getAll(Customer);
 // exports.getAllCustomer = catchAsync(async (req, res, next) => {

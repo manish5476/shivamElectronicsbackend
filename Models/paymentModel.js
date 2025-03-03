@@ -148,10 +148,10 @@ paymentSchema.post('save', async function (doc) {
     console.error("Error in post-save hook:", error);
   }
 });
+
 async function calculateRemainingAmount(customerId) {
   try {
     const customer = await Customer.findById(customerId).populate('paymentHistory');
-
     if (!customer) {
       console.log("Customer not found");
       return;
@@ -159,11 +159,8 @@ async function calculateRemainingAmount(customerId) {
 
     let totalPaid = 0;
     if (customer.paymentHistory) {
-      customer.paymentHistory.forEach(paymentId => {
-        const payment = customer.paymentHistory.find(payment => payment._id.toString() === paymentId.toString());
-        if (payment && payment.status === 'completed') {
-          totalPaid += payment.amount;
-        }
+      customer.paymentHistory.forEach(payment => { // Direct iteration over payment documents
+        totalPaid += payment.amount;
       });
     }
 
@@ -174,78 +171,31 @@ async function calculateRemainingAmount(customerId) {
   }
 }
 
+// async function calculateRemainingAmount(customerId) {
+//   try {
+//     const customer = await Customer.findById(customerId).populate('paymentHistory');
+//     if (!customer) {
+//       console.log("Customer not found");
+//       return;
+//     }
+
+//     let totalPaid = 0;
+//     if (customer.paymentHistory) {
+//       customer.paymentHistory.forEach(paymentId => {
+//         const payment = customer.paymentHistory.find(payment => payment._id.toString() === paymentId.toString());
+//         // if (payment && payment.status === 'completed') {
+//         totalPaid += payment.amount;
+//         // }
+//       });
+//     }
+
+//     customer.remainingAmount = customer.totalPurchasedAmount - totalPaid;
+//     await customer.save();
+//   } catch (err) {
+//     console.log("Error calculating remaining amount:", err);
+//   }
+// }
+
 const Payment = mongoose.model('Payment', paymentSchema);
 module.exports = Payment;
 
-// // const mongoose = require('mongoose');
-// // const Schema = mongoose.Schema;
-
-// // const paymentSchema = new Schema({
-// //   userCode: {
-// //     type: String,
-// //     required: [true, 'User code is required'],
-// //     index: true
-// //   },
-// //   amount: {
-// //     type: Number,
-// //     required: [true, 'Amount is required'],
-// //     min: [0, 'Amount cannot be negative']
-// //   },
-// //   paymentMethod: {
-// //     type: String,
-// //     required: true,
-// //     enum: ['credit_card', 'debit_card', 'upi', 'crypto', 'bank_transfer']
-// //   },
-// //   status: {
-// //     type: String,
-// //     default: 'pending',
-// //     enum: ['pending', 'completed', 'failed', 'refunded']
-// //   },
-// //   transactionId: {
-// //     type: String,
-// //     unique: true,
-// //     sparse: true
-// //   },
-// //   createdAt: {
-// //     type: Date,
-// //     default: Date.now
-// //   },
-// //   updatedAt: {
-// //     type: Date,
-// //     default: Date.now
-// //   },
-// //   metadata: {
-// //     type: Schema.Types.Mixed,
-// //     default: {}
-// //   },
-// //   description: {
-// //     type: String,
-// //     maxlength: 200
-// //   }
-// // }, {
-// //   timestamps: true // Auto-manage createdAt and updatedAt
-// // });
-
-// // paymentSchema.index({ userCode: 1, createdAt: -1 });
-// // paymentSchema.virtual('formattedAmount').get(function() {
-// //   return `${this.currency} ${this.amount.toFixed(2)}`;
-// // });
-
-// // paymentSchema.methods.isSuccessful = function() {
-// //   return this.status === 'completed';
-// // };
-
-// // paymentSchema.statics.findByUserCode = function(userCode) {
-// //   return this.find({ userCode }).sort({ createdAt: -1 });
-// // };
-
-// // paymentSchema.pre('save', function(next) {
-// //   if (!this.transactionId) {
-// //     this.transactionId = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-// //   }
-// //   next();
-// // });
-
-// // const Payment = mongoose.model('Payment', paymentSchema);
-
-// // module.exports = Payment;
