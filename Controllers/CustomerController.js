@@ -136,16 +136,32 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllCustomer = handleFactory.getAll(Customer);
-// exports.getAllCustomer = catchAsync(async (req, res, next) => {
-//   const customers = await Customer.find();
-//   res.status(200).json({
-//     status: 'success',
-//     statusCode:200,
-//     results: customers.length,
-//     data: customers,
-//   });
-// });
+exports.getAllCustomer = catchAsync(async (req, res, next) => {
+  const customers = await Customer.find(); // Fetch all customers using the standard method
+  // Use Promise.all to process each customer with getUserWithTotals concurrently
+  const customersWithTotals = await Promise.all(
+    customers.map(async (customer) => {
+      return await Customer.getUserWithTotals({ _id: customer._id });
+    })
+  );
+
+  res.status(200).json({
+    status: 'success',
+    statusCode: 200,
+    results: customersWithTotals.length, // Use the length of the updated array
+    data: customersWithTotals, // Send the array with updated customer data
+  });
+});
+// exports.getAllCustomer = handleFactory.getAll(Customer);
+// // exports.getAllCustomer = catchAsync(async (req, res, next) => {
+// //   const customers = await Customer.find();
+// //   res.status(200).json({
+// //     status: 'success',
+// //     statusCode:200,
+// //     results: customers.length,
+// //     data: customers,
+// //   });
+// // });
 
 exports.updateCustomer = handleFactory.updateOne(Customer);
 // exports.updateCustomer = catchAsync(async (req, res, next) => {
