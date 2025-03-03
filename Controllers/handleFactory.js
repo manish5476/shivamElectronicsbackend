@@ -104,6 +104,22 @@ exports.deleteMultipleProduct = (Model) =>
     });
   });
 
+exports.getModelDropdownWithoutStatus = (Model, fields) => catchAsync(async (req, res, next) => {
+  try {
+    const documents = await Model.find()
+      .select(fields.join(' ') + ' _id')
+      .lean();
+
+    res.status(200).json({
+      status: 'success',
+      statusCode: 200,
+      results: documents.length,
+      data: { dropdown: documents },
+    });
+  } catch (error) {
+    return next(new AppError('Failed to fetch dropdown data', 500));
+  }
+});
 
 // exports.deleteOne = (Model) =>
 //   catchAsync(async (req, res, next) => {
