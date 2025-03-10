@@ -45,12 +45,12 @@ exports.signup = catchAsync(async (req, res, next) => {
     return next(new AppError('Passwords do not match', 400));
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = await User.create({
     name,
     email,
-    password: hashedPassword,
-    passwordConfirm: hashedPassword,
+    password,
+    passwordConfirm,
     role,
   });
 
