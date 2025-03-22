@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const Invoice = require('./invoiceModel');
 const Product = require('./productModel');
 const customerSchema = new Schema({
+
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     status: {

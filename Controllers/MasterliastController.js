@@ -24,6 +24,7 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const Customer = require("../Models/customerModel")
 const Payment = require("../Models/paymentModel")
 const Invoice = require("../Models/invoiceModel")
+
 exports.getMasterList = catchAsync(async (req, res, next) => {
     const productPromise = Product.find().select('title sku _id');
     const userPromise = User.find().select('name email _id');

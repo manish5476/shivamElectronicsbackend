@@ -15,6 +15,7 @@ router.post('/', authController.restrictTo('admin', 'staff'), customerController
 router.patch('/:id', authController.restrictTo('admin', 'staff'), customerController.updateCustomer); // Update customer
 router.delete('/:id', authController.restrictTo('admin', 'staff'), customerController.deleteCustomer); // Delete customer
 // router.delete('/deletemany', authController.restrictTo('admin', 'staff'), customerController.deleteMultipleCustomer); // Delete multiple customers
-router.get('/dropdown', authController.restrictTo('admin', 'staff'), customerController.getCustomerDropdown); // Dropdown for admins
+router.get('/customerDropDown', customerController.getCustomerDropdown); // Dropdown for admins
+// authController.restrictTo('admin', 'staff'),
 
 module.exports = router;
