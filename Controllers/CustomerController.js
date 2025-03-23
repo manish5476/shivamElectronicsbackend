@@ -224,12 +224,3 @@ exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
     message: `${result.modifiedCount} customers deactivated successfully.`,
   });
 });
-
-// CRUD operations using handleFactory
-// exports.getAllCustomer = handleFactory.getAll(Customer);
-// exports.getCustomerById = handleFactory.getOne(Customer);
-// exports.newCustomer = handleFactory.newOne(Customer);
-// exports.updateCustomer = handleFactory.updateOne(Customer);
-// exports.deleteCustomer = handleFactory.deleteOne(Customer);
-// exports.deleteMultipleCustomer = handleFactory.deleteMultipleProduct(Customer);
-

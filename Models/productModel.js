@@ -95,6 +95,12 @@ productSchema.pre('save', function (next) {
   next();
 });
 
+productSchema.virtual("reviews", {
+  ref: "Review",
+  foreignField: "product",
+  localField: "_id",
+});
+
 const Product = mongoose.model('Product', productSchema);
 module.exports = Product;
 // const mongoose = require("mongoose");
