@@ -1,4 +1,3 @@
-
 require('dotenv').config({ path: './.env' });
 const express = require('express');
 const morgan = require('morgan');
@@ -19,16 +18,29 @@ const customerRoutes = require('./routes/customerRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const invoiceRoutes = require('./routes/InvoiceRoutes');
+const masterListRoutes = require('./routes/masterListRoutes');
 
 const app = express();
 
 // Logger Setup
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
   transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
+    new winston.transports.File({ 
+      filename: 'logs/error.log', 
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    }),
+    new winston.transports.File({ 
+      filename: 'logs/combined.log',
+      maxsize: 5242880,
+      maxFiles: 5,
+    }),
   ],
 });
 
@@ -72,9 +84,9 @@ app.use(express.json({ limit: '10kb' }));
 app.use(compression());
 
 // Data Sanitization
-// app.use(mongoSanitize());
-// app.use(xss());
-// app.use(hpp({ whitelist: ['duration', 'limit', 'average'] }));
+app.use(mongoSanitize());
+app.use(xss());
+app.use(hpp({ whitelist: ['duration', 'limit', 'average'] }));
 
 
 function sanitizeRequest(req, res, next) {
@@ -113,6 +125,7 @@ app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/sellers', sellerRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
+app.use('/api/v1/master-list', masterListRoutes);
 
 // Catch-All Route
 app.all('*', (req, res, next) => {
