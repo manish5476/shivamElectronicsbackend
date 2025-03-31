@@ -19,6 +19,8 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const invoiceRoutes = require('./routes/InvoiceRoutes');
 const masterListRoutes = require('./routes/masterListRoutes');
+const statisticsRoutes = require('./routes/statisticsRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
@@ -126,6 +128,8 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/sellers', sellerRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/master-list', masterListRoutes);
+app.use('/api/v1/statistics', statisticsRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Catch-All Route
 app.all('*', (req, res, next) => {
