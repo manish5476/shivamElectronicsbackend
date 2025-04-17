@@ -87,7 +87,7 @@ app.use(compression());
 
 // Data Sanitization
 app.use(mongoSanitize());
-app.use(xss());
+// app.use(xss());
 app.use(hpp({ whitelist: ['duration', 'limit', 'average'] }));
 
 
