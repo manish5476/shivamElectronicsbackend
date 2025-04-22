@@ -51,7 +51,8 @@ app.use(helmet());
 
 // CORS Configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'https://shivam-electronics-eyaaw4p4i-manish-singhs-projects-9b7a09ca.vercel.app',
+  // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'https://shivam-electronics-eyaaw4p4i-manish-singhs-projects-9b7a09ca.vercel.app',
+  origin: '*', // Allow all origins
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization',
   credentials: true,
