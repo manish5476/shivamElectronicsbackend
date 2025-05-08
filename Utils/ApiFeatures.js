@@ -12,32 +12,75 @@ class ApiFeatures {
       this.query = {}; // Initialize as an empty object if not already defined
     }
 
-    const queryObj = { ...this.queryString };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((el) => delete queryObj[el]);
+    // Handle nested filter object
+    let filterObj = {};
+    if (this.queryString.filter) {
+      filterObj = { ...this.queryString.filter };
+    } else {
+      // If no filter object, use the entire queryString
+      filterObj = { ...this.queryString };
+    }
 
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt|ne|in)\b/g, (match) => `$${match}`);
+    // Remove pagination, sorting, and field limiting parameters
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'filter'];
+    excludedFields.forEach((el) => delete filterObj[el]);
 
-    const query = JSON.parse(queryStr);
+    // Handle empty filter object
+    if (Object.keys(filterObj).length === 0) {
+      this.query = this.query.find({});
+      return this;
+    }
 
-    // Handle multiple values and nested queries
-    Object.keys(query).forEach((key) => {
-      if (typeof query[key] === 'string' && query[key].includes(',')) {
-        query[key] = { $in: query[key].split(',').map(item => item.trim()) };
-      } else if (key.includes('.')) {
-        // Handle nested queries, e.g., 'author.name' = 'John'
+    // Process each field in the filter
+    Object.keys(filterObj).forEach((key) => {
+      const value = filterObj[key];
+      
+      // Handle regex search
+      if (value && typeof value === 'object' && value.regex) {
+        filterObj[key] = { $regex: value.regex, $options: 'i' };
+      }
+      // Handle numeric comparisons
+      else if (value && typeof value === 'object') {
+        const operators = ['gte', 'gt', 'lte', 'lt', 'ne', 'in', 'nin'];
+        operators.forEach(op => {
+          if (value[op] !== undefined) {
+            filterObj[key] = { ...filterObj[key], [`$${op}`]: value[op] };
+          }
+        });
+      }
+      // Handle array values
+      else if (Array.isArray(value)) {
+        filterObj[key] = { $in: value };
+      }
+      // Handle comma-separated string values
+      else if (typeof value === 'string' && value.includes(',')) {
+        filterObj[key] = { $in: value.split(',').map(item => item.trim()) };
+      }
+      // // Handle nested queries
+      // if (key.includes('.')) {
+      //   const nestedKeys = key.split('.');
+      //   let tempQuery = filterObj;
+      //   for (let i = 0; i < nestedKeys.length - 1; i++) {
+      //     tempQuery = tempQuery[nestedKeys[i]] = tempQuery[nestedKeys[i]] || {};
+      //   }
+      //   tempQuery[nestedKeys[nestedKeys.length - 1]] = filterObj[key];
+      //   delete filterObj[key];
+      // }
+      if (key.includes('.')) {
         const nestedKeys = key.split('.');
-        let tempQuery = query;
+        let tempQuery = filterObj;
         for (let i = 0; i < nestedKeys.length - 1; i++) {
           tempQuery = tempQuery[nestedKeys[i]] = tempQuery[nestedKeys[i]] || {};
         }
-        tempQuery[nestedKeys[nestedKeys.length - 1]] = query[key];
-        delete query[key];
+        tempQuery[nestedKeys[nestedKeys.length - 1]] = value; // use original value
+        delete filterObj[key];
+      } else {
+        filterObj[key] = value; // set it only if not nested
       }
+      
     });
 
-    this.query = this.query.find(query);
+    this.query = this.query.find(filterObj);
     return this;
   }
 
@@ -69,7 +112,6 @@ class ApiFeatures {
     if (skip < 0) {
       throw new Error('Invalid page number');
     }
-
     this.query = this.query.skip(skip).limit(limit);
     return this;
   }

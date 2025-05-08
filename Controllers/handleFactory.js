@@ -66,7 +66,13 @@ exports.getOne = (Model, autoPopulateOptions) =>
 
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
-    const features = new ApiFeatures(Model.find(), req.query)
+    // Combine query parameters and request body for filtering
+    const filterParams = {
+      ...req.query,
+      ...req.body
+    };
+
+    const features = new ApiFeatures(Model.find(), filterParams)
       .filter()
       .sort()
       .limitFields()
@@ -79,7 +85,39 @@ exports.getAll = (Model) =>
       data: docs,
     });
   });
+// utils/handleFactory.js
 
+// exports.getAll = (Model, options = {}) =>
+//   catchAsync(async (req, res, next) => {
+//     const filterParams = {
+//       ...req.query,
+//       ...req.body
+//     };
+
+//     const features = new ApiFeatures(Model.find(), filterParams)
+//       .filter()
+//       .sort()
+//       .limitFields()
+//       .paginate();
+
+//     let docs = await features.query;
+
+//     // ✅ Optional post-processing hook (e.g., enrich customer data)
+//     if (options.afterEach && typeof options.afterEach === 'function') {
+//       docs = await Promise.all(
+//         docs.map(async (doc) => await options.afterEach(doc))
+//       );
+//     }
+
+//     res.status(200).json({
+//       status: "success",
+//       statusCode: 200,
+//       results: docs.length,
+//       data: docs,
+//     });
+//   });
+
+  
 exports.deleteMultipleProduct = (Model) =>
   catchAsync(async (req, res, next) => {
     const ids = req.body.ids;

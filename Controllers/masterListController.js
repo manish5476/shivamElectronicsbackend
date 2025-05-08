@@ -19,18 +19,11 @@ const formatResponse = (data, label) => {
 
 exports.getMasterList = catchAsync(async (req, res, next) => {
     // Get all data in parallel for better performance
-    const [
-        products,
-        users,
-        sellers,
-        customers,
-        payments,
-        invoices
-    ] = await Promise.all([
+    const [ products, users, sellers, customers, payments, invoices] = await Promise.all([
         Product.find().select('title sku _id category brand price stock'),
         User.find().select('name email _id role department'),
         Seller.find().select('name shopname _id email phone'),
-        Customer.find().select('fullname phoneNumbers _id email address'),
+        Customer.find().select('fullname phoneNumbers _id email address guaranteerId'),
         Payment.find().select('customerId customerName phoneNumbers amount status'),
         Invoice.find().select('invoiceNumber seller buyer totalAmount status date')
     ]);
@@ -73,7 +66,7 @@ exports.getModuleMasterList = catchAsync(async (req, res, next) => {
             break;
         case 'customers':
             query = Customer;
-            selectFields = 'fullname phoneNumbers _id email address';
+            selectFields = 'fullname phoneNumbers _id email address guaranteerId';
             break;
         case 'payments':
             query = Payment;

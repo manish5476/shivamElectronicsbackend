@@ -11,23 +11,40 @@ exports.findDuplicateProduct = catchAsync(async (req, res, next) => {
   }
   next();
 });
+exports.getProductDropdownWithId = catchAsync(async (req, res, next) => {
+  const products = await Product.find().select('title _id');
+  res.status(200).json({
+    status: 'success',
+    results: products.length,
+    data: { products },
+  });
+});
 
-exports.newProduct = [
-  body('title').notEmpty().withMessage('Title is required'),
-  body('sku').notEmpty().withMessage('SKU is required'),
-  body('rate').isNumeric().withMessage('Rate must be a number'),
-  catchAsync(async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return next(new AppError(errors.array().map(e => e.msg).join(', '), 400));
-    }
-    const product = await Product.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      data: product,
-    });
-  }),
-];
+exports.getAllProduct = handleFactory.getAll(Product, { path: "reviews" });
+exports.getProductById = handleFactory.getOne(Product, { path: "reviews" });
+exports.deleteProduct = handleFactory.deleteOne(Product);
+exports.updateProduct = handleFactory.updateOne(Product);
+exports.newProduct = handleFactory.newOne(Product);
+exports.deleteMultipleProduct = handleFactory.deleteMultipleProduct(Product)
+
+
+
+// exports.newProduct = [
+//   body('title').notEmpty().withMessage('Title is required'),
+//   body('sku').notEmpty().withMessage('SKU is required'),
+//   body('rate').isNumeric().withMessage('Rate must be a number'),
+//   catchAsync(async (req, res, next) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       return next(new AppError(errors.array().map(e => e.msg).join(', '), 400));
+//     }
+//     const product = await Product.create(req.body);
+//     res.status(201).json({
+//       status: 'success',
+//       data: product,
+//     });
+//   }),
+// ];
 
 // exports.getAllProduct = catchAsync(async (req, res, next) => {
 //   const products = await Product.find();
@@ -69,22 +86,6 @@ exports.newProduct = [
 //   });
 // });
 
-exports.getProductDropdownWithId = catchAsync(async (req, res, next) => {
-  const products = await Product.find().select('title _id');
-  res.status(200).json({
-    status: 'success',
-    results: products.length,
-    data: { products },
-  });
-});
-
-exports.getAllProduct = handleFactory.getAll(Product, { path: "reviews" });
-exports.getProductById = handleFactory.getOne(Product, { path: "reviews" });
-exports.deleteProduct = handleFactory.deleteOne(Product);
-exports.updateProduct = handleFactory.updateOne(Product);
-// exports.newProduct = handleFactory.newOne(Product);
-
-exports.deleteMultipleProduct = handleFactory.deleteMultipleProduct(Product)
 
 // const { query } = require("express");
 // const Product = require("./../Models/productModel");

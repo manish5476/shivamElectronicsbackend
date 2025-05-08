@@ -2,7 +2,7 @@ const Invoice = require('../Models/invoiceModel');
 const catchAsync = require('../Utils/catchAsyncModule');
 const AppError = require('../Utils/appError');
 const { body, validationResult } = require('express-validator');
-// const handleFactory = require('./handleFactory')
+const handleFactory = require('./handleFactory')
 exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
     const existingInvoice = await Invoice.findOne({ invoiceNumber: req.body.invoiceNumber });
     if (existingInvoice) {
@@ -29,14 +29,14 @@ exports.newInvoice = [
     }),
 ];
 
-exports.getAllInvoice = catchAsync(async (req, res, next) => {
-    const invoices = await Invoice.find();
-    res.status(200).json({
-        status: 'success',
-        results: invoices.length,
-        data: invoices,
-    });
-});
+// exports.getAllInvoice = catchAsync(async (req, res, next) => {
+//     const invoices = await Invoice.find();
+//     res.status(200).json({
+//         status: 'success',
+//         results: invoices.length,
+//         data: invoices,
+//     });
+// });
 
 exports.getInvoiceById = catchAsync(async (req, res, next) => {
     const invoice = await Invoice.findById(req.params.id);
@@ -164,7 +164,7 @@ exports.getProductSales = async (req, res, next) => {
 // });
 
 
-// exports.getAllInvoice = handleFactory.getAll(Invoice);
+exports.getAllInvoice = handleFactory.getAll(Invoice);
 // exports.getInvoiceById = handleFactory.getOne(Invoice);
 // exports.newInvoice = handleFactory.newOne(Invoice);
 // exports.deleteInvoice = handleFactory.deleteOne(Invoice);

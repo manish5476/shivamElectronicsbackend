@@ -1,33 +1,4 @@
 
-// const user = await Customer.getUserWithTotals({ _id:req._id  });
-// console.log(user);
-
-// exports.uploadProfileImage = [
-//   upload.single('profileImg'),
-//   catchAsync(async (req, res, next) => {
-//     const customerId = req.params.id;
-//     const file = req.file;
-//     if (!file) return next(new AppError('No file uploaded', 400));
-
-//     const fileName = `${Date.now()}_${file.originalname}`;
-//     const { error } = await supabase.storage
-//       .from(process.env.SUPABASE_BUCKET)
-//       .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true });
-
-//     if (error) return next(new AppError('Failed to upload image', 500));
-
-//     const { publicURL } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(fileName);
-//     const customer = await Customer.findByIdAndUpdate(customerId, { profileImg: publicURL }, { new: true });
-
-//     if (!customer) return next(new AppError('Customer not found', 404));
-
-//     res.status(200).json({
-//       status: 'success',
-//       message: 'Profile image uploaded successfully',
-//       data: { profileImg: publicURL },
-//     });
-//   }),
-// ];
 const Customer = require('../Models/customerModel');
 const catchAsync = require('../Utils/catchAsyncModule');
 const AppError = require('../Utils/appError');
@@ -89,7 +60,6 @@ exports.newCustomer = [
     }
     const { email, phoneNumbers, fullname, ...otherData } = req.body;
     let customer = await Customer.findOne({ email });
-
     if (customer) {
       if (customer.status === 'inactive') {
         customer = await Customer.findByIdAndUpdate(
@@ -106,7 +76,6 @@ exports.newCustomer = [
       }
       return next(new AppError('Customer already active', 400));
     }
-
     customer = await Customer.create({ email, phoneNumbers, fullname, ...otherData });
     res.status(201).json({
       status: 'success',
@@ -116,8 +85,6 @@ exports.newCustomer = [
   }),
 ];
 
-// exports.getCustomerById = handleFactory.getOne(Customer);
-// In customerController.js
 exports.getCustomerById = catchAsync(async (req, res, next) => {
   // Get the customer with up-to-date totals first
   let customer = await Customer.getUserWithTotals({ _id: req.params.id });
@@ -125,7 +92,6 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
   // Now update the remaining amount by subtracting completed payments
   customer = await Customer.updateRemainingAmount(customer._id);
   if (!customer) return next(new AppError('Failed to update remaining amount', 500));
-  // Optionally, restrict access to own data for non-admin users
   if (req.user.role !== 'admin' && req.user._id.toString() !== customer._id.toString()) {
     return next(new AppError('You can only view your own profile', 403));
   }
@@ -136,71 +102,31 @@ exports.getCustomerById = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllCustomer = catchAsync(async (req, res, next) => {
-  const customers = await Customer.find(); // Fetch all customers using the standard method
-  // Use Promise.all to process each customer with getUserWithTotals concurrently
-  const customersWithTotals = await Promise.all(
-    customers.map(async (customer) => {
-      return await Customer.getUserWithTotals({ _id: customer._id });
-    })
-  );
+// exports.getAllCustomer = catchAsync(async (req, res, next) => {
+//   const customers = await Customer.find(); // Fetch all customers using the standard method
+//   const customersWithTotals = await Promise.all(
+//     customers.map(async (customer) => {
+//       return await Customer.getUserWithTotals({ _id: customer._id });
+//     })
+//   );
 
-  res.status(200).json({
-    status: 'success',
-    statusCode: 200,
-    results: customersWithTotals.length, // Use the length of the updated array
-    data: customersWithTotals, // Send the array with updated customer data
-  });
-});
-// exports.getAllCustomer = handleFactory.getAll(Customer);
-// // exports.getAllCustomer = catchAsync(async (req, res, next) => {
-// //   const customers = await Customer.find();
-// //   res.status(200).json({
-// //     status: 'success',
-// //     statusCode:200,
-// //     results: customers.length,
-// //     data: customers,
-// //   });
-// // });
 
-exports.updateCustomer = handleFactory.updateOne(Customer);
-// exports.updateCustomer = catchAsync(async (req, res, next) => {
-//   const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
-//     new: true,
-//     runValidators: true,
-//   });
-//   if (!customer) return next(new AppError('Customer not found with Id', 404));
-//   res.status(201).json({
-//     status: 'success',
-//     statusCode:201,
-//     data: customer,
-//   });
-// });
-
-exports.deleteCustomer = handleFactory.deleteOne(Customer);
-
-// exports.deleteCustomer = catchAsync(async (req, res, next) => {
-//   const customer = await Customer.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
-//   if (!customer) return next(new AppError('Customer not found with Id', 404));
 //   res.status(200).json({
 //     status: 'success',
-//     statusCode:200,
-//     message: 'Customer deleted successfully',
-//     data: null,
+//     statusCode: 200,
+//     results: customersWithTotals.length, // Use the length of the updated array
+//     data: customersWithTotals, // Send the array with updated customer data
 //   });
 // });
 
-exports.getCustomerDropdown = catchAsync(async (req, res, next) => {
-  const customers = await Customer.find({ status: { $ne: 'inactive' } })
-    .select('fullname _id email')
-    .lean();
-  res.status(200).json({
-    status: 'success',
-    statusCode: 200,
-    results: customers.length,
-    data: { customersdrop: customers },
-  });
-});
+// exports.getAllCustomer = handleFactory.getAll(Customer, {
+//   afterEach: async (customer) => {
+//     return await Customer.getUserWithTotals({ _id: customer._id });
+//   }
+// });
+exports.getAllCustomer = handleFactory.getAll(Customer)
+exports.updateCustomer = handleFactory.updateOne(Customer);
+exports.deleteCustomer = handleFactory.deleteOne(Customer);
 
 exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
   const ids = req.body.ids;
@@ -224,3 +150,38 @@ exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
     message: `${result.modifiedCount} customers deactivated successfully.`,
   });
 });
+
+// exports.updateCustomer = catchAsync(async (req, res, next) => {
+//   const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
+//     new: true,
+//     runValidators: true,
+//   });
+//   if (!customer) return next(new AppError('Customer not found with Id', 404));
+//   res.status(201).json({
+//     status: 'success',
+//     statusCode:201,
+//     data: customer,
+//   });
+// });
+
+// exports.getAllCustomer = handleFactory.getAll(Customer);
+// // exports.getAllCustomer = catchAsync(async (req, res, next) => {
+// //   const customers = await Customer.find();
+// //   res.status(200).json({
+// //     status: 'success',
+// //     statusCode:200,
+// //     results: customers.length,
+// //     data: customers,
+// //   });
+// // });
+
+// exports.deleteCustomer = catchAsync(async (req, res, next) => {
+//   const customer = await Customer.findByIdAndUpdate(req.params.id, { status: 'inactive' }, { new: true });
+//   if (!customer) return next(new AppError('Customer not found with Id', 404));
+//   res.status(200).json({
+//     status: 'success',
+//     statusCode:200,
+//     message: 'Customer deleted successfully',
+//     data: null,
+//   });
+// });
