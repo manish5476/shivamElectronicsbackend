@@ -105,7 +105,7 @@ exports.getDashboardSummary = async (req, res, next) => {
     try {
         const { period, startDate: queryStartDate, endDate: queryEndDate } = req.query;
         const lowStockThreshold = parseInt(req.query.lowStockThreshold) || 10;
-        const listLimits = parseInt(req.query.listLimits) || 5;
+        const listLimits = parseInt(req.query.listLimits) || 15;
         const { startDate, endDate } = getDateRange(period, queryStartDate, queryEndDate);
         const dateMatchCriteria = (sDate, eDate, dateField = "invoiceDate") => {
             const match = {};
@@ -145,7 +145,7 @@ exports.getDashboardSummary = async (req, res, next) => {
                 { $project: { productId: "$_id", title: { $ifNull: ["$productDetails.title", "$items.customTitle"] }, totalRevenue: 1, totalQuantitySold: 1 }}
             ]),
             // Customers with Dues
-            Customer.find({ remainingAmount: { $gt: 0 } }).sort({ remainingAmount: -1 }).limit(listLimits).select('fullname email remainingAmount'),
+            Customer.find({ remainingAmount: { $gt: 0 } }).sort({ remainingAmount: -1 }).limit(listLimits).select('fullname mobileNumber email remainingAmount'),
             // New Customers Count
             Customer.countDocuments(dateMatchCriteria(startDate, endDate, "createdAt")),
             // Total Payments Received
