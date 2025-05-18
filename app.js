@@ -131,7 +131,7 @@ app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/master-list', masterListRoutes);
 app.use('/api/v1/statistics', statisticsRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
-
+app.use('/api/v1/dashboard', require('./routes/dashboardRoutes'));
 // Catch-All Route
 app.all('*', (req, res, next) => {
   next(new AppError(`Cannot find ${req.originalUrl} on this server`, 404));

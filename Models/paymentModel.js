@@ -171,6 +171,10 @@ async function calculateRemainingAmount(customerId) {
   }
 }
 
+
+const Payment = mongoose.model('Payment', paymentSchema);
+module.exports = Payment;
+
 // async function calculateRemainingAmount(customerId) {
 //   try {
 //     const customer = await Customer.findById(customerId).populate('paymentHistory');
@@ -195,7 +199,3 @@ async function calculateRemainingAmount(customerId) {
 //     console.log("Error calculating remaining amount:", err);
 //   }
 // }
-
-const Payment = mongoose.model('Payment', paymentSchema);
-module.exports = Payment;
-

@@ -86,31 +86,6 @@ customerSchema.pre(/^find/, function (next) {
     next();
 });
 
-// Virtuals and Pre / Post hooks(no changes needed)
-// customerSchema.virtual('sellerDetails', {
-//     ref: 'Product',
-//     localField: 'cart.items.productId',
-//     foreignField: '_id',
-//     justOne: true
-// });
-// customerSchema.virtual('buyerDetails', {
-//     ref: 'Invoice',
-//     localField: 'cart.items.invoiceIds',
-//     foreignField: '_id',
-//     justOne: true
-// });
-// customerSchema.virtual('paymentdetails', {
-//     ref: Product,
-//     localField: 'paymentHistory',
-//     foreignField: '_id'
-// });
-
-// customerSchema.pre(/^find/, function (next) {
-//     this.populate('sellerDetails', '-__v')
-//         .populate('buyerDetails', '-__v')
-//         .populate('paymentdetails', '-__v');
-//     next();
-// });
 // --- Aggregation functions (same as your existing ones) ---
 async function calculateTotalPurchasedAmount(customerId) {
     try {
@@ -227,6 +202,49 @@ customerSchema.statics.updateRemainingAmount = async function (customerId) {
     }
 };
 
+customerSchema.statics.getUserWithTotals = async function (query) {
+    // Find the user
+    let user = await this.findOne(query);
+    if (!user) return null;
+    
+    // Explicitly recalculate totals
+    await calculateTotalPurchasedAmount(user._id);
+    await calculateRemainingAmount(user._id);
+    
+    // Re-fetch the updated user with population
+    user = await this.findById(user._id);
+    return user;
+};
+module.exports = mongoose.model('Customer', customerSchema);
+
+
+
+
+// Virtuals and Pre / Post hooks(no changes needed)
+// customerSchema.virtual('sellerDetails', {
+//     ref: 'Product',
+//     localField: 'cart.items.productId',
+//     foreignField: '_id',
+//     justOne: true
+// });
+// customerSchema.virtual('buyerDetails', {
+//     ref: 'Invoice',
+//     localField: 'cart.items.invoiceIds',
+//     foreignField: '_id',
+//     justOne: true
+// });
+// customerSchema.virtual('paymentdetails', {
+//     ref: Product,
+//     localField: 'paymentHistory',
+//     foreignField: '_id'
+// });
+
+// customerSchema.pre(/^find/, function (next) {
+//     this.populate('sellerDetails', '-__v')
+//         .populate('buyerDetails', '-__v')
+//         .populate('paymentdetails', '-__v');
+//     next();
+// });
 // async function calculateRemainingAmount(customerId) {
 //     try {
 //         const Customer = mongoose.model('Customer');
@@ -267,19 +285,6 @@ customerSchema.statics.updateRemainingAmount = async function (customerId) {
 // }
 
 // --- Static method to get the user with updated totals ---
-customerSchema.statics.getUserWithTotals = async function (query) {
-    // Find the user
-    let user = await this.findOne(query);
-    if (!user) return null;
-
-    // Explicitly recalculate totals
-    await calculateTotalPurchasedAmount(user._id);
-    await calculateRemainingAmount(user._id);
-
-    // Re-fetch the updated user with population
-    user = await this.findById(user._id);
-    return user;
-};
 
 // // In customerModel.js
 // customerSchema.statics.updateRemainingAmount = async function (customerId) {
@@ -311,4 +316,3 @@ customerSchema.statics.getUserWithTotals = async function (query) {
 
 
 
-module.exports = mongoose.model('Customer', customerSchema);
