@@ -133,7 +133,7 @@ exports.getDashboardSummary = async (req, res, next) => {
             // Sales Count
             Invoice.countDocuments(dateMatchCriteria(startDate, endDate)),
             // Low Stock Products
-            Product.find({ stock: { $lt: lowStockThreshold, $gt: 0 } }).limit(listLimits).select('title stock sku'),
+            Product.find({ stock: { $lt: lowStockThreshold, $gte: 0 } }).limit(listLimits).select('title stock sku category brand rate thumbnail'),
             // Top Selling Products (by revenue)
             Invoice.aggregate([
                 { $match: dateMatchCriteria(startDate, endDate) },
