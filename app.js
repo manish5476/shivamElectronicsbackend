@@ -23,6 +23,7 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
+require('./telegrambot/telegrambot.js'); 
 
 // Logger Setup
 const logger = winston.createLogger({
@@ -74,7 +75,7 @@ if (process.env.NODE_ENV === 'development') {
 //   message: 'Too many requests from this IP, please try again in an hour',
 // });
 const limiter = rateLimit({
-  limit: 800, // Changed from `max` to `limit`
+  limit: 1000, // Changed from `max` to `limit`
   windowMs: 60 * 60 * 1000,
   message: { error: 'Too many requests from this IP, please try again in an hour' },
   standardHeaders: true,
