@@ -161,9 +161,6 @@ bot.onText(/\/customer (.+)/, async (msg, match) => {
   }
 });
 
-
-
-// -------------------------------------------------
 bot.onText(/\/logout/, (msg) => {
   const chatId = msg.chat.id;
   delete userTokens[chatId];
