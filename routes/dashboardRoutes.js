@@ -181,4 +181,43 @@ router.get('/reviews/overall-average-rating', /* isAuthenticated, isAdmin, */ da
  */
 router.get('/reviews/recent', /* isAuthenticated, isAdmin, */ dashboardController.getRecentReviews);
 
+
+
+// New routes
+/**
+ * @route GET /sales/yearly
+ * @description Get sales data for a specific year, grouped by month
+ * @access Private (Admin)
+ * @queryparam {Number} [ ] - The year to fetch sales for (default: current year)
+ */
+router.get('/sales/yearly', /* isAuthenticated, isAdmin, */ dashboardController.getYearlySalesByMonth);
+
+/**
+ * @route GET /sales/monthly
+ * @description Get sales data for a specific month and year, grouped by day
+ * @access Private (Admin)
+ * @queryparam {Number} [year] - The year (default: current year)
+ * @queryparam {Number} [month] - The month (1-12, default: current month)
+ */
+router.get('/sales/monthly', /* isAuthenticated, isAdmin, */ dashboardController.getMonthlySalesByDay);
+
+/**
+ * @route GET /sales/weekly
+ * @description Get sales data for a specific week and year, grouped by day
+ * @access Private (Admin)
+ * @queryparam {Number} [year] - The year (default: current year)
+ * @queryparam {Number} [week] - The ISO week number (1-53, default: current week)
+ */
+router.get('/sales/weekly', /* isAuthenticated, isAdmin, */ dashboardController.getWeeklySalesByDay);
+
+// New route
+/**
+ * @route GET /sales/charts
+ * @description Get sales data for yearly, monthly, and weekly charts for a specific year
+ * @access Private (Admin)
+ * @queryparam {Number} [year] - The year to fetch sales for (default: current year)
+ */
+router.get('/sales/charts', /* isAuthenticated, isAdmin, */ dashboardController.getSalesDataForCharts);
+
+
 module.exports = router;
