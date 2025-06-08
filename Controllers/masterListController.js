@@ -66,7 +66,7 @@ exports.getModuleMasterList = catchAsync(async (req, res, next) => {
             break;
         case 'customers':
             query = Customer;
-            selectFields = 'fullname phoneNumbers _id email address guaranteerId';
+            selectFields = 'fullname phoneNumbers _id mobileNumber email address guaranteerId';
             break;
         case 'payments':
             query = Payment;
