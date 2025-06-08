@@ -7,6 +7,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss');
 const hpp = require('hpp');
 const cors = require('cors');
+
 const compression = require('compression');
 const winston = require('winston');
 const globalErrorHandler = require('./Controllers/errorController');
@@ -24,6 +25,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 // require('./telegrambot/telegrambot.js'); 
+app.set('trust proxy', 1);
 
 // Logger Setup
 const logger = winston.createLogger({
@@ -33,13 +35,13 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ 
-      filename: 'logs/error.log', 
+    new winston.transports.File({
+      filename: 'logs/error.log',
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
-    new winston.transports.File({ 
+    new winston.transports.File({
       filename: 'logs/combined.log',
       maxsize: 5242880,
       maxFiles: 5,
