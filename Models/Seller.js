@@ -80,12 +80,18 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const Customer = require("./customerModel");  // Assuming there's a customer model
 const Product = require("./productModel");  // Assuming there's a product model
+const User = require('./UserModel')
 
 const sellerSchema = new Schema({
     name: {
         type: String,
         required: [true, 'Seller name is required'],
         trim: true
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Assumes you have a 'User' model
+        required: true // Every customer must belong to a user
     },
     profile: {
         type: String, // Fixed typo from 'prifile' to 'profile'

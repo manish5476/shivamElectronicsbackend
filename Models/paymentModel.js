@@ -71,9 +71,14 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const Customer = require('./customerModel'); // Assuming there's a customer model
+const User =require('./UserModel')
 
 const paymentSchema = new Schema({
-
+  owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User', // Assumes you have a 'User' model
+      required: true // Every customer must belong to a user
+  },
   amount: {
     type: Number,
     required: [true, 'Amount is required'],

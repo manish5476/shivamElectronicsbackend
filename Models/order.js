@@ -11,6 +11,7 @@ const orderItemSchema = new Schema({
     ref: 'Product',
     required: true
   },
+
   quantity: {
     type: Number,
     required: true,
@@ -24,6 +25,11 @@ const orderSchema = new Schema({
     ref: 'User',
     required: true
   },
+owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Assumes you have a 'User' model
+    required: true // Every customer must belong to a user
+},
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',

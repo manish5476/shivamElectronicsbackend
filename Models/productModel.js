@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const User =require('./UserModel')
 
 const productSchema = new mongoose.Schema({
   title: {
@@ -8,6 +9,11 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: [200, 'Title cannot exceed 200 characters'],
   },
+owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Assumes you have a 'User' model
+    required: true // Every customer must belong to a user
+},
   slug: {
     type: String,
     unique: true,

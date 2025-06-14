@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const Product = require('./productModel'); // Avoid circular dependency with Customer
+const User =require('./UserModel')
+
 // this was old one --------
 // const invoiceItemSchema = new Schema({
 //     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -27,6 +29,11 @@ const invoiceItemSchema = new Schema({
 
 
 const invoiceSchema = new Schema({
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Assumes you have a 'User' model
+        required: true // Every customer must belong to a user
+    },
     invoiceNumber: { type: String, required: true, unique: true },
     invoiceDate: { type: Date, required: true },
     dueDate: { type: Date },
@@ -337,4 +344,3 @@ module.exports = Invoice;
 //         session.endSession();
 //     }
 // });
- 

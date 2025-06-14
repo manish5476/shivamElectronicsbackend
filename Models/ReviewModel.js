@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 const Product = require('./productModel');
+const User = require('./UserModel')
 
 const reviewSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'A review must be given by a User'],
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Assumes you have a 'User' model
+    required: true // Every customer must belong to a user
   },
   product: {
     type: mongoose.Schema.Types.ObjectId, // Corrected from ObjectId to Types.ObjectId
