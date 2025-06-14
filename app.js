@@ -53,22 +53,22 @@ const logger = winston.createLogger({
 app.use(helmet());
 
 // CORS Configuration
-const corsOptions = {
-  // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'https://shivam-electronics-2.vercel.app',
-  origin: '*', // Allow all origins
-  methods: 'GET,POST,PATCH,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization',
-  credentials: true,
-};
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// const corsOptions = {
+//   // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'https://shivam-electronics-2.vercel.app',
+//   origin: '*', // Allow all origins
+//   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
+//   allowedHeaders: 'Content-Type,Authorization',
+//   credentials: true,
+// };
+// app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions));
 
-// Logging Middleware
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
-}
+// // Logging Middleware
+// if (process.env.NODE_ENV === 'development') {
+//   app.use(morgan('dev'));
+// } else {
+//   app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+// }
 
 // Rate Limiter
 // const limiter = rateLimit({

@@ -3,8 +3,13 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const Invoice = require('./invoiceModel');
 const Product = require('./productModel');
+const User =require('./UserModel')
 const customerSchema = new Schema({
-
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', // Assumes you have a 'User' model
+        required: true // Every customer must belong to a user
+    },
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     status: {
@@ -12,19 +17,20 @@ const customerSchema = new Schema({
         enum: ["active", "inactive", "pending", "suspended", "blocked"],
         default: "pending",
     },
+
     profileImg: { type: String },
     email: { type: String, unique: true, match: /.+\@.+\..+/ },
     fullname: { type: String, required: true },
     mobileNumber: {
-      type: String,
-      required: true,
-      validate: {
-        validator: function (v) {
-          return /^0?[6-9]\d{9}$/.test(v);  // Updated regex
-        },
-        message: props => `${props.value} is not a valid mobile number!`
-      }
-    },    
+        type: String,
+        required: true,
+        validate: {
+            validator: function (v) {
+                return /^0?[6-9]\d{9}$/.test(v);  // Updated regex
+            },
+            message: props => `${props.value} is not a valid mobile number!`
+        }
+    },
     phoneNumbers: {
         type: [
             {
@@ -38,7 +44,7 @@ const customerSchema = new Schema({
                 if (!this.guaranteerId) {
                     return Array.isArray(v) && v.length > 0;
                 }
-                return true; 
+                return true;
             },
             message: 'Phone number is required if no guaranteer is provided.'
         }
@@ -165,11 +171,11 @@ async function calculateRemainingAmount(customerId) {
         console.error("Error calculating remaining amount:", err);
     }
 }
-customerSchema.pre('save', function(next) {
-  if (this.phoneNumbers && this.phoneNumbers.length > 0 && !this.mobileNumber) {
-    this.mobileNumber = this.phoneNumbers[0].number;
-  }
-  next();
+customerSchema.pre('save', function (next) {
+    if (this.phoneNumbers && this.phoneNumbers.length > 0 && !this.mobileNumber) {
+        this.mobileNumber = this.phoneNumbers[0].number;
+    }
+    next();
 });
 
 customerSchema.statics.updateRemainingAmount = async function (customerId) {
@@ -206,11 +212,11 @@ customerSchema.statics.getUserWithTotals = async function (query) {
     // Find the user
     let user = await this.findOne(query);
     if (!user) return null;
-    
+
     // Explicitly recalculate totals
     await calculateTotalPurchasedAmount(user._id);
     await calculateRemainingAmount(user._id);
-    
+
     // Re-fetch the updated user with population
     user = await this.findById(user._id);
     return user;
