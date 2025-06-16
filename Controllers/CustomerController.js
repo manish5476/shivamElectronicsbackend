@@ -4,7 +4,7 @@ const AppError = require('../Utils/appError');
 const { body, validationResult } = require('express-validator');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+// const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const handleFactory = require('./handleFactory'); // Your generic factory handler
@@ -13,40 +13,40 @@ const handleFactory = require('./handleFactory'); // Your generic factory handle
 // Example: router.get('/', protect, customerController.getAllCustomer);
 
 // --- 1. Upload Profile Image ---
-exports.uploadProfileImage = [
-  upload.single('profileImg'),
-  catchAsync(async (req, res, next) => {
-    const customerId = req.params.id;
-    const file = req.file;
-    const userId = req.user._id; // Get the authenticated user's ID
+// exports.uploadProfileImage = [
+//   upload.single('profileImg'),
+//   catchAsync(async (req, res, next) => {
+//     const customerId = req.params.id;
+//     const file = req.file;
+//     const userId = req.user._id; // Get the authenticated user's ID
 
-    if (!file) return next(new AppError('No file uploaded', 400));
+//     if (!file) return next(new AppError('No file uploaded', 400));
 
-    const fileName = `${Date.now()}_${file.originalname}`;
-    const { error } = await supabase.storage
-      .from(process.env.SUPABASE_BUCKET)
-      .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true }); // Corrected mimeType to mimetype
-    if (error) return next(new AppError('Failed to upload image', 500));
+//     const fileName = `${Date.now()}_${file.originalname}`;
+//     const { error } = await supabase.storage
+//       .from(process.env.SUPABASE_BUCKET)
+//       .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: true }); // Corrected mimeType to mimetype
+//     if (error) return next(new AppError('Failed to upload image', 500));
 
-    const { publicUrl } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(fileName); // Corrected publicURL to publicUrl
+//     const { publicUrl } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(fileName); // Corrected publicURL to publicUrl
 
-    // Find and update the customer by ID AND ensure it belongs to the current user
-    const customer = await Customer.findOneAndUpdate(
-      { _id: customerId, owner: userId }, // Crucial: Filter by owner
-      { profileImg: publicUrl }, // Use publicUrl here
-      { new: true }
-    );
+//     // Find and update the customer by ID AND ensure it belongs to the current user
+//     const customer = await Customer.findOneAndUpdate(
+//       { _id: customerId, owner: userId }, // Crucial: Filter by owner
+//       { profileImg: publicUrl }, // Use publicUrl here
+//       { new: true }
+//     );
 
-    if (!customer) return next(new AppError('Customer not found or you do not have permission.', 404));
+//     if (!customer) return next(new AppError('Customer not found or you do not have permission.', 404));
 
-    res.status(200).json({
-      status: 'success',
-      statusCode: 200,
-      message: 'Profile image uploaded successfully',
-      data: { profileImg: publicUrl },
-    });
-  }),
-];
+//     res.status(200).json({
+//       status: 'success',
+//       statusCode: 200,
+//       message: 'Profile image uploaded successfully',
+//       data: { profileImg: publicUrl },
+//     });
+//   }),
+// ];
 
 // --- 2. Find Duplicate Customer (Per User) ---
 exports.findDuplicateCustomer = catchAsync(async (req, res, next) => {
@@ -223,6 +223,8 @@ exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
     message: `${result.modifiedCount} customers deactivated successfully.`,
   });
 });
+
+
 // const Customer = require('../Models/customerModel');
 // const catchAsync = require('../Utils/catchAsyncModule');
 // const AppError = require('../Utils/appError');

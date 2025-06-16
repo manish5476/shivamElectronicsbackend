@@ -5,15 +5,18 @@
 
 
 
-
-
 const express = require('express');
 const router = express.Router();
 const dashboardController = require('../Controllers/dashboardControllers');
+const authController = require('../Controllers/authController');
 // const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware'); // Optional: Authentication
 
 // --- DASHBOARD ROUTES ---
 // All routes are prefixed with /api/v1/dashboard (defined in server.js)
+
+// admin Logs
+router.get('/logs',authController.protect,authController.restrictTo('superAdmin'), dashboardController.getSystemLogs);
+
 
 /**
  * @route GET /summary

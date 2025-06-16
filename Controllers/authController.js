@@ -1,3 +1,79 @@
+// const { promisify } = require('util');
+// const crypto = require('crypto');
+// const bcrypt = require('bcryptjs');
+// const User = require('../Models/UserModel');
+// const catchAsync = require('../Utils/catchAsyncModule');
+// const AppError = require('../Utils/appError');
+// const sendEmail = require('../Utils/email');
+// const jwt = require('jsonwebtoken');
+// const speakeasy = require('speakeasy'); // For 2FA (optional)
+
+// const cookieOptions = {
+//   expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+//   httpOnly: true,
+//   secure: process.env.NODE_ENV === 'production',
+// };
+
+// const signToken = (id) => {
+//   return jwt.sign({ id }, process.env.JWT_SECRET, {
+//     expiresIn: process.env.JWT_EXPIRES_IN,
+//   });
+// };
+
+// const createSendToken = (user, statusCode, res) => {
+//   const token = signToken(user._id);
+//   res.cookie('jwt', token, cookieOptions);
+//   user.password = undefined;
+//   const userData = {
+//     _id: user._id,
+//     name: user.name,
+//     email: user.email,
+//     role: user.role,
+//   };
+//   res.status(statusCode).json({
+//     status: 'success',
+//     token,
+//     data: { user: userData },
+//   });
+// };
+
+// exports.signup = catchAsync(async (req, res, next) => {
+//   console.log(req.body);
+//   const { name, email, password, passwordConfirm, role } = req.body;
+
+//   if (password !== passwordConfirm) {
+//     return next(new AppError('Passwords do not match', 400));
+//   }
+
+//   // const hashedPassword = await bcrypt.hash(password, 10);
+//   const newUser = await User.create({
+//     name,
+//     email,
+//     password,
+//     passwordConfirm,
+//     role,
+//   });
+
+//   createSendToken(newUser, 201, res);
+// });
+
+// exports.login = catchAsync(async (req, res, next) => {
+//   console.log(req.body);
+//   const { email, password } = req.body;
+
+//   if (!email || !password) {
+//     return next(new AppError('Please provide email and password', 400));
+//   }
+
+//   const user = await User.findOne({ email }).select('+password');
+//   if (!user || !(await bcrypt.compare(password, user.password))) {
+//     return next(new AppError('Invalid email or password', 401));
+//   }
+
+//   createSendToken(user, 200, res);
+// });
+
+// Controllers/authController.js
 const { promisify } = require('util');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -6,7 +82,23 @@ const catchAsync = require('../Utils/catchAsyncModule');
 const AppError = require('../Utils/appError');
 const sendEmail = require('../Utils/email');
 const jwt = require('jsonwebtoken');
-const speakeasy = require('speakeasy'); // For 2FA (optional)
+const speakeasy = require('speakeasy');
+const winston = require('winston'); // Import winston
+const path = require('path');
+const { MongoDB } = require
+// Assuming you configure logger globally or import it from your app.js or a logger config file
+// For simplicity, let's assume 'logger' is available globally or imported like this:
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'logs/auth.log', level: 'info' }), 
+  ]
+});
+
 
 const cookieOptions = {
   expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
@@ -38,14 +130,12 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const { name, email, password, passwordConfirm, role } = req.body;
 
   if (password !== passwordConfirm) {
     return next(new AppError('Passwords do not match', 400));
   }
 
-  // const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = await User.create({
     name,
     email,
@@ -54,11 +144,11 @@ exports.signup = catchAsync(async (req, res, next) => {
     role,
   });
 
+  logger.info(`User Signed Up: UserID: ${newUser._id}, Email: ${newUser.email}, Role: ${newUser.role}, IP: ${req.ip}`);
   createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -67,12 +157,14 @@ exports.login = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({ email }).select('+password');
   if (!user || !(await bcrypt.compare(password, user.password))) {
+    // --- LOGGING FAILED LOGIN ATTEMPT ---
+    logger.warn(`Failed Login Attempt: Email: ${email}, IP: ${req.ip}`);
     return next(new AppError('Invalid email or password', 401));
   }
+  logger.info(`User Logged In: UserID: ${user._id}, Email: ${user.email}, Role: ${user.role}, IP: ${req.ip}`);
 
   createSendToken(user, 200, res);
 });
-
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token;
