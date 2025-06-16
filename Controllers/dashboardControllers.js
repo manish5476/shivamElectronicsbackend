@@ -16,7 +16,7 @@ const Review = require('../Models/ReviewModel');
 const fs = require('fs').promises; // For async file operations
 const path = require('path');
 const catchAsync = require('../Utils/catchAsyncModule');
-// get system logs
+const AppError = require('../Utils/appError');
 
 exports.getSystemLogs = catchAsync(async (req, res, next) => {
     const logFileName = req.query.file || 'combined.log'; // Allow selection of log file

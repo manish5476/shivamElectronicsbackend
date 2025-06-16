@@ -33,7 +33,6 @@ const app = express();
 
 // Trust proxy for secure headers (e.g., X-Forwarded-For for IP)
 app.set('trust proxy', 1);
-
 // --- 1. Logger Setup ---
 const logsDir = path.join(__dirname, 'logs');
 if (!require('fs').existsSync(logsDir)) {
@@ -81,9 +80,6 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(helmet());
 
-// CORS Configuration - IMPORTANT: Configure carefully for production
-// Remove the `app.options('*', cors(corsOptions));` if `app.use(cors(corsOptions));` is before routes.
-// The `cors` middleware typically handles pre-flight OPTIONS requests automatically.
 const corsOptions = {
     // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:4200', 'http://127.0.0.1:4200'], // More specific origins for dev, or load from env for prod
     origin: "*",
