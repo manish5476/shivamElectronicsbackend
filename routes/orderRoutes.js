@@ -102,7 +102,7 @@ router.post('/checkout', [
     // Link invoice to order
     order[0].invoice = invoice[0]._id;
     await order[0].save({ session });
-
+// m
     await session.commitTransaction();
     res.json({
       status: 'success',
