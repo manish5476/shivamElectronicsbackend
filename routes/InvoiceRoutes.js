@@ -10,9 +10,9 @@ router.use(authController.protect);
 router.get('/:id', invoiceController.getInvoiceById); // Users can view their invoice
 
 // Admin/staff-only routes
-router.get('/', authController.restrictTo('admin', 'staff'), invoiceController.getAllInvoice); // View all invoices
-router.post('/', authController.restrictTo('admin', 'staff'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); // Create invoice
-router.patch('/:id', authController.restrictTo('admin', 'staff'), invoiceController.updateInvoice); // Update invoice
-router.delete('/:id', authController.restrictTo('admin', 'staff'), invoiceController.deleteInvoice); // Delete invoice
-router.post('/productSales', authController.restrictTo('admin', 'staff'), invoiceController.getProductSales); // Delete invoice
+router.get('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.getAllInvoice); // View all invoices
+router.post('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); 
+router.patch('/:id', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.updateInvoice); // Update invoice
+router.delete('/:id', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.deleteInvoice); // Delete invoice
+router.post('/productSales', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.getProductSales); // Delete invoice
 module.exports = router;

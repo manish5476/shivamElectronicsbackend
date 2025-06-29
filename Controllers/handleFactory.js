@@ -74,6 +74,7 @@ exports.updateOne = (Model) =>
  */
 exports.newOne = (Model) =>
   catchAsync(async (req, res, next) => {
+    console.log(req.user);
     // The owner is ALWAYS the authenticated user creating the document.
     // Super admins cannot override this via req.body.owner for creation.
     const ownerIdToAssign = req.user._id;
