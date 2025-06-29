@@ -123,31 +123,63 @@ exports.newCustomer = [
 ];
 
 // --- 4. Get Customer by ID ---
+// exports.getCustomerById = catchAsync(async (req, res, next) => {
+//   const userId = req.user._id; // Get the authenticated user's ID
+//   const customerId = req.params.id;
+
+//   // Get the customer by ID AND owner, with up-to-date totals
+//   // Assuming `getUserWithTotals` is a static method on your Customer model
+//   let customer = await Customer.getUserWithTotals({ _id: customerId, owner: userId }); // Crucial: Filter by owner
+//   if (!customer) return next(new AppError('Customer not found or you do not have permission.', 404));
+
+//   // Now update the remaining amount by subtracting completed payments
+//   customer = await Customer.updateRemainingAmount(customer._id); // Assuming this method implicitly uses the fetched customer's context or is smart enough
+//   if (!customer) return next(new AppError('Failed to update remaining amount', 500));
+
+//   // The role check is now less critical here because the query already filters by owner.
+//   // However, if an admin should be able to view ANY customer, you'd add a conditional here.
+//   // if (req.user.role !== 'admin' && req.user._id.toString() !== customer.owner.toString()) {
+//   //   return next(new AppError('You can only view your own customer profiles', 403));
+//   // }
+
+//   res.status(200).json({
+//     status: 'success',
+//     statusCode: 200,
+//     data: customer,
+//   });
+// });
+
+// --- 4. Get Customer by ID ---
 exports.getCustomerById = catchAsync(async (req, res, next) => {
-  const userId = req.user._id; // Get the authenticated user's ID
-  const customerId = req.params.id;
+    const userId = req.user._id; // Get the authenticated user's ID
+    const customerId = req.params.id;
+    const isSuperAdmin = req.user.role === 'superAdmin';
+    let findFilter = { _id: customerId };
+    if (!isSuperAdmin) { 
+        findFilter.owner = userId; 
+    }
 
-  // Get the customer by ID AND owner, with up-to-date totals
-  // Assuming `getUserWithTotals` is a static method on your Customer model
-  let customer = await Customer.getUserWithTotals({ _id: customerId, owner: userId }); // Crucial: Filter by owner
-  if (!customer) return next(new AppError('Customer not found or you do not have permission.', 404));
+    let customer = await Customer.getUserWithTotals(findFilter);
 
-  // Now update the remaining amount by subtracting completed payments
-  customer = await Customer.updateRemainingAmount(customer._id); // Assuming this method implicitly uses the fetched customer's context or is smart enough
-  if (!customer) return next(new AppError('Failed to update remaining amount', 500));
+    if (!customer) {
+        return next(new AppError(
+            `Customer not found with Id ${customerId}` +
+            (!isSuperAdmin ? ' or you do not have permission.' : '.'),
+            404
+        ));
+    }
+    
+    console.log(customer,"kkkkkkkkkkkkkkkkkkkkkk");
+    customer = await Customer.updateRemainingAmount(customer._id);
+    if (!customer) return next(new AppError('Failed to update remaining amount', 500));
 
-  // The role check is now less critical here because the query already filters by owner.
-  // However, if an admin should be able to view ANY customer, you'd add a conditional here.
-  // if (req.user.role !== 'admin' && req.user._id.toString() !== customer.owner.toString()) {
-  //   return next(new AppError('You can only view your own customer profiles', 403));
-  // }
-
-  res.status(200).json({
-    status: 'success',
-    statusCode: 200,
-    data: customer,
-  });
+    res.status(200).json({
+        status: 'success',
+        statusCode: 200,
+        data: customer,
+    });
 });
+
 
 // --- 5. Get All Customers (Per User) ---
 // This assumes handleFactory.getAll can take a filter.
