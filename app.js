@@ -148,8 +148,6 @@ app.use('/api/v1/analytics', analyticsRoutes); // Assuming these are admin dashb
 app.use('/api/v1/dashboard', dashboardRoutes); // Using consistent variable name
 // app.use('/api/v1/bot', botRoutes); // New route for your helping bot
 
-// --- 4. Serve Static Files (if any) ---
-// Make sure the path is correct from the root of your project, assuming 'public' is a top-level folder
 app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
 
 
@@ -158,10 +156,7 @@ app.all('*', (req, res, next) => {
     next(new AppError(`Cannot find ${req.originalUrl} on this server!`, 404));
 });
 
-// --- 6. Global Error Handling Middleware ---
-// This must be the last middleware in the chain
 app.use(globalErrorHandler);
-
 module.exports = app;
 
 // require('dotenv').config({ path: './.env' });
