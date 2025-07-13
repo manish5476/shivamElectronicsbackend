@@ -31,52 +31,51 @@ const dashboardRoutes = require('./routes/dashboardRoutes'); // Consistent impor
 
 const app = express();
 
-// Trust proxy for secure headers (e.g., X-Forwarded-For for IP)
 app.set('trust proxy', 1);
 // --- 1. Logger Setup ---
-const logsDir = path.join(__dirname, 'logs');
-if (!require('fs').existsSync(logsDir)) {
-    require('fs').mkdirSync(logsDir);
-}
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({
-            filename: path.join(logsDir, 'error.log'),
-            level: 'error',
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true, // Keep the latest files
-            zippedArchive: true // Compress rotated logs
-        }),
-        new winston.transports.File({
-            filename: path.join(logsDir, 'combined.log'),
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true,
-            zippedArchive: true
-        }),
-    ],
-    exceptionHandlers: [ // Catch uncaught exceptions
-        new winston.transports.File({ filename: path.join(logsDir, 'exceptions.log') })
-    ],
-    rejectionHandlers: [ // Catch unhandled promise rejections
-        new winston.transports.File({ filename: path.join(logsDir, 'rejections.log') })
-    ]
-});
+// const logsDir = path.join(__dirname, 'logs');
+// if (!require('fs').existsSync(logsDir)) {
+//     require('fs').mkdirSync(logsDir);
+// }
+// const logger = winston.createLogger({
+//     level: 'info',
+//     format: winston.format.combine(
+//         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+//         winston.format.json()
+//     ),
+//     transports: [
+//         new winston.transports.File({
+//             filename: path.join(logsDir, 'error.log'),
+//             level: 'error',
+//             maxsize: 5242880, // 5MB
+//             maxFiles: 5,
+//             tailable: true, // Keep the latest files
+//             zippedArchive: true // Compress rotated logs
+//         }),
+//         new winston.transports.File({
+//             filename: path.join(logsDir, 'combined.log'),
+//             maxsize: 5242880, // 5MB
+//             maxFiles: 5,
+//             tailable: true,
+//             zippedArchive: true
+//         }),
+//     ],
+//     exceptionHandlers: [ // Catch uncaught exceptions
+//         new winston.transports.File({ filename: path.join(logsDir, 'exceptions.log') })
+//     ],
+//     rejectionHandlers: [ // Catch unhandled promise rejections
+//         new winston.transports.File({ filename: path.join(logsDir, 'rejections.log') })
+//     ]
+// });
 
-if (process.env.NODE_ENV === 'development') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple()
-        )
-    }));
-}
+// if (process.env.NODE_ENV === 'development') {
+//     logger.add(new winston.transports.Console({
+//         format: winston.format.combine(
+//             winston.format.colorize(),
+//             winston.format.simple()
+//         )
+//     }));
+// }
 
 app.use(helmet());
 
