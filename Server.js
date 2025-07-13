@@ -32,7 +32,7 @@ const server = app.listen(port, async () => {
     try {
       await bot.setWebHook(webhookUrl);
       console.log(`Telegram Webhook set to: ${webhookUrl}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error setting Telegram Webhook:', err.message);
     }
   } else {
