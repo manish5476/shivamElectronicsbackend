@@ -1,6 +1,4 @@
 node_modules/
 config.env
-.env
-.env.*
 .config
 .vercel
