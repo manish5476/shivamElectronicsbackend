@@ -28,55 +28,54 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes'); // Consistent import
 // const botRoutes = require('./routes/botRoutes'); // Assuming you'll add this for your bot
-
+require('./telegrambot/telegrambot'); // Point to the file inside the folder
 const app = express();
 
-// Trust proxy for secure headers (e.g., X-Forwarded-For for IP)
 app.set('trust proxy', 1);
 // --- 1. Logger Setup ---
-const logsDir = path.join(__dirname, 'logs');
-if (!require('fs').existsSync(logsDir)) {
-    require('fs').mkdirSync(logsDir);
-}
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({
-            filename: path.join(logsDir, 'error.log'),
-            level: 'error',
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true, // Keep the latest files
-            zippedArchive: true // Compress rotated logs
-        }),
-        new winston.transports.File({
-            filename: path.join(logsDir, 'combined.log'),
-            maxsize: 5242880, // 5MB
-            maxFiles: 5,
-            tailable: true,
-            zippedArchive: true
-        }),
-    ],
-    exceptionHandlers: [ // Catch uncaught exceptions
-        new winston.transports.File({ filename: path.join(logsDir, 'exceptions.log') })
-    ],
-    rejectionHandlers: [ // Catch unhandled promise rejections
-        new winston.transports.File({ filename: path.join(logsDir, 'rejections.log') })
-    ]
-});
+// const logsDir = path.join(__dirname, 'logs');
+// if (!require('fs').existsSync(logsDir)) {
+//     require('fs').mkdirSync(logsDir);
+// }
+// const logger = winston.createLogger({
+//     level: 'info',
+//     format: winston.format.combine(
+//         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+//         winston.format.json()
+//     ),
+//     transports: [
+//         new winston.transports.File({
+//             filename: path.join(logsDir, 'error.log'),
+//             level: 'error',
+//             maxsize: 5242880, // 5MB
+//             maxFiles: 5,
+//             tailable: true, // Keep the latest files
+//             zippedArchive: true // Compress rotated logs
+//         }),
+//         new winston.transports.File({
+//             filename: path.join(logsDir, 'combined.log'),
+//             maxsize: 5242880, // 5MB
+//             maxFiles: 5,
+//             tailable: true,
+//             zippedArchive: true
+//         }),
+//     ],
+//     exceptionHandlers: [ // Catch uncaught exceptions
+//         new winston.transports.File({ filename: path.join(logsDir, 'exceptions.log') })
+//     ],
+//     rejectionHandlers: [ // Catch unhandled promise rejections
+//         new winston.transports.File({ filename: path.join(logsDir, 'rejections.log') })
+//     ]
+// });
 
-if (process.env.NODE_ENV === 'development') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple()
-        )
-    }));
-}
+// if (process.env.NODE_ENV === 'development') {
+//     logger.add(new winston.transports.Console({
+//         format: winston.format.combine(
+//             winston.format.colorize(),
+//             winston.format.simple()
+//         )
+//     }));
+// }
 
 app.use(helmet());
 
@@ -146,10 +145,7 @@ app.use('/api/v1/master-list', masterListRoutes);
 app.use('/api/v1/statistics', statisticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/analytics', analyticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/dashboard', dashboardRoutes); // Using consistent variable name
-// app.use('/api/v1/bot', botRoutes); // New route for your helping bot
 
-// --- 4. Serve Static Files (if any) ---
-// Make sure the path is correct from the root of your project, assuming 'public' is a top-level folder
 app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
 
 
@@ -158,10 +154,7 @@ app.all('*', (req, res, next) => {
     next(new AppError(`Cannot find ${req.originalUrl} on this server!`, 404));
 });
 
-// --- 6. Global Error Handling Middleware ---
-// This must be the last middleware in the chain
 app.use(globalErrorHandler);
-
 module.exports = app;
 
 // require('dotenv').config({ path: './.env' });
