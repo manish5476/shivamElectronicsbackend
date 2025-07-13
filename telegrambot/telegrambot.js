@@ -14,7 +14,9 @@ const paymentController = require('../Controllers/paymentController');
 const productController = require('../Controllers/productController'); // Import productController
 
 // Retrieve your Telegram Bot Token from environment variables
-const token = '7246790832:AAFbmLogzlmX_3lyhpNClZ65izO2dSqIfbk';
+// const token = '7246790832:AAFbmLogzlmX_3lyhpNClZ65izO2dSqI';
+const token = process.env.TELEGRAM_TOKEN;
+
 if (!token) {
     console.error('TELEGRAM_TOKEN environment variable is not set. Please set it to your bot token.');
     process.exit(1);
