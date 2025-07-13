@@ -3,8 +3,8 @@ const { v4: uuidv4 } = require('uuid');
 
 // Import your controllers (paths are relative to telegrambot.js)
 const authController = require('../Controllers/authController');
-const customerController = require('../Controllers/customerController');
-const invoiceController = require('../Controllers/invoiceController');
+const customerController = require('../Controllers/CustomerController');
+const invoiceController = require('../Controllers/InvoiceController');
 const paymentController = require('../Controllers/paymentController');
 const productController = require('../Controllers/productController'); // Import productController
 
