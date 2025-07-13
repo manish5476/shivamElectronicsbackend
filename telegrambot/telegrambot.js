@@ -22,7 +22,7 @@ if (!token) {
     process.exit(1);
 }
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: false });
 
 // In-memory stores for user tokens and roles.
 const userTokens = {};
