@@ -9,7 +9,6 @@ router.use(authController.protect);
 // User-accessible routes
 router.get('/:id', invoiceController.getInvoiceById); // Users can view their invoice
 
-// Admin/staff-only routes
 router.get('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.getAllInvoice); // View all invoices
 router.post('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); 
 router.patch('/:id', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.updateInvoice); // Update invoice

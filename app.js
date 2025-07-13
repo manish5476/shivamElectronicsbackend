@@ -28,7 +28,7 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes'); // Consistent import
 // const botRoutes = require('./routes/botRoutes'); // Assuming you'll add this for your bot
-
+require('./telegrambot/telegrambot'); // Point to the file inside the folder
 const app = express();
 
 app.set('trust proxy', 1);
@@ -145,7 +145,6 @@ app.use('/api/v1/master-list', masterListRoutes);
 app.use('/api/v1/statistics', statisticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/analytics', analyticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/dashboard', dashboardRoutes); // Using consistent variable name
-// app.use('/api/v1/bot', botRoutes); // New route for your helping bot
 
 app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
 
