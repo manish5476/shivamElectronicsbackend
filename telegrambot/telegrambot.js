@@ -1,15 +1,20 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { v4: uuidv4 } = require('uuid');
+const dotenv = require("dotenv");
+
+// Load the .env file passed as an argument, default to .env.dev if none provided
+const envFile = process.argv[2] || ".env.dev";
+dotenv.config({ path: envFile });
 
 // Import your controllers (paths are relative to telegrambot.js)
 const authController = require('../Controllers/authController');
-const customerController = require('../Controllers/customerController');
-const invoiceController = require('../Controllers/invoiceController');
+const customerController = require('../Controllers/CustomerController');
+const invoiceController = require('../Controllers/InvoiceController');
 const paymentController = require('../Controllers/paymentController');
 const productController = require('../Controllers/productController'); // Import productController
 
 // Retrieve your Telegram Bot Token from environment variables
-const token = process.env.TELEGRAM_TOKEN;
+const token = '7246790832:AAFbmLogzlmX_3lyhpNClZ65izO2dSqIfbk';
 if (!token) {
     console.error('TELEGRAM_TOKEN environment variable is not set. Please set it to your bot token.');
     process.exit(1);
