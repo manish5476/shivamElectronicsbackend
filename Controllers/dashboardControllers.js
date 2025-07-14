@@ -923,7 +923,7 @@ exports.getTopCustomersByPurchase = async (req, res, next) => {
                         fullname: "$customerDetails.fullname",
                         email: "$customerDetails.email",
                         periodPurchasedAmount: 1,
-                        // You might want to include their overall totalPurchasedAmount as well
+                        cart:"$customerDetails.cart",
                         totalPurchasedAmountGlobal: "$customerDetails.totalPurchasedAmount"
                     }
                 }
@@ -1020,7 +1020,6 @@ exports.getFailedPaymentsCount = async (req, res, next) => {
         next(error);
     }
 };
-
 
 // --- Review Statistics ---
 exports.getOverallAverageRating = async (req, res, next) => {
