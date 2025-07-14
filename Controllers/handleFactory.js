@@ -3,13 +3,6 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const ApiFeatures = require("../Utils/ApiFeatures");
 const mongoose = require('mongoose');
 
-/**
- * Generic factory handler for deleting a single document by ID and owner.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model (e.g., Customer, Product).
- * @returns {Function} An Express middleware function.
- */
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const isSuperAdmin = req.user.role === 'superAdmin';
@@ -33,13 +26,7 @@ exports.deleteOne = (Model) =>
     });
   });
 
-/**
- * Generic factory handler for updating a single document by ID and owner.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @returns {Function} An Express middleware function.
- */
+
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const isSuperAdmin = req.user.role === 'superAdmin';
@@ -69,23 +56,9 @@ exports.updateOne = (Model) =>
     });
   });
 
-/**
- * Generic factory handler for creating a new document, assigning the current user as owner.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @returns {Function} An Express middleware function.
- */
 exports.newOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    // console.log(req.user); // This is good for debugging
-
-    // Ensure owner is set from req.user._id if not superAdmin, or allow superAdmin to set it
-    // For simplicity and security, it's safer to always assign the current user as owner on creation
-    // unless there's a specific reason for a superAdmin to create on behalf of another.
-    // Given your existing logic, we'll assign the logged-in user as owner.
     const ownerIdToAssign = req.user._id;
-
     const doc = await Model.create({
       ...req.body,
       owner: ownerIdToAssign
@@ -94,7 +67,6 @@ exports.newOne = (Model) =>
     if (!doc) {
       return next(new AppError(`Failed to create ${Model.modelName}`, 400));
     }
-
     res.status(201).json({
       status: "success",
       statusCode: 201, // Changed to 201 for creation
@@ -102,105 +74,132 @@ exports.newOne = (Model) =>
     });
   });
 
-/**
- * Generic factory handler for getting a single document by ID and owner.
- * Allows super admins to get any document, otherwise gets by ID and owner.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @param {string|object} [autoPopulateOptions] Options for Mongoose populate.
- * @returns {Function} An Express middleware function.
- */
-exports.getOne = (Model, autoPopulateOptions) =>
-  catchAsync(async (req, res, next) => {
-    const userId = req.user._id;
-    const isSuperAdmin = req.user.role === 'superAdmin';
-
-    let filter = { _id: req.params.id };
-    if (!isSuperAdmin) {
-      filter.owner = userId;
-    }
-
-    let query = Model.findOne(filter);
-
-    if (autoPopulateOptions) {
-      query = query.populate(autoPopulateOptions);
-    }
-
-    const doc = await query;
-
-    if (!doc) {
-      return next(
-        new AppError(
-          `${Model.modelName} not found with Id ${req.params.id}` +
-          (!isSuperAdmin ? ' or you do not have permission.' : '.'),
-          404
-        )
-      );
-    }
-
-    res.status(200).json({
-      status: "success",
-      statusCode: 200,
-      data: doc,
+  exports.getOne = (Model, populateOptions) =>
+    catchAsync(async (req, res, next) => {
+      let query = Model.findById(req.params.id);
+      if (populateOptions) {
+        query = query.populate(populateOptions);
+      } else if (Object.keys(autoPopulateOptions).length > 0) { // Check if autoPopulateOptions has actual keys
+        query = query.populate(autoPopulateOptions);
+      }
+  
+      const doc = await query;
+  
+      if (!doc) {
+        return next(new AppError("No document found with that ID", 404));
+      }
+  
+      res.status(200).json({
+        status: "success",
+        data: {
+          data: doc,
+        },
+      });
     });
-  });
+  
+  exports.getAll = (Model, populateOptions) =>
+    catchAsync(async (req, res, next) => {
+      // To allow for nested GET reviews on tour (hack) - assuming this might be your filter setup
+      let filter = {};
+      // if (req.params.someId) filter = { someField: req.params.someId }; // Example filter
+  
+      const features = new ApiFeatures(Model.find(filter), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
 
-/**
- * Generic factory handler for getting all documents.
- * Allows super admins to get all documents across all owners, otherwise gets documents for the current user.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @returns {Function} An Express middleware function.
- */
-exports.getAll = (Model) =>
-  catchAsync(async (req, res, next) => {
-    // console.log(req.user.role); // Good for debugging
-
-    const userId = req.user._id;
-    const isSuperAdmin = req.user.role === 'superAdmin';
-
-    let baseFilter = {};
-    if (!isSuperAdmin) {
-      baseFilter = { owner: userId };
-    }
-
-    const combinedFilter = {
-      ...baseFilter,
-      ...req.query,
-    };
-
-     let query = Model.find(combinedFilter); // Start with a query object
-
-    if (autoPopulateOptions) { 
-      query = query.populate(autoPopulateOptions);
-    }
-
-    const features = new ApiFeatures(query, combinedFilter) // Pass the query object
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
-
-    const docs = await features.query; // Execute t
-
-    res.status(200).json({
-      status: "success",
-      statusCode: 200,
-      results: docs.length,
-      data: docs,
+      let query = features.query;
+      // if (populateOptions) {
+      //   query = query.populate(populateOptions);
+      // } else if (Object.keys(autoPopulateOptions).length > 0) { // Check if autoPopulateOptions has actual keys
+      //   query = query.populate(autoPopulateOptions);
+      // }
+  
+      const doc = await query;
+  
+      res.status(200).json({
+        status: "success",
+        results: doc.length,
+        data: {
+          data: doc,
+        },
+      });
     });
-  });
 
-/**
- * Generic factory handler for deleting multiple documents by IDs.
- * Allows super admins to delete any documents matching the IDs, otherwise deletes documents matching IDs and owner.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @returns {Function} An Express middleware function.
- */
+// exports.getOne = (Model, autoPopulateOptions) =>
+//   catchAsync(async (req, res, next) => {
+//     const userId = req.user._id;
+//     const isSuperAdmin = req.user.role === 'superAdmin';
+
+//     let filter = { _id: req.params.id };
+//     if (!isSuperAdmin) {
+//       filter.owner = userId;
+//     }
+
+//     let query = Model.findOne(filter);
+
+//     if (autoPopulateOptions) {
+//       query = query.populate(autoPopulateOptions);
+//     }
+
+//     const doc = await query;
+
+//     if (!doc) {
+//       return next(
+//         new AppError(
+//           `${Model.modelName} not found with Id ${req.params.id}` +
+//           (!isSuperAdmin ? ' or you do not have permission.' : '.'),
+//           404
+//         )
+//       );
+//     }
+
+//     res.status(200).json({
+//       status: "success",
+//       statusCode: 200,
+//       data: doc,
+//     });
+//   });
+// exports.getAll = (Model) =>
+//   catchAsync(async (req, res, next) => {
+//     // console.log(req.user.role); // Good for debugging
+
+//     const userId = req.user._id;
+//     const isSuperAdmin = req.user.role === 'superAdmin';
+
+//     let baseFilter = {};
+//     if (!isSuperAdmin) {
+//       baseFilter = { owner: userId };
+//     }
+
+//     const combinedFilter = {
+//       ...baseFilter,
+//       ...req.query,
+//     };
+
+//      let query = Model.find(combinedFilter); // Start with a query object
+
+//     if (autoPopulateOptions) { 
+//       query = query.populate(autoPopulateOptions);
+//     }
+
+//     const features = new ApiFeatures(query, combinedFilter) // Pass the query object
+//       .filter()
+//       .sort()
+//       .limitFields()
+//       .paginate();
+
+//     const docs = await features.query; // Execute t
+
+//     res.status(200).json({
+//       status: "success",
+//       statusCode: 200,
+//       results: docs.length,
+//       data: docs,
+//     });
+//   });
+
 exports.deleteMany = (Model) => // Renamed to deleteMany for generality
   catchAsync(async (req, res, next) => {
     const ids = req.body.ids;
@@ -236,15 +235,6 @@ exports.deleteMany = (Model) => // Renamed to deleteMany for generality
     });
   });
 
-/**
- * Generic factory handler for fetching dropdown data (select fields).
- * Allows super admins to fetch dropdown data across all owners, otherwise fetches data for the current user.
- * Requires the 'protect' middleware to run before this handler in the route.
- *
- * @param {Mongoose.Model} Model The Mongoose model.
- * @param {string[]} fields An array of field names to select (e.g., ['name', 'code']).
- * @returns {Function} An Express middleware function.
- */
 exports.getModelDropdownWithoutStatus = (Model, fields) => catchAsync(async (req, res, next) => {
   const userId = req.user._id;
   const isSuperAdmin = req.user.role === 'superAdmin';
