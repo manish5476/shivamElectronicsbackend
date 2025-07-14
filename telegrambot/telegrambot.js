@@ -13,8 +13,6 @@ const invoiceController = require('../Controllers/InvoiceController');
 const paymentController = require('../Controllers/paymentController');
 const productController = require('../Controllers/productController'); // Import productController
 
-// Retrieve your Telegram Bot Token from environment variables
-// const token = '7246790832:AAFbmLogzlmX_3lyhpNClZ65izO2dSqI';
 const token = process.env.TELEGRAM_TOKEN;
 
 if (!token) {
@@ -23,14 +21,9 @@ if (!token) {
 }
 
 const bot = new TelegramBot(token, { polling: true });
-
-// In-memory stores for user tokens and roles.
 const userTokens = {};
 const userRoles = {};
-
-// --- Centralized Command Definitions ---
 const commandDefinitions = [
-    // General Commands
     {
         command: '/start',
         description: 'Get a welcome message and basic info.',
@@ -323,11 +316,7 @@ const restrictBotUserTo = (allowedRoles, commandHandler) => async (msg, match) =
     commandHandler(msg, match, user);
 };
 
-/**
- * Sends a usage hint for a command if arguments are missing or invalid.
- * @param {number} chatId The chat ID.
- * @param {string} command The command string (e.g., '/newcustomer').
- */
+
 const sendUsageHint = async (chatId, command) => {
     const cmdInfo = commandDetailsMap.get(command);
     if (cmdInfo) {
@@ -343,10 +332,7 @@ const sendUsageHint = async (chatId, command) => {
     }
 };
 
-/**
- * Generates a string formatted for Telegram's BotFather /setcommands.
- * You need to copy the output of this function and paste it into BotFather.
- */
+
 function generateBotCommandsList() {
     // Filter out commands that are not meant for the main command list (e.g., internal-only or very specific ones)
     // For BotFather, we typically list commands that users would type directly.
@@ -360,11 +346,6 @@ function generateBotCommandsList() {
     // Sort commands alphabetically for better readability
     commandsForBotFather.sort((a, b) => a.command.localeCompare(b.command));
 
-    // console.log("\n--- BotFather /setcommands List (JSON Format) ---");
-    // console.log("Copy the JSON below and send it to @BotFather after typing /setcommands and selecting your bot:");
-    // console.log(JSON.stringify(commandsForBotFather, null, 2));
-    // console.log("-------------------------------------------------\n");
-
     return commandsForBotFather;
 }
 
@@ -374,7 +355,6 @@ generateBotCommandsList();
 
 
 // --- General Commands ---
-
 bot.onText(/\/start/, restrictBotUserTo(['guest', 'user', 'staff', 'admin', 'superAdmin'], async (msg) => {
     const chatId = msg.chat.id;
     const welcomeMessage = `
@@ -432,7 +412,6 @@ bot.onText(/\/help/, restrictBotUserTo(['guest', 'user', 'staff', 'admin', 'supe
     if (currentMessage.length > 0) {
         messages.push(currentMessage);
     }
-
     for (const part of messages) {
         await bot.sendMessage(chatId, part, { parse_mode: 'Markdown' });
     }
@@ -445,14 +424,11 @@ bot.onText(/\/register (.+)/, restrictBotUserTo(['guest'], async (msg, match) =>
     const chatId = msg.chat.id;
     const command = '/register';
     const args = match[1].split(' ');
-
     if (args.length < 3) {
         return sendUsageHint(chatId, command);
     }
-
     const [name, email, password] = args;
     const passwordConfirm = password;
-
     try {
         const { token, user } = await authController.signupBot(name, email, password, passwordConfirm, 'user');
         userTokens[chatId] = token;
@@ -467,11 +443,9 @@ bot.onText(/\/login (.+)/, restrictBotUserTo(['guest'], async (msg, match) => {
     const chatId = msg.chat.id;
     const command = '/login';
     const args = match[1].split(' ');
-
     if (args.length < 2) {
         return sendUsageHint(chatId, command);
     }
-
     const [email, password] = args;
 
     try {
@@ -493,7 +467,6 @@ bot.onText(/\/logout/, restrictBotUserTo(['user', 'staff', 'admin', 'superAdmin'
 
 
 // --- Product Management Commands ---
-
 bot.onText(/\/newproduct (.+)/, restrictBotUserTo(['admin', 'staff', 'superAdmin'], async (msg, match, user) => {
     const chatId = msg.chat.id;
     const command = '/newproduct';

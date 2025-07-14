@@ -28,10 +28,11 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes'); // Consistent import
 // const botRoutes = require('./routes/botRoutes'); // Assuming you'll add this for your bot
-require('./telegrambot/telegrambot'); // Point to the file inside the folder
+// require('./telegrambot/telegrambot'); // Point to the file inside the folder
 const app = express();
 
 app.set('trust proxy', 1);
+
 // --- 1. Logger Setup ---
 const logsDir = path.join(__dirname, 'logs');
 if (!require('fs').existsSync(logsDir)) {
@@ -68,7 +69,7 @@ const logger = winston.createLogger({
     ]
 });
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env .NODE_ENV === 'development') {
     logger.add(new winston.transports.Console({
         format: winston.format.combine(
             winston.format.colorize(),
@@ -90,9 +91,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev')); // Concise output colored for development
+    app.use(morgan('dev')); 
 } else {
-    // Log to file for production
     app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 }
 
@@ -106,7 +106,9 @@ const apiLimiter = rateLimit({
         next(new AppError('Too many requests from this IP, please try again after an hour.', 429));
     }
 });
+
 app.use('/api/v1', apiLimiter);
+
 app.use(express.json({ limit: '50kb' }));
 app.use(mongoSanitize());
 app.use(xss());
