@@ -85,3 +85,5 @@
 {"level":"info","message":"Incoming Request: GET /api/v1/products from IP: ::ffff:127.0.0.1","timestamp":"2025-07-14 11:09:50"}
 {"level":"info","message":"Incoming Request: GET /api/v1/customers?page=1&limit=100 from IP: ::ffff:127.0.0.1","timestamp":"2025-07-14 11:09:51"}
 {"level":"info","message":"Incoming Request: GET /api/v1/payments from IP: ::ffff:127.0.0.1","timestamp":"2025-07-14 11:09:51"}
+{"level":"info","message":"Incoming Request: GET /api/v1/customers?page=1&limit=100 from IP: ::ffff:127.0.0.1","timestamp":"2025-07-14 11:13:51"}
+{"level":"info","message":"Incoming Request: GET /api/v1/master-list/customers from IP: ::ffff:127.0.0.1","timestamp":"2025-07-14 11:13:52"}
