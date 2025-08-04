@@ -64,6 +64,10 @@ const paymentSchema = new Schema({
     description: {
         type: String,
         maxlength: 200
+    },
+    reviews: {
+        type: String,
+        maxlength: 200
     }
 }, {
     timestamps: true // Automatically manage createdAt and updatedAt
