@@ -43,8 +43,8 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
 // Factory handlers
 exports.getAllUsers = handleFactory.getAll(User);
 exports.getUserById = handleFactory.getOne(User);
-exports.deleteUser = handleFactory.deleteOne(User);
-exports.updateUser = handleFactory.updateOne(User);
+exports.deleteUser = handleFactory.delete(User);
+exports.updateUser = handleFactory.update(User);
 // const User = require("../Models/UserModel");
 // const { query } = require("express");
 // const ApiFeatures = require("../Utils/ApiFeatures");
@@ -106,8 +106,8 @@ exports.updateUser = handleFactory.updateOne(User);
 
 // exports.getAllUsers = handleFactory.getAll(User);
 // exports.getAllUsersById = handleFactory.getOne(User);
-// exports.deleteUser = handleFactory.deleteOne(User);
-// exports.updateUser = handleFactory.updateOne(User);
+// exports.deleteUser = handleFactory.delete(User);
+// exports.updateUser = handleFactory.update(User);
 
 // // ---------------------------------------------------------------------------------------------------------------------------------------
 

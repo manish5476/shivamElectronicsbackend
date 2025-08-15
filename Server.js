@@ -1,37 +1,99 @@
+// Load environment variables first. This allows specifying a config file via command line.
+const envFile = process.argv[2] || '.env.dev';
+require('dotenv').config({ path: envFile });
 
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
+const mongoose = require('mongoose');
+const app = require('./app'); // Your main Express app
+// const bot = require('./telegrambot/telegrambot'); // Uncomment when your bot is ready
 
-// Load the .env file passed as an argument, default to .env.dev if none provided
-const envFile = process.argv[2] || ".env.dev";
-dotenv.config({ path: envFile });
-
-const app = require("./app");
-
+// --- 1. DATABASE CONNECTION ---
 mongoose
-  .connect(process.env.DATABASE)
-  .then(() => {
-    console.log(`Connected to MongoDB (${process.env.NODE_ENV})`);
-  })
-  .catch((err) => {
-    console.error("Database connection error:", err);
-    process.exit(1);
-  });
+    .connect(process.env.DATABASE)
+    .then(() => { console.log(`✅ Connected to MongoDB (${process.env.NODE_ENV})`);})
+    .catch((err) => {
+        console.error('💥 DATABASE CONNECTION ERROR:', err);
+        process.exit(1); // Exit the process if DB connection fails
+    });
 
+// --- 2. START THE SERVER ---
 const port = process.env.PORT || 4000;
 const server = app.listen(port, () => {
-  console.log(`Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
+    console.log(`🚀 Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
+    // --- TELEGRAM WEBHOOK SETUP (Optional) ---
+    // This block sets up your Telegram bot's webhook, essential for production.
+    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+    if (RENDER_EXTERNAL_URL && bot) {
+        const webhookUrl = `${RENDER_EXTERNAL_URL}/telegram-webhook`;
+        bot.setWebHook(webhookUrl)
+            .then(() => console.log(`✅ Telegram Webhook set to: ${webhookUrl}`))
+            .catch(err => console.error('❌ Error setting Telegram Webhook:', err.message));
+    } else if (!RENDER_EXTERNAL_URL) {
+        console.warn('⚠️ RENDER_EXTERNAL_URL not set. Webhook will not be configured.');
+    }
 });
 
-async function shutdown() {
-  console.log("Shutting down server...");
-  await mongoose.connection.close(); // Remove callback
-  console.log("MongoDB connection closed.");
-  process.exit(0);
-}
+// --- 3. GRACEFUL SHUTDOWN AND ERROR HANDLING ---
+// Handles critical errors that were not caught elsewhere (e.g., programming bugs)
+const handleFatalError = (errorType) => (err) => {
+    console.error(`💥 ${errorType}! Shutting down...`);
+    console.error(err.name, err.message);
+    console.error(err.stack); // Log the full stack trace for debugging
+    server.close(() => {
+        process.exit(1);
+    });
+};
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on('unhandledRejection', handleFatalError('UNHANDLED REJECTION'));
+process.on('uncaughtException', handleFatalError('UNCAUGHT EXCEPTION'));
+
+// Handles server shutdown signals (e.g., from Ctrl+C or deployment services)
+const gracefulShutdown = async (signal) => {
+    console.log(`👋 ${signal} received. Shutting down gracefully...`);
+    server.close(async () => {
+        console.log('✅ HTTP server closed.');
+        await mongoose.connection.close(false);
+        console.log('✅ MongoDB connection closed.');
+        process.exit(0);
+    });
+};
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+
+// const mongoose = require("mongoose");
+// const dotenv = require("dotenv");
+
+// // Load the .env file passed as an argument, default to .env.dev if none provided
+// const envFile = process.argv[2] || ".env.dev";
+// dotenv.config({ path: envFile });
+
+// const app = require("./app");
+
+// mongoose
+//   .connect(process.env.DATABASE)
+//   .then(() => {
+//     console.log(`Connected to MongoDB (${process.env.NODE_ENV})`);
+//   })
+//   .catch((err) => {
+//     console.error("Database connection error:", err);
+//     process.exit(1);
+//   });
+
+// const port = process.env.PORT || 4000;
+// const server = app.listen(port, () => {
+//   console.log(`Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
+// });
+
+// async function shutdown() {
+//   console.log("Shutting down server...");
+//   await mongoose.connection.close(); // Remove callback
+//   console.log("MongoDB connection closed.");
+//   process.exit(0);
+// }
+
+// process.on("SIGINT", shutdown);
+// process.on("SIGTERM", shutdown);
 
 /*
 const app = require('./app'); // Assuming your Express app is in 'app.js'

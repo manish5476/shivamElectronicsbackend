@@ -1,24 +1,46 @@
 const express = require('express');
 const router = express.Router();
-const productControl = require('../Controllers/productController');
 const authController = require('../Controllers/authController');
 const reviewRoutes = require('./reviewRoutes');
-const getMasterList = require('../Controllers/MasterliastController')
-// Protected routes (require authentication)
-router.get('/DropdownData', productControl.getProductDropdownWithId); // Users can get dropdown data
-router.get('/autopopulate', getMasterList.getMasterList); // Users can get dropdown data
 
+// Import the factory and the Product model
+const factory = require('../Controllers/handleFactory');
+const Product = require('../Models/productModel'); // Ensure this path is correct
+
+// --- Unprotected Routes ---
+// These routes don't require a user to be logged in.
+// Note: I'm assuming these have custom logic not covered by the factory.
+// If they can be converted to factory.getAll(Product), you can do that.
+const productControl = require('../Controllers/productController');
+const getMasterList = require('../Controllers/MasterliastController');
+router.get('/DropdownData', productControl.getProductDropdownWithId);
+router.get('/autopopulate', getMasterList.getMasterList);
+
+// --- All subsequent routes are protected ---
 router.use(authController.protect);
-// User-accessible routes
-router.get('/', productControl.getAllProduct); // Users can view all products
-router.get('/:id', productControl.getProductById); // Users can view a specific product
-// Admin/staff-only routes
-router.post('/', authController.restrictTo('admin', 'staff'), productControl.findDuplicateProduct, productControl.newProduct); // Create product
-router.patch('/:id', authController.restrictTo('admin', 'staff'), productControl.updateProduct); // Update product
-router.delete('/:id', authController.restrictTo('admin', 'staff'), productControl.deleteProduct); // Delete product
-router.delete('/deletemany', authController.restrictTo('admin', 'staff'), productControl.deleteMultipleProduct); // Delete multiple products
 
-// Nested review routes (user can create reviews, controlled by reviewRoutes)
+// --- Combined Routes using the Factory ---
+
+// GET all products OR GET a single product by ID
+router.get('/', factory.getAll(Product));
+router.get('/:id', factory.getOne(Product));
+
+// --- Admin/Staff Restricted Routes ---
+router.use(authController.restrictTo('superAdmin','admin', 'staff'));
+
+// POST to / -> Creates one or many products
+router.post('/', factory.create(Product));
+
+// PATCH to /:id -> Updates one product
+// PATCH to / -> Updates many products (from body)
+router.patch('/:id?', factory.update(Product));
+
+// DELETE to /:id -> Deletes one product
+// DELETE to / -> Deletes many products (from body)
+router.delete('/:id?', factory.delete(Product));
+
+// --- Nested Routes ---
+// This remains the same. It correctly forwards to your review router.
 router.use('/:productId/reviews', reviewRoutes);
 
 module.exports = router;

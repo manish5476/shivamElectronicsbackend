@@ -54,10 +54,10 @@ exports.getProductDropdownWithId = catchAsync(async (req, res, next) => {
 // which already incorporate the owner filter and super admin bypass logic.
 exports.getAllProduct = handleFactory.getAll(Product);
 exports.getProductById = handleFactory.getOne(Product, { path: "reviews" }); // Include populate option as specified
-exports.deleteProduct = handleFactory.deleteOne(Product);
-exports.updateProduct = handleFactory.updateOne(Product);
-exports.newProduct = handleFactory.newOne(Product);
-exports.deleteMultipleProduct = handleFactory.deleteMany(Product); // Generic multiple delete
+exports.deleteProduct = handleFactory.delete(Product);
+exports.updateProduct = handleFactory.update(Product);
+exports.newProduct = handleFactory.create(Product);
+// exports.deleteMultipleProduct = handleFactory.deleteMany(Product); // Generic multiple delete
 
 
 // --- Bot-Specific Helper Functions (No req, res, next) ---
@@ -198,6 +198,7 @@ exports.newProductBot = async (productData, userId) => {
     return { message: 'Product created successfully', product: newProduct };
 };
 
+
 exports.deleteMultipleProductsBot = async (productIds, userId, isSuperAdmin = false) => {
     if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
         throw new AppError('No valid IDs provided for deletion.', 400);
@@ -275,9 +276,9 @@ exports.deleteMultipleProductsBot = async (productIds, userId, isSuperAdmin = fa
 // // which already incorporate the owner filter and super admin bypass logic.
 // exports.getAllProduct = handleFactory.getAll(Product); // reviews path typically only for getOne
 // exports.getProductById = handleFactory.getOne(Product, { path: "reviews" }); // Include populate option as specified
-// exports.deleteProduct = handleFactory.deleteOne(Product);
-// exports.updateProduct = handleFactory.updateOne(Product);
-// exports.newProduct = handleFactory.newOne(Product);
+// exports.deleteProduct = handleFactory.delete(Product);
+// exports.updateProduct = handleFactory.update(Product);
+// exports.newProduct = handleFactory.create(Product);
 // exports.deleteMultipleProduct = handleFactory.deleteMany(Product); // Generic multiple delete
 
 // // const Product = require('../Models/productModel');
@@ -304,9 +305,9 @@ exports.deleteMultipleProductsBot = async (productIds, userId, isSuperAdmin = fa
 
 // // exports.getAllProduct = handleFactory.getAll(Product, { path: "reviews" });
 // // exports.getProductById = handleFactory.getOne(Product, { path: "reviews" });
-// // exports.deleteProduct = handleFactory.deleteOne(Product);
-// // exports.updateProduct = handleFactory.updateOne(Product);
-// // exports.newProduct = handleFactory.newOne(Product);
+// // exports.deleteProduct = handleFactory.delete(Product);
+// // exports.updateProduct = handleFactory.update(Product);
+// // exports.newProduct = handleFactory.create(Product);
 // // exports.deleteMultipleProduct = handleFactory.deleteMultipleProduct(Product)
 
 
@@ -500,9 +501,9 @@ exports.deleteMultipleProductsBot = async (productIds, userId, isSuperAdmin = fa
 // // // // ---------------------------------------------------------------------------------------------------------------------------------------
 // // // exports.getAllProduct = handleFactory.getAll(Product, { path: "reviews" });
 // // // exports.getProductById = handleFactory.getOne(Product, { path: "reviews" });
-// // // exports.newProduct = handleFactory.newOne(Product);
-// // // exports.deleteProduct = handleFactory.deleteOne(Product);
-// // // exports.updateProduct = handleFactory.updateOne(Product);
+// // // exports.newProduct = handleFactory.create(Product);
+// // // exports.deleteProduct = handleFactory.delete(Product);
+// // // exports.updateProduct = handleFactory.update(Product);
 // // // // ---------------------------------------------------------------------------------------------------------------------------------------
 
 // // // // exports.getProductById = catchAsync(async (req, res, next) => {

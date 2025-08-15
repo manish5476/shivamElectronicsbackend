@@ -9,9 +9,9 @@ const mongoose = require('mongoose'); // Import mongoose
 
 exports.getAllPayment = handleFactory.getAll(Payment, { path: "reviews" });
 exports.getPaymentById = handleFactory.getOne(Payment, { path: "reviews" });
-exports.newPayment = handleFactory.newOne(Payment);
-exports.deletePayment = handleFactory.deleteOne(Payment);
-exports.updatePayment = handleFactory.updateOne(Payment);
+exports.newPayment = handleFactory.create(Payment);
+exports.deletePayment = handleFactory.delete(Payment);
+exports.updatePayment = handleFactory.update(Payment);
 
 
 exports.newPaymentBot = async (paymentData, userId) => {

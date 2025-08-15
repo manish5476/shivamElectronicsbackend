@@ -101,16 +101,15 @@ exports.newCustomer = [
 
         if (customer) {
             if (customer.status === 'inactive') {
-                // If inactive, reactivate it using the update handler logic
-                req.params.id = customer._id; // Set ID for updateOne factory
+                req.params.id = customer._id; // Set ID for update factory
                 req.body.status = 'active'; // Ensure status is set to active
-                return handleFactory.updateOne(Customer)(req, res, next); // Pass control to updateOne
+                return handleFactory.update(Customer)(req, res, next); // Pass control to update
             }
             return next(new AppError('Customer already active for this user.', 400));
         }
         next(); // If no existing customer or not inactive, proceed to creation
     }),
-    handleFactory.newOne(Customer), // Use factory handler for actual creation
+    handleFactory.create(Customer), // Use factory handler for actual creation
 ];
 
 
@@ -121,11 +120,10 @@ exports.getCustomerById = handleFactory.getOne(Customer); // This now handles su
 exports.getAllCustomer = handleFactory.getAll(Customer); // This now handles superAdmin logic
 
 // Update Customer API endpoint using factory handler
-exports.updateCustomer = handleFactory.updateOne(Customer); // This now handles superAdmin logic
+exports.updateCustomer = handleFactory.update(Customer); // This now handles superAdmin logic
 
 // Delete Customer API endpoint using factory handler
-exports.deleteCustomer = handleFactory.deleteOne(Customer); // This now handles superAdmin logic
-
+exports.deleteCustomer = handleFactory.delete(Customer); // This now handles superAdmin logic
 
 // Deactivate Multiple Customers API endpoint
 exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
@@ -162,6 +160,55 @@ exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
     });
 });
 
+exports.getCustomersNearMe = catchAsync(async (req, res, next) => {
+  const { lng, lat, distance } = req.query;
+
+  if (!lng || !lat) {
+    return next(new AppError('Please provide latitude and longitude in the query string.', 400));
+  }
+
+  const customers = await Customer.findNear(lng, lat, distance);
+
+  res.status(200).json({
+    status: 'success',
+    results: customers.length,
+    data: {
+      customers
+    }
+  });
+});
+
+
+exports.createCustomerWithGeocoding = catchAsync(async (req, res, next) => {
+    const customerData = req.body;
+
+    // Check if there are addresses to geocode
+    if (customerData.addresses && customerData.addresses.length > 0) {
+        for (const address of customerData.addresses) {
+            // Combine the address parts into a single string for geocoding
+            const addressString = `${address.street}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
+            
+            const loc = await geocoder.geocode(addressString);
+            
+            // Add the location to the address object
+            address.location = {
+                type: 'Point',
+                coordinates: [loc[0].longitude, loc[0].latitude]
+            };
+        }
+    }
+
+    // Assign the owner and create the customer
+    customerData.owner = req.user._id;
+    const customer = await Customer.create(customerData);
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            customer
+        }
+    });
+});
 
 // --- Bot-Specific Helper Functions (No req, res, next) ---
 // These functions will be called directly by the Telegram bot handlers.
@@ -203,7 +250,6 @@ exports.newCustomerBot = async (customerData, userId) => {
     return { message: 'Customer created successfully', customer };
 };
 
-
 exports.getCustomerByIdBot = async (customerId, userId, isSuperAdmin = false) => {
     let filter = { _id: customerId };
     if (!isSuperAdmin) {
@@ -244,7 +290,6 @@ exports.getAllCustomersBot = async (userId, isSuperAdmin = false, queryFilters =
     const customers = await features.query;
     return customers;
 };
-
 
 exports.updateCustomerBot = async (customerId, updateData, userId, isSuperAdmin = false) => {
     if (!mongoose.Types.ObjectId.isValid(customerId)) {
@@ -508,9 +553,9 @@ exports.deactivateMultipleCustomersBot = async (customerIds, userId, isSuperAdmi
 // exports.getAllCustomer = handleFactory.getAll(Customer); // Crucial: Pass owner to filter
 
 // // --- 6. Update Customer (Per User) ---
-// // This assumes handleFactory.updateOne can take an owner filter implicitly.
-// // If handleFactory.updateOne doesn't support implicit owner filtering, you'd modify it.
-// exports.updateCustomer = handleFactory.updateOne(Customer); // handleFactory.updateOne must internally use { _id: req.params.id, owner: req.user._id }
+// // This assumes handleFactory.update can take an owner filter implicitly.
+// // If handleFactory.update doesn't support implicit owner filtering, you'd modify it.
+// exports.updateCustomer = handleFactory.update(Customer); // handleFactory.update must internally use { _id: req.params.id, owner: req.user._id }
 // // OR a custom implementation for `updateCustomer` like:
 // /*
 // exports.updateCustomer = catchAsync(async (req, res, next) => {
@@ -530,8 +575,8 @@ exports.deactivateMultipleCustomersBot = async (customerIds, userId, isSuperAdmi
 // */
 
 // // --- 7. Delete Customer (Per User) ---
-// // This assumes handleFactory.deleteOne can take an owner filter implicitly.
-// exports.deleteCustomer = handleFactory.deleteOne(Customer); // handleFactory.deleteOne must internally use { _id: req.params.id, owner: req.user._id }
+// // This assumes handleFactory.delete can take an owner filter implicitly.
+// exports.deleteCustomer = handleFactory.delete(Customer); // handleFactory.delete must internally use { _id: req.params.id, owner: req.user._id }
 // // OR a custom implementation for `deleteCustomer` like:
 // /*
 // exports.deleteCustomer = catchAsync(async (req, res, next) => {
@@ -704,8 +749,8 @@ exports.deactivateMultipleCustomersBot = async (customerIds, userId, isSuperAdmi
 // // //   }
 // // // });
 // // exports.getAllCustomer = handleFactory.getAll(Customer)
-// // exports.updateCustomer = handleFactory.updateOne(Customer);
-// // exports.deleteCustomer = handleFactory.deleteOne(Customer);
+// // exports.updateCustomer = handleFactory.update(Customer);
+// // exports.deleteCustomer = handleFactory.delete(Customer);
 
 // // exports.deactivateMultipleCustomers = catchAsync(async (req, res, next) => {
 // //   const ids = req.body.ids;

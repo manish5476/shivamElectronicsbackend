@@ -58,12 +58,14 @@ invoiceSchema.virtual('sellerDetails', {
     foreignField: '_id',
     justOne: true
 });
+
 invoiceSchema.virtual('buyerDetails', {
     ref: 'Customer',
     localField: 'buyer',
     foreignField: '_id',
     justOne: true
 });
+
 invoiceSchema.virtual('itemDetails', {
     ref: 'Product',
     localField: 'items.product',
@@ -133,7 +135,6 @@ invoiceSchema.pre(/^find/, function (next) {
 // ////////////
 // Post-save: Update customer cart
 
-
 invoiceSchema.pre('save', async function (next) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -141,32 +142,25 @@ invoiceSchema.pre('save', async function (next) {
         if (!this.dueDate) {
             this.dueDate = new Date(this.invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000);
         }
-
         let subTotal = 0, totalDiscount = 0, totalGst = 0;
-
         for (const item of this.items) {
             let product = null;
             if (item.product) {
                 product = await Product.findById(item.product).session(session);
             }
-
             if (product) {
                 // Inventory product
                 if (product.stock < item.quantity) {
                     throw new Error(`Insufficient stock for ${product.title}`);
                 }
-
                 // Fill missing fields from product
                 if (item.rate == null) item.rate = product.rate ?? 0;
                 if (item.gstRate == null) item.gstRate = product.gstRate ?? 0;
                 if (!item.customTitle) item.customTitle = product.title;
-
                 item.isCustomProduct = false;
-
                 // Deduct stock
                 product.stock -= item.quantity;
                 await product.save({ session });
-
             } else {
                 // Custom product (not found in inventory)
                 if (!item.customTitle || typeof item.customTitle !== 'string') {
@@ -176,7 +170,6 @@ invoiceSchema.pre('save', async function (next) {
                     throw new Error(`Rate must be provided for custom product "${item.customTitle}"`);
                 }
                 if (item.gstRate == null) item.gstRate = 0;
-
                 item.isCustomProduct = true;
             }
 
@@ -185,17 +178,14 @@ invoiceSchema.pre('save', async function (next) {
             const discountedValue = item.taxableValue - (item.taxableValue * item.discount / 100);
             item.gstAmount = (discountedValue * item.gstRate) / 100;
             item.amount = discountedValue + item.gstAmount;
-
             subTotal += item.taxableValue;
             totalDiscount += (item.taxableValue * item.discount / 100);
             totalGst += item.gstAmount;
         }
-
         this.subTotal = subTotal;
         this.totalDiscount = totalDiscount;
         this.gst = totalGst;
         this.totalAmount = subTotal + totalGst - totalDiscount;
-
         await session.commitTransaction();
         next();
     } catch (error) {
@@ -205,7 +195,6 @@ invoiceSchema.pre('save', async function (next) {
         session.endSession();
     }
 });
-// ?new one
 
 // customer
 invoiceSchema.post('save', async function (doc) {
@@ -215,7 +204,6 @@ invoiceSchema.post('save', async function (doc) {
         const Customer = require('./customerModel'); // Avoid circular dependency
         const customer = await Customer.findById(doc.buyer).session(session);
         if (!customer) throw new Error('Customer not found');
-
         for (const item of doc.items) {
             const cartItem = customer.cart.items.find(cartItem =>
                 cartItem.productId.toString() === item.product.toString()
