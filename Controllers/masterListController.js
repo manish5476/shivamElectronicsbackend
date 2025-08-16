@@ -30,7 +30,7 @@ const moduleConfig = {
     },
     customers: {
         Model: Customer,
-        selectFields: 'fullname phoneNumbers _id mobileNumber email address',
+        selectFields: 'fullname  _id mobileNumber email ',
         labelField: 'fullname',
         searchFields: ['fullname', 'phoneNumbers.number'],
     },

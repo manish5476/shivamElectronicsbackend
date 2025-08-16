@@ -23,12 +23,68 @@ exports.getCustomersWithOutstandingPayments = async (req, res, next) => {
     }
 };
 
+// exports.getTopCustomersByPurchase = async (req, res, next) => {
+//     try {
+//         const limit = parseInt(req.query.limit) || 5;
+//         const { period, startDate: queryStartDate, endDate: queryEndDate } = req.query;
+//         // Your Customer model has `totalPurchasedAmount`.
+//         // If you need to calculate this dynamically for a period from INVOICES:
+//         if (period || (queryStartDate && queryEndDate)) {
+//             const { startDate, endDate } = getDateRange(period, queryStartDate, queryEndDate);
+//             const matchStage = {};
+//             if (startDate && endDate) {
+//                 matchStage.invoiceDate = { $gte: startDate, $lte: endDate };
+//             }
+
+//             const topCustomersByInvoice = await Invoice.aggregate([
+//                 { $match: matchStage },
+//                 // { $match: { status: 'paid' } }, // Optionally, only consider paid invoices
+//                 {
+//                     $group: {
+//                         _id: "$buyer", // Group by customer ID
+//                         periodPurchasedAmount: { $sum: "$totalAmount" }
+//                     }
+//                 },
+//                 { $sort: { periodPurchasedAmount: -1 } },
+//                 { $limit: limit },
+//                 {
+//                     $lookup: { // Get customer details
+//                         from: "customers",
+//                         localField: "_id",
+//                         foreignField: "_id",
+//                         as: "customerDetails"
+//                     }
+//                 },
+//                 { $unwind: "$customerDetails" },
+//                 {
+//                     $project: {
+//                         _id: "$customerDetails._id",
+//                         fullname: "$customerDetails.fullname",
+//                         email: "$customerDetails.email",
+//                         periodPurchasedAmount: 1,
+//                         cart:"$customerDetails.cart",
+//                         totalPurchasedAmountGlobal: "$customerDetails.totalPurchasedAmount"
+//                     }
+//                 }
+//             ]);
+//             return res.status(200).json({ success: true, data: topCustomersByInvoice });
+//         } else {
+//             // Use the pre-calculated totalPurchasedAmount on the Customer model
+//             const customers = await Customer.find({})
+//                 .sort({ totalPurchasedAmount: -1 })
+//                 .limit(limit)
+//                 .select('fullname email totalPurchasedAmount remainingAmount');
+//             return res.status(200).json({ success: true, data: customers });
+//         }
+//     } catch (error) {
+//         next(error);
+//     }
+// };
 exports.getTopCustomersByPurchase = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 5;
         const { period, startDate: queryStartDate, endDate: queryEndDate } = req.query;
-        // Your Customer model has `totalPurchasedAmount`.
-        // If you need to calculate this dynamically for a period from INVOICES:
+
         if (period || (queryStartDate && queryEndDate)) {
             const { startDate, endDate } = getDateRange(period, queryStartDate, queryEndDate);
             const matchStage = {};
@@ -37,18 +93,21 @@ exports.getTopCustomersByPurchase = async (req, res, next) => {
             }
 
             const topCustomersByInvoice = await Invoice.aggregate([
+                // Stage 1: Match invoices within the date range
                 { $match: matchStage },
-                // { $match: { status: 'paid' } }, // Optionally, only consider paid invoices
+                // Stage 2: Group by customer to calculate total purchase amount for the period
                 {
                     $group: {
                         _id: "$buyer", // Group by customer ID
                         periodPurchasedAmount: { $sum: "$totalAmount" }
                     }
                 },
+                // Stage 3: Sort by the highest spending customers
                 { $sort: { periodPurchasedAmount: -1 } },
                 { $limit: limit },
+                // Stage 4: Lookup the full customer details
                 {
-                    $lookup: { // Get customer details
+                    $lookup: {
                         from: "customers",
                         localField: "_id",
                         foreignField: "_id",
@@ -56,31 +115,72 @@ exports.getTopCustomersByPurchase = async (req, res, next) => {
                     }
                 },
                 { $unwind: "$customerDetails" },
+                // Stage 5: Unwind the cart items to process each one
+                { $unwind: { path: "$customerDetails.cart.items", preserveNullAndEmptyArrays: true } },
+                // Stage 6: *** NEW - Lookup the product details for each cart item ***
+                {
+                    $lookup: {
+                        from: "products",
+                        localField: "customerDetails.cart.items.productId",
+                        foreignField: "_id",
+                        as: "customerDetails.cart.items.productInfo"
+                    }
+                },
+                { $unwind: { path: "$customerDetails.cart.items.productInfo", preserveNullAndEmptyArrays: true } },
+                // Stage 7: Group back to reconstruct the customer object with populated cart items
+                {
+                    $group: {
+                        _id: "$customerDetails._id",
+                        fullname: { $first: "$customerDetails.fullname" },
+                        email: { $first: "$customerDetails.email" },
+                        periodPurchasedAmount: { $first: "$periodPurchasedAmount" },
+                        totalPurchasedAmountGlobal: { $first: "$customerDetails.totalPurchasedAmount" },
+                        cartItems: {
+                            $push: {
+                                // Rebuild the item with populated product details
+                                _id: "$customerDetails.cart.items._id",
+                                invoiceIds: "$customerDetails.cart.items.invoiceIds",
+                                // Embed the product details directly
+                                productId: {
+                                    _id: "$customerDetails.cart.items.productInfo._id",
+                                    title: "$customerDetails.cart.items.productInfo.title",
+                                    price: "$customerDetails.cart.items.productInfo.price",
+                                    sku: "$customerDetails.cart.items.productInfo.sku",
+                                    thumbnail: "$customerDetails.cart.items.productInfo.thumbnail"
+                                }
+                            }
+                        }
+                    }
+                },
+                // Final Stage: Reshape the output to match the expected format
                 {
                     $project: {
-                        _id: "$customerDetails._id",
-                        fullname: "$customerDetails.fullname",
-                        email: "$customerDetails.email",
+                        _id: 1,
+                        fullname: 1,
+                        email: 1,
                         periodPurchasedAmount: 1,
-                        cart:"$customerDetails.cart",
-                        totalPurchasedAmountGlobal: "$customerDetails.totalPurchasedAmount"
+                        totalPurchasedAmountGlobal: 1,
+                        cart: {
+                            items: "$cartItems"
+                        }
                     }
-                }
+                },
+                 { $sort: { periodPurchasedAmount: -1 } }, // Sort again after regrouping
             ]);
             return res.status(200).json({ success: true, data: topCustomersByInvoice });
         } else {
-            // Use the pre-calculated totalPurchasedAmount on the Customer model
+            // Fallback for when no date period is specified
             const customers = await Customer.find({})
                 .sort({ totalPurchasedAmount: -1 })
                 .limit(limit)
-                .select('fullname email totalPurchasedAmount remainingAmount');
+                .select('fullname email totalPurchasedAmount remainingAmount cart')
+                .populate('cart.items.productId', 'title price sku thumbnail'); // Use populate for the simpler case
             return res.status(200).json({ success: true, data: customers });
         }
     } catch (error) {
         next(error);
     }
 };
-
 exports.getNewCustomersCount = async (req, res, next) => {
     try {
         const { period, startDate: queryStartDate, endDate: queryEndDate } = req.query;
