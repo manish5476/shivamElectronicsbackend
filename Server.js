@@ -21,15 +21,15 @@ const server = app.listen(port, () => {
     console.log(`🚀 Server is running on port ${port} in ${process.env.NODE_ENV} mode`);
     // --- TELEGRAM WEBHOOK SETUP (Optional) ---
     // This block sets up your Telegram bot's webhook, essential for production.
-    const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
-    if (RENDER_EXTERNAL_URL && bot) {
-        const webhookUrl = `${RENDER_EXTERNAL_URL}/telegram-webhook`;
-        bot.setWebHook(webhookUrl)
-            .then(() => console.log(`✅ Telegram Webhook set to: ${webhookUrl}`))
-            .catch(err => console.error('❌ Error setting Telegram Webhook:', err.message));
-    } else if (!RENDER_EXTERNAL_URL) {
-        console.warn('⚠️ RENDER_EXTERNAL_URL not set. Webhook will not be configured.');
-    }
+    // const RENDER_EXTERNAL_URL = process.env.RENDER_EXTERNAL_URL;
+    // if (RENDER_EXTERNAL_URL && bot) {
+    //     const webhookUrl = `${RENDER_EXTERNAL_URL}/telegram-webhook`;
+    //     bot.setWebHook(webhookUrl)
+    //         .then(() => console.log(`✅ Telegram Webhook set to: ${webhookUrl}`))
+    //         .catch(err => console.error('❌ Error setting Telegram Webhook:', err.message));
+    // } else if (!RENDER_EXTERNAL_URL) {
+    //     console.warn('⚠️ RENDER_EXTERNAL_URL not set. Webhook will not be configured.');
+    // }
 });
 
 // --- 3. GRACEFUL SHUTDOWN AND ERROR HANDLING ---
