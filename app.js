@@ -12,7 +12,8 @@ const winston = require('winston'); // Advanced logging
 const path = require('path'); // For path manipulation
 
 // Import custom utilities and error handler
-const globalErrorHandler = require('./Controllers/errorController');
+// const globalErrorHandler = require('./Controllers/errorController');
+const globalErrorHandler = require('./middleWare/errorController');
 const AppError = require('./Utils/appError');
 
 // Import all route files
@@ -147,15 +148,12 @@ app.use('/api/v1/master-list', masterListRoutes);
 app.use('/api/v1/statistics', statisticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/analytics', analyticsRoutes); // Assuming these are admin dashboard routes
 app.use('/api/v1/dashboard', dashboardRoutes); // Using consistent variable name
-
 app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
-
 
 // --- 5. Unhandled Routes (404) ---
 app.all('*', (req, res, next) => {
     next(new AppError(`Cannot find ${req.originalUrl} on this server!`, 404));
 });
-
 app.use(globalErrorHandler);
 module.exports = app;
 

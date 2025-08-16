@@ -10,7 +10,6 @@ const ApiFeatures = require('../Utils/ApiFeatures'); // Import ApiFeatures
 
 // Middleware to find duplicate invoices by invoiceNumber
 exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
-    // Ensure the invoiceNumber is provided in the request body
     if (!req.body.invoiceNumber) {
         return next(new AppError('Invoice number is required to check for duplicates.', 400));
     }
@@ -26,9 +25,9 @@ exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
 // Using handleFactory for basic CRUD operations (without explicit populate options here)
 exports.getAllInvoice = handleFactory.getAll(Invoice);
 exports.getInvoiceById = handleFactory.getOne(Invoice);
-exports.newInvoice = handleFactory.newOne(Invoice);
-exports.deleteInvoice = handleFactory.deleteOne(Invoice);
-exports.updateInvoice = handleFactory.updateOne(Invoice);
+exports.newInvoice = handleFactory.create(Invoice);
+exports.deleteInvoice = handleFactory.delete(Invoice);
+exports.updateInvoice = handleFactory.update(Invoice);
 
 // Custom API handler for creating an invoice (as it has specific logic like customer lookup)
 exports.createInvoice = catchAsync(async (req, res, next) => {
@@ -357,6 +356,6 @@ exports.getProductSalesBot = async (startDate, endDate, userId, isSuperAdmin = f
 // };
 // exports.getAllInvoice = handleFactory.getAll(Invoice);
 // exports.getInvoiceById = handleFactory.getOne(Invoice);
-// exports.newInvoice = handleFactory.newOne(Invoice);
-// exports.deleteInvoice = handleFactory.deleteOne(Invoice);
-// exports.updateInvoice = handleFactory.updateOne(Invoice);
+// exports.newInvoice = handleFactory.create(Invoice);
+// exports.deleteInvoice = handleFactory.delete(Invoice);
+// exports.updateInvoice = handleFactory.update(Invoice);

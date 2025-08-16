@@ -16,9 +16,8 @@ const logSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // The 'meta' field will store structured data like userId, role, IP, URL, etc.
     meta: {
-        type: mongoose.Schema.Types.Mixed // Mixed type allows flexible object structure
+        type: mongoose.Schema.Types.Mixed 
     },
     environment: {
         type: String,

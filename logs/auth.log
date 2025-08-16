@@ -15,3 +15,13 @@
 {"level":"info","message":"Bot User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin","timestamp":"2025-07-13T14:48:34.939Z"}
 {"level":"info","message":"Bot User Logged In: UserID: 68502ba110961e80c08aa35c, Email: manish.singh@gmail.com, Role: superAdmin","timestamp":"2025-07-13T16:11:53.730Z"}
 {"level":"info","message":"Bot User Logged In: UserID: 68502ba110961e80c08aa35c, Email: manish.singh@gmail.com, Role: superAdmin","timestamp":"2025-07-13T16:12:16.646Z"}
+{"level":"warn","message":"Failed Login Attempt: Email: msms5476m@gmail.com, IP: ::1","timestamp":"2025-08-06T16:09:29.899Z"}
+{"level":"warn","message":"Failed Login Attempt: Email: msms5476m@gmail.com, IP: ::1","timestamp":"2025-08-06T16:09:42.046Z"}
+{"level":"info","message":"User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-06T16:09:59.798Z"}
+{"level":"info","message":"User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-11T14:55:51.199Z"}
+{"level":"info","message":"User Logged In: UserID: 686a2ce050cf9fd42163f0fa, Email: msms5476mm@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-11T15:14:29.631Z"}
+{"level":"info","message":"User Logged In: UserID: 686a2ce050cf9fd42163f0fa, Email: msms5476mm@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-12T16:31:14.025Z"}
+{"level":"info","message":"User Signed Up: UserID: 689b6fae0586de80b79ad0d2, Email: nehal.singh@gmail.com, Role: user, IP: ::1","timestamp":"2025-08-12T16:45:35.464Z"}
+{"level":"info","message":"User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-15T06:23:36.726Z"}
+{"level":"info","message":"User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-15T06:46:36.669Z"}
+{"level":"info","message":"User Logged In: UserID: 6862b0cd05e5ace5f442a982, Email: manish.singh@gmail.com, Role: superAdmin, IP: ::1","timestamp":"2025-08-15T10:27:28.485Z"}
