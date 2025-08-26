@@ -10,9 +10,6 @@ const Invoice = require('../Models/invoiceModel'); // Make sure this path is cor
 // --- All routes are protected from this point ---
 router.use(authController.protect);
 
-// --- User-accessible route ---
-// This allows a user to view a specific invoice they own.
-// This is kept as a custom controller function assuming it has special logic.
 router.get('/:id', invoiceController.getInvoiceById);
 
 // --- Admin/Staff/SuperAdmin Restricted Routes ---
@@ -37,22 +34,3 @@ router.patch('/:id?', factory.update(Invoice));
 router.delete('/:id?', factory.delete(Invoice));
 
 module.exports = router;
-
-
-// const express = require('express');
-// const router = express.Router();
-// const authController = require('../Controllers/authController');
-// const invoiceController = require('../Controllers/InvoiceController');
-
-// // Protected routes (require authentication)
-// router.use(authController.protect);
-
-// // User-accessible routes
-// router.get('/:id', invoiceController.getInvoiceById); // Users can view their invoice
-
-// router.get('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.getAllInvoice); // View all invoices
-// router.post('/', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.findDuplicateInvoice, invoiceController.newInvoice); 
-// router.patch('/:id', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.updateInvoice); // Update invoice
-// router.delete('/:id', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.deleteInvoice); // Delete invoice
-// router.post('/productSales', authController.protect, authController.restrictTo('admin', 'staff', 'superAdmin'), invoiceController.getProductSales); // Delete invoice
-// module.exports = router;

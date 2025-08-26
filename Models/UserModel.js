@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "staff", "admin","superAdmin"],
+      enum: ["user", "staff", "admin", "superAdmin"],
       default: "user",
     },
     photo: String,
@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema(
         },
         message: "Passwords must match",
       },
+    },
+    allowedRoutes: {
+      type: [String],
+      default: []
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
