@@ -76,22 +76,22 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        return next(new AppError('Please provide email and password', 400));
-    }
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password', 400));
+  }
 
-    const user = await User.findOne({ email }).select('+password');
-    // --- IMPORTANT CHANGE HERE ---
-    // Your UserModel's correctPassword method only takes one argument (candidatePassword)
-    if (!user || !(await user.correctPassword(password))) { // Removed 'user.password' from arguments
-        logger.warn(`Failed Login Attempt: Email: ${email}, IP: ${req.ip}`);
-        return next(new AppError('Invalid email or password', 401));
-    }
-    logger.info(`User Logged In: UserID: ${user._id}, Email: ${user.email}, Role: ${user.role}, IP: ${req.ip}`);
+  const user = await User.findOne({ email }).select('+password');
+  // --- IMPORTANT CHANGE HERE ---
+  // Your UserModel's correctPassword method only takes one argument (candidatePassword)
+  if (!user || !(await user.correctPassword(password))) { // Removed 'user.password' from arguments
+    logger.warn(`Failed Login Attempt: Email: ${email}, IP: ${req.ip}`);
+    return next(new AppError('Invalid email or password', 401));
+  }
+  logger.info(`User Logged In: UserID: ${user._id}, Email: ${user.email}, Role: ${user.role}, IP: ${req.ip}`);
 
-    createSendToken(user, 200, res);
+  createSendToken(user, 200, res);
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -199,7 +199,65 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
 });
 
 
+exports.checkUserPermission = (requiredPermissionTag) => {
+  return (req, res, next) => {
+    try {
+      const user = req.user;
 
+      if (!user) {
+        return res.status(401).json({
+          status: 'fail',
+          message: 'User not authenticated'
+        });
+      }
+
+      if (user.role === 'superAdmin' || user.role === 'admin') {
+        return next();
+      }
+
+      if (Array.isArray(user.allowedRoutes) && user.allowedRoutes.includes(requiredPermissionTag)) {
+        return next();
+      }
+
+      return res.status(403).json({
+        status: 'fail',
+        message: 'You do not have permission to perform this action.'
+      });
+    } catch (err) {
+      console.error('Permission middleware failed:', err);
+      next(err);
+    }
+  };
+};
+
+// exports.checkUserPermission = (requiredPermissionTag) => {
+//   return async (req, res, next) => {
+//     const user = req.user; // Comes from the 'protect' middleware
+
+//     // Rule 1: 'superAdmin' can do anything.
+//     if (user.role === 'superAdmin') {
+//       return next();
+//     }
+
+//     // Rule 2: 'admin' can also do anything in this model.
+//     if (user.role === 'admin') {
+//       return next();
+//     }
+
+//     // Rule 3: Check the user's personal `allowedRoutes` array.
+//     if (user.allowedRoutes && user.allowedRoutes.includes(requiredPermissionTag)) {
+//       return next();
+//     }
+
+//     // If no rules pass, the user is forbidden.
+//     return res.status(403).json({
+//       status: 'fail',
+//       message: 'You do not have permission to perform this action.'
+//     });
+//   };
+// };
+
+// ------------------------------------------------- BOy section _----------------------------------------------------------//
 
 // --- Bot-Specific Helper Functions (No req, res, next) ---
 // These functions will be called directly by the Telegram bot handlers.
@@ -225,22 +283,22 @@ exports.signupBot = async (name, email, password, passwordConfirm, role) => {
 
 
 exports.loginBot = async (email, password) => {
-    if (!email || !password) {
-        throw new AppError('Please provide email and password', 400);
-    }
+  if (!email || !password) {
+    throw new AppError('Please provide email and password', 400);
+  }
 
-    const user = await User.findOne({ email }).select('+password');
-    // --- IMPORTANT CHANGE HERE ---
-    // Your UserModel's correctPassword method only takes one argument (candidatePassword)
-    if (!user || !(await user.correctPassword(password))) { // Removed 'user.password' from arguments
-        logger.warn(`Bot Failed Login Attempt: Email: ${email}`);
-        throw new AppError('Invalid email or password', 401);
-    }
-    logger.info(`Bot User Logged In: UserID: ${user._id}, Email: ${user.email}, Role: ${user.role}`);
+  const user = await User.findOne({ email }).select('+password');
+  // --- IMPORTANT CHANGE HERE ---
+  // Your UserModel's correctPassword method only takes one argument (candidatePassword)
+  if (!user || !(await user.correctPassword(password))) { // Removed 'user.password' from arguments
+    logger.warn(`Bot Failed Login Attempt: Email: ${email}`);
+    throw new AppError('Invalid email or password', 401);
+  }
+  logger.info(`Bot User Logged In: UserID: ${user._id}, Email: ${user.email}, Role: ${user.role}`);
 
-    const token = signToken(user._id);
-    user.password = undefined; // Remove password from output
-    return { user, token };
+  const token = signToken(user._id);
+  user.password = undefined; // Remove password from output
+  return { user, token };
 };
 
 exports.verifyTokenAndGetUserBot = async (tokenHeader) => {
