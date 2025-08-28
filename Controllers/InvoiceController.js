@@ -393,7 +393,6 @@ exports.getProductSalesBot = async (
     );
 };
 
-
 // --- THEME & LAYOUT CONSTANTS ---
 // Centralizing style makes it easy to change the invoice's look and feel.
 const theme = {
