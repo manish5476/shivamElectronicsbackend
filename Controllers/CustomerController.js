@@ -1,4 +1,5 @@
 const Customer = require("../Models/customerModel"); // Your Customer model
+const Invoice = require("../Models/invoiceModel"); // Your Customer model
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
 const { body, validationResult } = require("express-validator"); // For API validation
