@@ -1485,3 +1485,8 @@
 {"level":"info","message":"Incoming Request: GET / from IP: 10.84.7.14","timestamp":"2025-08-28 06:57:53"}
 {"level":"info","message":"Incoming Request: GET / from IP: 10.84.7.14","timestamp":"2025-08-28 06:58:00"}
 {"level":"info","message":"Incoming Request: GET / from IP: 10.84.1.13","timestamp":"2025-08-28 08:53:06"}
+{"level":"info","message":"Incoming Request: GET /api/v1/invoices/68a5e694cb3427b068d86903/pdf from IP: ::1","timestamp":"2025-08-28 21:32:15"}
+{"level":"info","message":"Incoming Request: GET /api/v1/invoices/68a5e694cb3427b068d86903/pdf from IP: ::1","timestamp":"2025-08-28 21:37:13"}
+{"level":"info","message":"Incoming Request: GET /api/v1/invoices/68a5e694cb3427b068d86903/pdf from IP: ::1","timestamp":"2025-08-28 21:40:48"}
+{"level":"info","message":"Incoming Request: GET /api/v1/invoices/68a5e694cb3427b068d86903/pdf from IP: ::1","timestamp":"2025-08-28 21:41:01"}
+{"level":"info","message":"Incoming Request: GET /api/v1/invoices/68a5e694cb3427b068d86903/pdf from IP: ::1","timestamp":"2025-08-28 21:43:43"}

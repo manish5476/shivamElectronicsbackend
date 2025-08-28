@@ -13,9 +13,5 @@ router.use(authController.protect);
 // - type ('sales' or 'payments')
 // - paymentMethod ('credit_card', 'upi', etc.)
 // - status ('paid', 'unpaid', 'pending', etc.)
-router.get(
-  "/",
-  authController.checkUserPermission("transaction:get"),
-  transactionController.getAllTransactions,
-);
+router.get("/",authController.checkUserPermission("transaction:get"),transactionController.getAllTransactions,);
 module.exports = router;
