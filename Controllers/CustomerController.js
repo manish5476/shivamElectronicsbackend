@@ -1,4 +1,5 @@
 const Customer = require("../Models/customerModel"); // Your Customer model
+const Payment = require("../Models/paymentModel"); // Your Customer model
 const Invoice = require("../Models/invoiceModel"); // Your Customer model
 const catchAsync = require("../Utils/catchAsyncModule");
 const AppError = require("../Utils/appError");
@@ -6,7 +7,6 @@ const { body, validationResult } = require("express-validator"); // For API vali
 const multer = require("multer"); // For API file uploads
 const { createClient } = require("@supabase/supabase-js"); // For Supabase integration
 const mongoose = require("mongoose"); // Needed for ObjectId validation
-
 // Factory handlers for common CRUD operations
 const handleFactory = require("./handleFactory");
 const ApiFeatures = require("../Utils/ApiFeatures"); // Import ApiFeatures

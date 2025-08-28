@@ -32,7 +32,6 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const permissionsRouter = require("./routes/permissionsRoutes");
 const transactionRoutes = require("./routes/transactionRoutes"); // <-- ADD THIS LINE
-const advancedAnalyticsRoutes = require("./routes/advancedAnalyticsRoutes");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -220,7 +219,6 @@ app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/permissions", permissionsRouter);
 app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 
-app.use("/api/v1/analytics", advancedAnalyticsRoutes);
 
 // Static assets
 app.use(
