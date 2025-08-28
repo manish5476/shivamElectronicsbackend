@@ -78,6 +78,15 @@ exports.createInvoice = catchAsync(async (req, res, next) => {
         owner: req.user._id, // Assign owner from the authenticated user
     });
 
+    if (newInvoice && newInvoice.items) {
+        for (const item of newInvoice.items) {
+            if (item.product) {
+                await inventoryAlertService.checkStockAndSendAlert(
+                    item.product,
+                );
+            }
+        }
+    }
     // --- 4. Update the Seller's record ---
     // This is the crucial step to link the invoice back to the seller.
     if (newInvoice && newInvoice.seller) {
