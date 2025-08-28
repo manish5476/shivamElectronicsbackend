@@ -6,6 +6,7 @@ const catchAsync = require("../Utils/catchAsyncModule");
 const handleFactory = require("./handleFactory"); // Your generic factory handler
 const mongoose = require("mongoose"); // For ObjectId validation
 const { body, validationResult } = require("express-validator"); // Still imported, even if not directly used by all handlers
+const PDFDocument = require("pdfkit"); // Import the PDF generation library
 
 const ApiFeatures = require("../Utils/ApiFeatures"); // Import ApiFeatures
 
@@ -380,6 +381,145 @@ exports.getProductSalesBot = async (
         isSuperAdmin,
     );
 };
+
+/**
+ * @description Generates a PDF for a specific invoice and streams it to the client.
+ */
+exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const ownerFilter =
+        req.user.role === "superAdmin" ? {} : { owner: req.user._id };
+
+    // Fetch the invoice with all necessary details populated
+    const invoice = await Invoice.findOne({ _id: id, ...ownerFilter })
+        .populate("buyer")
+        .populate("seller")
+        .populate("items.product");
+
+    if (!invoice) {
+        return next(
+            new AppError(
+                "Invoice not found or you do not have permission.",
+                404,
+            ),
+        );
+    }
+
+    // --- PDF Generation Starts Here ---
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+
+    // Set response headers to trigger a download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
+    );
+
+    // Pipe the PDF document directly to the response stream
+    doc.pipe(res);
+
+    // --- Helper Functions for PDF Layout ---
+    const generateHeader = (doc) => {
+        doc.fontSize(20).text(invoice.seller.shopName || "Seller Company", {
+            align: "left",
+        });
+        doc.fontSize(10).text(invoice.seller.address.street || "", {
+            align: "left",
+        });
+        doc.fontSize(10).text(
+            `${invoice.seller.address.city || ""}, ${invoice.seller.address.state || ""} ${invoice.seller.address.pincode || ""}`,
+            { align: "left" },
+        );
+        doc.fontSize(10).text(invoice.seller.contactNumber || "", {
+            align: "left",
+        });
+
+        doc.fontSize(20).text("INVOICE", { align: "right" });
+        doc.moveDown();
+    };
+
+    const generateCustomerInformation = (doc, invoice) => {
+        doc.fontSize(10);
+        doc.text(`Invoice Number: ${invoice.invoiceNumber}`, { align: "left" });
+        doc.text(
+            `Invoice Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`,
+            { align: "left" },
+        );
+        doc.text(
+            `Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
+            { align: "left" },
+        );
+
+        const customerX = 350;
+        doc.text("Bill To:", customerX, 125);
+        doc.font("Helvetica-Bold").text(invoice.buyer.fullname, customerX, 140);
+        doc.font("Helvetica");
+        if (invoice.buyer.addresses && invoice.buyer.addresses[0]) {
+            const address = invoice.buyer.addresses[0];
+            doc.text(`${address.street}, ${address.city}`, customerX, 155);
+        }
+        doc.moveDown(2);
+    };
+
+    const generateInvoiceTable = (doc, invoice) => {
+        const tableTop = 250;
+        const itemX = 50;
+        const qtyX = 250;
+        const rateX = 300;
+        const amountX = 370;
+
+        doc.font("Helvetica-Bold");
+        doc.text("Item", itemX, tableTop);
+        doc.text("Quantity", qtyX, tableTop, { width: 90, align: "right" });
+        doc.text("Rate", rateX, tableTop, { width: 90, align: "right" });
+        doc.text("Amount", amountX, tableTop, { width: 100, align: "right" });
+        doc.font("Helvetica");
+
+        let i = 0;
+        for (const item of invoice.items) {
+            const y = tableTop + (i + 1) * 30;
+            doc.text(item.customTitle, itemX, y);
+            doc.text(item.quantity.toString(), qtyX, y, {
+                width: 90,
+                align: "right",
+            });
+            doc.text(item.rate.toFixed(2), rateX, y, {
+                width: 90,
+                align: "right",
+            });
+            doc.text(item.amount.toFixed(2), amountX, y, {
+                width: 100,
+                align: "right",
+            });
+            i++;
+        }
+
+        const subtotalY = tableTop + (i + 1) * 30;
+        doc.font("Helvetica-Bold").text("Subtotal:", 200, subtotalY, {
+            align: "right",
+        });
+        doc.text(invoice.subTotal.toFixed(2), 0, subtotalY, { align: "right" });
+
+        const gstY = subtotalY + 20;
+        doc.font("Helvetica-Bold").text("GST:", 200, gstY, { align: "right" });
+        doc.text(invoice.gst.toFixed(2), 0, gstY, { align: "right" });
+
+        const totalY = gstY + 20;
+        doc.font("Helvetica-Bold").text("Total:", 200, totalY, {
+            align: "right",
+        });
+        doc.text(invoice.totalAmount.toFixed(2), 0, totalY, { align: "right" });
+    };
+
+    // --- Build the PDF ---
+    generateHeader(doc);
+    generateCustomerInformation(doc, invoice);
+    generateInvoiceTable(doc, invoice);
+
+    // Finalize the PDF and end the stream
+    doc.end();
+});
+
 // const Invoice = require('../Models/invoiceModel');
 // const catchAsync = require('../Utils/catchAsyncModule');
 // const AppError = require('../Utils/appError');

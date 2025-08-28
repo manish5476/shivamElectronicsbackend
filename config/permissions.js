@@ -7,6 +7,12 @@ const PERMISSIONS = [
         description: "Get Single Invoice",
     },
     {
+        tag: "invoice:generate_pdf",
+        method: "GET",
+        path: "/api/v1/invoices/:id/pdf",
+        description: "Generate Invoice PDF",
+    },
+    {
         tag: "invoice:read_all",
         method: "GET",
         path: "/api/v1/invoices",
