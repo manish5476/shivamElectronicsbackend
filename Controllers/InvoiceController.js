@@ -1,23 +1,36 @@
-const Invoice = require('../Models/invoiceModel'); // Assuming your Invoice model is named invoiceModel.js
-const Customer = require('../Models/customerModel'); // Assuming your Customer model is named customerModel.js
-const AppError = require('../Utils/appError');
-const catchAsync = require('../Utils/catchAsyncModule');
-const handleFactory = require('./handleFactory'); // Your generic factory handler
-const mongoose = require('mongoose'); // For ObjectId validation
-const { body, validationResult } = require('express-validator'); // Still imported, even if not directly used by all handlers
+const Invoice = require("../Models/invoiceModel"); // Assuming your Invoice model is named invoiceModel.js
+const Seller = require("../Models/Seller"); // Assuming your Invoice model is named invoiceModel.js
+const Customer = require("../Models/customerModel"); // Assuming your Customer model is named customerModel.js
+const AppError = require("../Utils/appError");
+const catchAsync = require("../Utils/catchAsyncModule");
+const handleFactory = require("./handleFactory"); // Your generic factory handler
+const mongoose = require("mongoose"); // For ObjectId validation
+const { body, validationResult } = require("express-validator"); // Still imported, even if not directly used by all handlers
 
-const ApiFeatures = require('../Utils/ApiFeatures'); // Import ApiFeatures
+const ApiFeatures = require("../Utils/ApiFeatures"); // Import ApiFeatures
 
 // Middleware to find duplicate invoices by invoiceNumber
 exports.findDuplicateInvoice = catchAsync(async (req, res, next) => {
     if (!req.body.invoiceNumber) {
-        return next(new AppError('Invoice number is required to check for duplicates.', 400));
+        return next(
+            new AppError(
+                "Invoice number is required to check for duplicates.",
+                400,
+            ),
+        );
     }
 
     // Find a duplicate invoice by invoiceNumber (assuming invoiceNumber is unique globally, not per owner)
-    const existingInvoice = await Invoice.findOne({ invoiceNumber: req.body.invoiceNumber });
+    const existingInvoice = await Invoice.findOne({
+        invoiceNumber: req.body.invoiceNumber,
+    });
     if (existingInvoice) {
-        return next(new AppError(`Invoice with number ${req.body.invoiceNumber} already exists`, 400));
+        return next(
+            new AppError(
+                `Invoice with number ${req.body.invoiceNumber} already exists`,
+                400,
+            ),
+        );
     }
     next(); // No duplicate found, proceed to the next middleware/handler
 });
@@ -29,64 +42,75 @@ exports.newInvoice = handleFactory.create(Invoice);
 exports.deleteInvoice = handleFactory.delete(Invoice);
 exports.updateInvoice = handleFactory.update(Invoice);
 
-// Custom API handler for creating an invoice (as it has specific logic like customer lookup)
 exports.createInvoice = catchAsync(async (req, res, next) => {
-    const { customerId, customerName, amount, status, products } = req.body;
+    // Destructure all necessary fields from the request body
+    const { buyer, seller, items, invoiceNumber, invoiceDate, status } =
+        req.body;
 
-    // Validate customerId
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        return next(new AppError('Invalid customer ID provided.', 400));
+    // --- 1. Validation ---
+    if (!mongoose.Types.ObjectId.isValid(buyer)) {
+        return next(new AppError("Invalid buyer (customer) ID provided.", 400));
     }
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-        return next(new AppError('Customer not found for the provided customerId', 400));
-    }
-
-    // Ensure products array is correctly formatted if coming from API
-    let productsArray = products;
-    if (!Array.isArray(products)) {
-        // If products is not an array, assume single product from simplified bot input format
-        // This part might need adjustment based on your API's expected product input
-        if (req.body.productName && req.body.productQuantity && req.body.productPrice) {
-            productsArray = [{
-                productName: req.body.productName,
-                quantity: parseInt(req.body.productQuantity, 10),
-                price: parseFloat(req.body.productPrice)
-            }];
-        } else {
-            return next(new AppError('Products array is required or missing product details.', 400));
-        }
+    if (!mongoose.Types.ObjectId.isValid(seller)) {
+        return next(new AppError("Invalid seller ID provided.", 400));
     }
 
-    const newInv = await Invoice.create({
-        customerId,
-        customerName: customerName || customer.fullname, // Use provided name or fetched customer's name
-        amount: parseFloat(amount),
-        status: status || 'pending',
-        products: productsArray,
-        owner: req.user._id // Assign owner from authenticated user
+    // --- 2. Check if Customer and Seller exist ---
+    const customerExists = await Customer.findById(buyer);
+    if (!customerExists) {
+        return next(
+            new AppError("Customer not found for the provided buyer ID.", 404),
+        );
+    }
+
+    const sellerExists = await Seller.findById(seller);
+    if (!sellerExists) {
+        return next(
+            new AppError("Seller not found for the provided seller ID.", 404),
+        );
+    }
+
+    // --- 3. Create the Invoice ---
+    // The invoiceModel's pre-save hook will handle stock reduction and total calculations.
+    const newInvoice = await Invoice.create({
+        ...req.body, // Pass the entire body to capture all fields
+        owner: req.user._id, // Assign owner from the authenticated user
     });
 
+    // --- 4. Update the Seller's record ---
+    // This is the crucial step to link the invoice back to the seller.
+    if (newInvoice && newInvoice.seller) {
+        await Seller.findByIdAndUpdate(newInvoice.seller, {
+            // Use $push to add the new invoice's ID to the seller's 'invoices' array
+            $push: { invoices: newInvoice._id },
+        });
+    }
+
+    // --- 5. Send the Response ---
     res.status(201).json({
-        status: 'success',
+        status: "success",
         statusCode: 201,
-        data: newInv,
+        data: newInvoice,
     });
 });
-
 // Helper function for product sales statistics (used by API and bot)
-const productSalesStatistics = async (startDate, endDate, userId, isSuperAdmin) => {
+const productSalesStatistics = async (
+    startDate,
+    endDate,
+    userId,
+    isSuperAdmin,
+) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the whole end day
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        throw new AppError('Invalid date format. Please use YYYY-MM-DD.', 400);
+        throw new AppError("Invalid date format. Please use YYYY-MM-DD.", 400);
     }
 
     let matchFilter = {
         invoiceDate: { $gte: start, $lte: end },
-        status: 'paid' // Only consider paid invoices for sales
+        status: "paid", // Only consider paid invoices for sales
     };
 
     if (!isSuperAdmin) {
@@ -96,59 +120,96 @@ const productSalesStatistics = async (startDate, endDate, userId, isSuperAdmin) 
     try {
         const salesData = await Invoice.aggregate([
             {
-                $match: matchFilter
+                $match: matchFilter,
             },
             {
-                $unwind: '$products' // Deconstruct the products array
+                $unwind: "$products", // Deconstruct the products array
             },
             {
                 $group: {
                     _id: null,
-                    totalSales: { $sum: { $multiply: ['$products.quantity', '$products.price'] } }, // Sum product-wise sales
-                    invoicesCount: { $addToSet: '$_id' }, // Count unique invoices
+                    totalSales: {
+                        $sum: {
+                            $multiply: [
+                                "$products.quantity",
+                                "$products.price",
+                            ],
+                        },
+                    }, // Sum product-wise sales
+                    invoicesCount: { $addToSet: "$_id" }, // Count unique invoices
                     productSales: {
                         $push: {
-                            name: '$products.productName',
-                            quantity: '$products.quantity',
-                            price: '$products.price'
-                        }
-                    }
-                }
+                            name: "$products.productName",
+                            quantity: "$products.quantity",
+                            price: "$products.price",
+                        },
+                    },
+                },
             },
             {
                 $project: {
                     _id: 0,
                     totalSales: 1,
-                    invoicesCount: { $size: '$invoicesCount' },
+                    invoicesCount: { $size: "$invoicesCount" },
                     productSales: {
                         $reduce: {
-                            input: '$productSales',
+                            input: "$productSales",
                             initialValue: {},
                             in: {
                                 $mergeObjects: [
-                                    '$$value',
+                                    "$$value",
                                     {
                                         $cond: {
-                                            if: { $ne: ['$$this.name', null] },
+                                            if: { $ne: ["$$this.name", null] },
                                             then: {
-                                                $arrayToObject: [[
-                                                    { k: '$$this.name', v: { $add: [{ $ifNull: [{ $getField: { field: '$$this.name', input: '$$value' } }, 0] }, { $multiply: ['$$this.quantity', '$$this.price'] }] } }
-                                                ]]
+                                                $arrayToObject: [
+                                                    [
+                                                        {
+                                                            k: "$$this.name",
+                                                            v: {
+                                                                $add: [
+                                                                    {
+                                                                        $ifNull:
+                                                                            [
+                                                                                {
+                                                                                    $getField:
+                                                                                        {
+                                                                                            field: "$$this.name",
+                                                                                            input: "$$value",
+                                                                                        },
+                                                                                },
+                                                                                0,
+                                                                            ],
+                                                                    },
+                                                                    {
+                                                                        $multiply:
+                                                                            [
+                                                                                "$$this.quantity",
+                                                                                "$$this.price",
+                                                                            ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
+                                                ],
                                             },
-                                            else: {}
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
+                                            else: {},
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
         ]);
 
-        return salesData.length > 0 ? salesData[0] : { totalSales: 0, invoicesCount: 0, productSales: {} };
+        return salesData.length > 0
+            ? salesData[0]
+            : { totalSales: 0, invoicesCount: 0, productSales: {} };
     } catch (error) {
-        console.error('Error generating product sales statistics:', error);
+        console.error("Error generating product sales statistics:", error);
         throw error; // Re-throw to be caught by catchAsync or bot handler
     }
 };
@@ -157,12 +218,17 @@ const productSalesStatistics = async (startDate, endDate, userId, isSuperAdmin) 
 exports.getProductSales = catchAsync(async (req, res, next) => {
     const { startDate, endDate } = req.query; // Changed from req.body to req.query for API consistency
     const userId = req.user._id;
-    const isSuperAdmin = req.user.role === 'superAdmin';
+    const isSuperAdmin = req.user.role === "superAdmin";
 
-    const salesStats = await productSalesStatistics(startDate, endDate, userId, isSuperAdmin);
+    const salesStats = await productSalesStatistics(
+        startDate,
+        endDate,
+        userId,
+        isSuperAdmin,
+    );
 
     res.status(200).json({
-        status: 'success',
+        status: "success",
         statusCode: 200,
         data: {
             salesData: salesStats,
@@ -170,13 +236,12 @@ exports.getProductSales = catchAsync(async (req, res, next) => {
     });
 });
 
-
 // --- Bot-Specific Helper Functions (No req, res, next) ---
 // These functions are designed to be called directly by the Telegram bot handlers.
 
 exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError('Invalid invoice ID.', 400);
+        throw new AppError("Invalid invoice ID.", 400);
     }
 
     let filter = { _id: invoiceId };
@@ -184,10 +249,16 @@ exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
         filter.owner = userId;
     }
 
-    const invoice = await Invoice.findOne(filter).populate('customerId', 'fullname email mobileNumber');
+    const invoice = await Invoice.findOne(filter).populate(
+        "customerId",
+        "fullname email mobileNumber",
+    );
     if (!invoice) {
-        throw new AppError(`No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? ' or you do not have permission.' : '.'), 404);
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+                (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
     }
     return invoice;
 };
@@ -197,41 +268,62 @@ exports.getAllInvoicesBot = async (userId, isSuperAdmin = false) => {
     if (!isSuperAdmin) {
         filter.owner = userId;
     }
-    const invoices = await Invoice.find(filter).populate('customerId', 'fullname email mobileNumber');
+    const invoices = await Invoice.find(filter).populate(
+        "customerId",
+        "fullname email mobileNumber",
+    );
     return invoices;
 };
 
 exports.newInvoiceBot = async (invoiceData, userId) => {
-    const { customerId, customerName, amount, status, productName, productQuantity, productPrice } = invoiceData;
+    const {
+        customerId,
+        customerName,
+        amount,
+        status,
+        productName,
+        productQuantity,
+        productPrice,
+    } = invoiceData;
 
     if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        throw new AppError('Invalid customer ID provided.', 400);
+        throw new AppError("Invalid customer ID provided.", 400);
     }
     const customer = await Customer.findById(customerId);
     if (!customer) {
-        throw new AppError('Customer not found for the provided customerId', 400);
+        throw new AppError(
+            "Customer not found for the provided customerId",
+            400,
+        );
     }
 
-    const productsArray = [{
-        productName,
-        quantity: parseInt(productQuantity, 10),
-        price: parseFloat(productPrice)
-    }];
+    const productsArray = [
+        {
+            productName,
+            quantity: parseInt(productQuantity, 10),
+            price: parseFloat(productPrice),
+        },
+    ];
 
     const newInv = await Invoice.create({
         customerId,
         customerName: customerName || customer.fullname,
         amount: parseFloat(amount),
-        status: status || 'pending',
+        status: status || "pending",
         products: productsArray,
-        owner: userId // Assign owner from bot user
+        owner: userId, // Assign owner from bot user
     });
     return newInv;
 };
 
-exports.updateInvoiceBot = async (invoiceId, updateData, userId, isSuperAdmin = false) => {
+exports.updateInvoiceBot = async (
+    invoiceId,
+    updateData,
+    userId,
+    isSuperAdmin = false,
+) => {
     if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError('Invalid invoice ID.', 400);
+        throw new AppError("Invalid invoice ID.", 400);
     }
 
     let filter = { _id: invoiceId };
@@ -241,18 +333,21 @@ exports.updateInvoiceBot = async (invoiceId, updateData, userId, isSuperAdmin = 
 
     const updatedInv = await Invoice.findOneAndUpdate(filter, updateData, {
         new: true,
-        runValidators: true
+        runValidators: true,
     });
     if (!updatedInv) {
-        throw new AppError(`No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? ' or you do not have permission.' : '.'), 404);
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+                (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
     }
     return updatedInv;
 };
 
 exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError('Invalid invoice ID.', 400);
+        throw new AppError("Invalid invoice ID.", 400);
     }
 
     let filter = { _id: invoiceId };
@@ -262,15 +357,28 @@ exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
 
     const invoice = await Invoice.findOneAndDelete(filter);
     if (!invoice) {
-        throw new AppError(`No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? ' or you do not have permission.' : '.'), 404);
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+                (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
     }
-    return { message: 'Invoice deleted successfully' };
+    return { message: "Invoice deleted successfully" };
 };
 
-exports.getProductSalesBot = async (startDate, endDate, userId, isSuperAdmin = false) => {
+exports.getProductSalesBot = async (
+    startDate,
+    endDate,
+    userId,
+    isSuperAdmin = false,
+) => {
     // This bot function now directly calls the shared productSalesStatistics helper
-    return await productSalesStatistics(startDate, endDate, userId, isSuperAdmin);
+    return await productSalesStatistics(
+        startDate,
+        endDate,
+        userId,
+        isSuperAdmin,
+    );
 };
 // const Invoice = require('../Models/invoiceModel');
 // const catchAsync = require('../Utils/catchAsyncModule');

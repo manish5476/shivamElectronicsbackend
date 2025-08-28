@@ -1481,3 +1481,6 @@
 {"level":"info","message":"Incoming Request: GET /api/v1/invoices from IP: ::1","timestamp":"2025-08-26 21:50:11"}
 {"level":"info","message":"Incoming Request: GET /api/v1/payments from IP: ::1","timestamp":"2025-08-26 21:50:12"}
 {"level":"info","message":"Incoming Request: GET /api/v1/invoices/689ed29367cd245a2681b2c4 from IP: ::1","timestamp":"2025-08-26 21:51:54"}
+{"level":"info","message":"Incoming Request: GET / from IP: 10.84.7.14","timestamp":"2025-08-28 06:56:44"}
+{"level":"info","message":"Incoming Request: GET / from IP: 10.84.7.14","timestamp":"2025-08-28 06:57:53"}
+{"level":"info","message":"Incoming Request: GET / from IP: 10.84.7.14","timestamp":"2025-08-28 06:58:00"}
