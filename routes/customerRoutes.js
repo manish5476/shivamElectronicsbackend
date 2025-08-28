@@ -6,6 +6,7 @@ const factory = require('../Controllers/handleFactory');
 const Customer = require('../Models/customerModel');
 
 router.use(authController.protect);
+router.get('/:id/snapshot', authController.checkUserPermission('customer:read_snapshot'), customerController.getCustomerSnapshot);
 
 router.get('/', authController.checkUserPermission('customer:read_all'), factory.getAll(Customer));
 router.post('/', authController.checkUserPermission('customer:create'), customerController.findDuplicateCustomer, factory.create(Customer));

@@ -126,6 +126,12 @@ const PERMISSIONS = [
         path: "/api/v1/masterlist/search",
         description: "Search Master List",
     },
+    {
+        tag: "customer:read_snapshot",
+        method: "GET",
+        path: "/api/v1/customers/:id/snapshot",
+        description: "Get Customer Snapshot Report",
+    }, // <-- ADD THIS LINE
 
     // Payments
     {
