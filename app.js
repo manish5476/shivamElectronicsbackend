@@ -1,85 +1,92 @@
 // app.js
 // Load .env here (safe: dotenv won't override vars already set by Server.js)
-require('dotenv').config({ path: './.env' });
+require("dotenv").config({ path: "./.env" });
 
-const express = require('express');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
-const hpp = require('hpp');
-const cors = require('cors');
-const compression = require('compression');
-const winston = require('winston');
-const path = require('path');
-const fs = require('fs');
+const express = require("express");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+const hpp = require("hpp");
+const cors = require("cors");
+const compression = require("compression");
+const winston = require("winston");
+const path = require("path");
+const fs = require("fs");
 
-const globalErrorHandler = require('./middleWare/errorController');
-const AppError = require('./Utils/appError');
+const globalErrorHandler = require("./middleWare/errorController");
+const AppError = require("./Utils/appError");
 
 // --- Routes ---
-const productRoutes = require('./routes/productRoutes');
-const usersRoutes = require('./routes/UserRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const customerRoutes = require('./routes/customerRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const sellerRoutes = require('./routes/sellerRoutes');
-const invoiceRoutes = require('./routes/InvoiceRoutes');
-const masterListRoutes = require('./routes/masterListRoutes');
-const statisticsRoutes = require('./routes/statisticsRoutes');
-const analyticsRoutes = require('./routes/analyticsRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const permissionsRouter = require('./routes/permissionsRoutes');
+const productRoutes = require("./routes/productRoutes");
+const usersRoutes = require("./routes/UserRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const customerRoutes = require("./routes/customerRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const sellerRoutes = require("./routes/sellerRoutes");
+const invoiceRoutes = require("./routes/InvoiceRoutes");
+const masterListRoutes = require("./routes/masterListRoutes");
+const statisticsRoutes = require("./routes/statisticsRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const permissionsRouter = require("./routes/permissionsRoutes");
+const transactionRoutes = require("./routes/transactionRoutes"); // <-- ADD THIS LINE
 
 const app = express();
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // ------------------------------
 // 1) Logger (Winston + files)
 // ------------------------------
-const logsDir = path.join(__dirname, 'logs');
+const logsDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
 
 const logger = winston.createLogger({
-    level: 'info',
+    level: "info",
     format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        winston.format.json()
+        winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+        winston.format.json(),
     ),
     transports: [
         new winston.transports.File({
-            filename: path.join(logsDir, 'error.log'),
-            level: 'error',
+            filename: path.join(logsDir, "error.log"),
+            level: "error",
             maxsize: 5 * 1024 * 1024,
             maxFiles: 5,
             tailable: true,
-            zippedArchive: true
+            zippedArchive: true,
         }),
         new winston.transports.File({
-            filename: path.join(logsDir, 'combined.log'),
+            filename: path.join(logsDir, "combined.log"),
             maxsize: 5 * 1024 * 1024,
             maxFiles: 5,
             tailable: true,
-            zippedArchive: true
+            zippedArchive: true,
         }),
     ],
     exceptionHandlers: [
-        new winston.transports.File({ filename: path.join(logsDir, 'exceptions.log') })
+        new winston.transports.File({
+            filename: path.join(logsDir, "exceptions.log"),
+        }),
     ],
     rejectionHandlers: [
-        new winston.transports.File({ filename: path.join(logsDir, 'rejections.log') })
-    ]
+        new winston.transports.File({
+            filename: path.join(logsDir, "rejections.log"),
+        }),
+    ],
 });
 
 // NOTE: fix typo: process.env.NODE_ENV (no stray space)
-if (process.env.NODE_ENV === 'development') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.combine(
-            winston.format.colorize(),
-            winston.format.simple()
-        )
-    }));
+if (process.env.NODE_ENV === "development") {
+    logger.add(
+        new winston.transports.Console({
+            format: winston.format.combine(
+                winston.format.colorize(),
+                winston.format.simple(),
+            ),
+        }),
+    );
 }
 
 // --------------------------------------------------
@@ -88,39 +95,55 @@ if (process.env.NODE_ENV === 'development') {
 app.use(helmet());
 
 // CORS (allow all by default; restrict via env if needed)
-app.use(cors({
-    // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-    credentials: true,
-    optionsSuccessStatus: 204
-}));
+app.use(
+    cors({
+        // origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+        origin: "*",
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        allowedHeaders: "Content-Type,Authorization",
+        credentials: true,
+        optionsSuccessStatus: 204,
+    }),
+);
 
 // HTTP logs -> winston in prod, console in dev
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
+if (process.env.NODE_ENV === "development") {
+    app.use(morgan("dev"));
 } else {
-    app.use(morgan('combined', { stream: { write: msg => logger.info(msg.trim()) } }));
+    app.use(
+        morgan("combined", {
+            stream: { write: (msg) => logger.info(msg.trim()) },
+        }),
+    );
 }
 
 // Global rate limiter for API
-app.use('/api/v1', rateLimit({
-    limit: 1000,
-    windowMs: 60 * 60 * 1000,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many requests from this IP, please try again after an hour.',
-    handler: (req, res, next) => next(new AppError('Too many requests from this IP, please try again after an hour.', 429))
-}));
+app.use(
+    "/api/v1",
+    rateLimit({
+        limit: 1000,
+        windowMs: 60 * 60 * 1000,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message:
+            "Too many requests from this IP, please try again after an hour.",
+        handler: (req, res, next) =>
+            next(
+                new AppError(
+                    "Too many requests from this IP, please try again after an hour.",
+                    429,
+                ),
+            ),
+    }),
+);
 
 // Body parsing
-app.use(express.json({ limit: '50kb' }));
+app.use(express.json({ limit: "50kb" }));
 
 // Handle bad JSON early (must be after express.json and before routes)
 app.use((err, req, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        return next(new AppError('Invalid JSON payload provided.', 400));
+    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+        return next(new AppError("Invalid JSON payload provided.", 400));
     }
     next(err);
 });
@@ -128,51 +151,88 @@ app.use((err, req, res, next) => {
 // Sanitization & hardening
 app.use(mongoSanitize());
 app.use(xss());
-app.use(hpp({
-    whitelist: [
-        'duration', 'average', 'page', 'limit', 'sort', 'fields', 'filter',
-        'status', 'category', 'price', 'stock', 'fullname', 'email', 'name', 'shopname', 'mobileNumber',
-        'level', 'startDate', 'endDate', 'userId', 'userRole', 'ipAddress', 'method', 'url', 'environment'
-    ]
-}));
+app.use(
+    hpp({
+        whitelist: [
+            "duration",
+            "average",
+            "page",
+            "limit",
+            "sort",
+            "fields",
+            "filter",
+            "status",
+            "category",
+            "price",
+            "stock",
+            "fullname",
+            "email",
+            "name",
+            "shopname",
+            "mobileNumber",
+            "level",
+            "startDate",
+            "endDate",
+            "userId",
+            "userRole",
+            "ipAddress",
+            "method",
+            "url",
+            "environment",
+        ],
+    }),
+);
 
 app.use(compression());
 
 // Request context log (simple)
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
-    logger.info(`Incoming Request: ${req.method} ${req.originalUrl} from IP: ${req.ip}`);
+    logger.info(
+        `Incoming Request: ${req.method} ${req.originalUrl} from IP: ${req.ip}`,
+    );
     next();
 });
 
 // ------------
 // 3) Routes
 // ------------
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'UP', env: process.env.NODE_ENV, ts: new Date().toISOString() });
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "UP",
+        env: process.env.NODE_ENV,
+        ts: new Date().toISOString(),
+    });
 });
 
-app.use('/api/v1/users', usersRoutes);
-app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/reviews', reviewRoutes);
-app.use('/api/v1/customers', customerRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/sellers', sellerRoutes);
-app.use('/api/v1/invoices', invoiceRoutes);
-app.use('/api/v1/master-list', masterListRoutes);
-app.use('/api/v1/statistics', statisticsRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/permissions', permissionsRouter);
+app.use("/api/v1/users", usersRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/customers", customerRoutes);
+app.use("/api/v1/payments", paymentRoutes);
+app.use("/api/v1/sellers", sellerRoutes);
+app.use("/api/v1/invoices", invoiceRoutes);
+app.use("/api/v1/master-list", masterListRoutes);
+app.use("/api/v1/statistics", statisticsRoutes);
+app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/permissions", permissionsRouter);
+app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 
 // Static assets
-app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
+app.use(
+    "/public",
+    express.static(path.join(__dirname, "public"), {
+        maxAge: "1d",
+        dotfiles: "deny",
+    }),
+);
 
 // -------------------------
 // 4) 404 + Global Error MW
 // -------------------------
 // Single 404 handler -> pass to global error handler
-app.all('*', (req, res, next) => {
+app.all("*", (req, res, next) => {
     next(new AppError(`Cannot find ${req.originalUrl} on this server!`, 404));
 });
 
@@ -180,7 +240,6 @@ app.all('*', (req, res, next) => {
 app.use(globalErrorHandler);
 
 module.exports = app;
-
 
 // require('dotenv').config({ path: './.env' }); // Always load .env first
 // const express = require('express');
@@ -335,7 +394,6 @@ module.exports = app;
 // app.use('/api/v1/dashboard', dashboardRoutes); // Using consistent variable name
 // app.use("/api/v1/permissions", permissionsRouter);
 // app.use('/public', express.static(path.join(__dirname, 'public'), { maxAge: '1d', dotfiles: 'deny' }));
-
 
 // // 404 handler
 // app.all('*', (req, res, next) => {
