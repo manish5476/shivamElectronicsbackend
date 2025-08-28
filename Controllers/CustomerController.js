@@ -440,12 +440,17 @@ exports.deactivateMultipleCustomersBot = async (
     };
 };
 
-// --- NEW CUSTOMER SNAPSHOT CONTROLLER ---
+// --- CUSTOMER SNAPSHOT CONTROLLER (FIXED) ---
 exports.getCustomerSnapshot = catchAsync(async (req, res, next) => {
     const { id } = req.params;
+
+    // **FIX:** Add validation to ensure the ID is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(new AppError("Invalid customer ID format.", 400));
+    }
+
     const ownerFilter =
         req.user.role === "superAdmin" ? {} : { owner: req.user._id };
-
     const customerId = new mongoose.Types.ObjectId(id);
 
     const [
@@ -456,36 +461,25 @@ exports.getCustomerSnapshot = catchAsync(async (req, res, next) => {
         overdueInvoices,
         productPreferences,
     ] = await Promise.all([
-        // 1. Get Basic Customer Details
         Customer.findOne({ _id: customerId, ...ownerFilter }).lean(),
-
-        // 2. Calculate Lifetime Value
         Invoice.aggregate([
             { $match: { buyer: customerId, ...ownerFilter } },
             { $group: { _id: null, total: { $sum: "$totalAmount" } } },
         ]),
-
-        // 3. Get Recent Invoices
         Invoice.find({ buyer: customerId, ...ownerFilter })
             .sort({ invoiceDate: -1 })
             .limit(5)
             .lean(),
-
-        // 4. Get Recent Payments
         Payment.find({ customerId: customerId, ...ownerFilter })
             .sort({ date: -1 })
             .limit(5)
             .lean(),
-
-        // 5. Find Overdue Invoices
         Invoice.find({
             buyer: customerId,
             status: { $in: ["unpaid", "partially paid"] },
             dueDate: { $lt: new Date() },
             ...ownerFilter,
         }).lean(),
-
-        // 6. Analyze Product Preferences
         Invoice.aggregate([
             { $match: { buyer: customerId, ...ownerFilter } },
             { $unwind: "$items" },

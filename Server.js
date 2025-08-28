@@ -2,11 +2,12 @@
 // --------------------
 // 1. ENVIRONMENT SETUP
 // --------------------
-const envFile = process.argv[2] || '.env.dev';
-require('dotenv').config({ path: envFile });
+const envFile = process.argv[2] || ".env.dev";
+require("dotenv").config({ path: envFile });
+const { startScheduledTasks } = require("./scheduledTasks"); // <-- ADD THIS LINE
 
-const mongoose = require('mongoose');
-const app = require('./app');
+const mongoose = require("mongoose");
+const app = require("./app");
 
 const PORT = process.env.PORT || 4000;
 const DB_URI = process.env.DATABASE;
@@ -17,12 +18,12 @@ const DB_URI = process.env.DATABASE;
 async function connectDB() {
   try {
     await mongoose.connect(DB_URI, {
-      autoIndex: process.env.NODE_ENV !== 'production',
+      autoIndex: process.env.NODE_ENV !== "production",
       maxPoolSize: 10,
     });
     console.log(`✅ MongoDB connected (${process.env.NODE_ENV})`);
   } catch (err) {
-    console.error('💥 Database connection failed:', err.message);
+    console.error("💥 Database connection failed:", err.message);
     process.exit(1);
   }
 }
@@ -37,6 +38,7 @@ async function startServer() {
 
   server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT} [${process.env.NODE_ENV}]`);
+    startScheduledTasks();
   });
 }
 
@@ -50,46 +52,39 @@ const handleFatalError = (type) => (err) => {
   shutdown(1); // exit with failure
 };
 
-process.on('unhandledRejection', handleFatalError('UNHANDLED REJECTION'));
-process.on('uncaughtException', handleFatalError('UNCAUGHT EXCEPTION'));
+process.on("unhandledRejection", handleFatalError("UNHANDLED REJECTION"));
+process.on("uncaughtException", handleFatalError("UNCAUGHT EXCEPTION"));
 
 // --------------------
 // 5. GRACEFUL SHUTDOWN
 // --------------------
 async function shutdown(exitCode = 0) {
   try {
-    console.log('👋 Shutting down gracefully...');
+    console.log("👋 Shutting down gracefully...");
 
     if (server) {
       await new Promise((resolve) => server.close(resolve));
-      console.log('✅ HTTP server closed.');
+      console.log("✅ HTTP server closed.");
     }
 
     if (mongoose.connection.readyState === 1) {
       await mongoose.connection.close(false);
-      console.log('✅ MongoDB connection closed.');
+      console.log("✅ MongoDB connection closed.");
     }
   } catch (err) {
-    console.error('💥 Error during shutdown:', err);
+    console.error("💥 Error during shutdown:", err);
   } finally {
     process.exit(exitCode);
   }
 }
 
-process.on('SIGINT', () => shutdown(0));  // Ctrl+C
-process.on('SIGTERM', () => shutdown(0)); // Deployment stop
+process.on("SIGINT", () => shutdown(0)); // Ctrl+C
+process.on("SIGTERM", () => shutdown(0)); // Deployment stop
 
 // --------------------
 // 6. BOOTSTRAP
 // --------------------
 startServer();
-
-
-
-
-
-
-
 
 // // Load environment variables first. This allows specifying a config file via command line.
 // const envFile = process.argv[2] || '.env.dev';
