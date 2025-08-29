@@ -33,6 +33,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const permissionsRouter = require("./routes/permissionsRoutes");
 const transactionRoutes = require("./routes/transactionRoutes"); // <-- ADD THIS LINE
 const advancedAnalyticsRoutes = require("./routes/advancedAnalyticsRoutes");
+const emiRoutes = require("./routes/emiRoutes");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -218,9 +219,11 @@ app.use("/api/v1/statistics", statisticsRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/permissions", permissionsRouter);
-app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 
+// new
+app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 app.use("/api/v1/analytics", advancedAnalyticsRoutes);
+app.use("/api/v1/emis", emiRoutes);
 
 // Static assets
 app.use(
