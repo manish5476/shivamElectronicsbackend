@@ -221,7 +221,6 @@ app.use("/api/v1/statistics", statisticsRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/permissions", permissionsRouter);
-
 app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 app.use("/api/v1/emis", emiRoutes);
 app.use("/api/v1/purchase-orders", purchaseOrderRoutes);
