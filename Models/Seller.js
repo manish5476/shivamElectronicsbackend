@@ -3,6 +3,8 @@ const { Schema } = mongoose;
 const Customer = require("./customerModel"); // Assuming there's a customer model
 const Product = require("./productModel"); // Assuming there's a product model
 const User = require("./UserModel");
+const Invoice = require("./invoiceModel");
+const PurchaseOrder = require("./purchaseOrderModel");
 
 const sellerSchema = new Schema(
     {
@@ -119,6 +121,16 @@ const sellerSchema = new Schema(
                     type: Number,
                     required: true,
                 },
+            },
+        ],
+        // salesHistory: [], // This was likely a placeholder, you can use the invoices array for sales
+        invoices: [{ type: Schema.Types.ObjectId, ref: "Invoice" }], // For sales made by this seller if they are also a user
+
+        // --- NEW FIELD ---
+        purchaseOrders: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "PurchaseOrder",
             },
         ],
     },
