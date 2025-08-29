@@ -35,6 +35,7 @@ const transactionRoutes = require("./routes/transactionRoutes"); // <-- ADD THIS
 // const advancedAnalyticsRoutes = require("./routes/advancedAnalyticsRoutes");
 const emiRoutes = require("./routes/emiRoutes");
 const purchaseOrderRoutes = require("./routes/purchaseOrderRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -224,6 +225,7 @@ app.use("/api/v1/permissions", permissionsRouter);
 app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 app.use("/api/v1/emis", emiRoutes);
 app.use("/api/v1/purchase-orders", purchaseOrderRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 // Static assets
 app.use(

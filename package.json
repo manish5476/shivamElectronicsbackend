@@ -30,6 +30,7 @@
     "git": "^0.1.5",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
+    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.14.0",
     "mongoose": "^8.11.0",
