@@ -3,23 +3,18 @@ const router = express.Router();
 const analyticsController = require('../Controllers/analyticsController');
 const authController = require('../Controllers/authController');
 
-// Protect all routes and restrict to admin only
+// Protect all routes in this file
 router.use(authController.protect);
-router.use(authController.restrictTo('admin'));
 
-// Sales performance metrics
-router.get('/sales-performance', analyticsController.getSalesPerformance);
+// --- Standard Analytics Routes ---
+router.get('/sales-performance', authController.checkUserPermission('analytics:read_sales_performance'), analyticsController.getSalesPerformance);
+router.get('/customer-insights', authController.checkUserPermission('analytics:read_customer_insights'), analyticsController.getCustomerInsights);
+router.get('/product-performance', authController.checkUserPermission('analytics:read_product_performance'), analyticsController.getProductPerformance);
+router.get('/payment-efficiency', authController.checkUserPermission('analytics:read_payment_efficiency'), analyticsController.getPaymentCollectionEfficiency);
+router.get('/inventory-turnover', authController.checkUserPermission('analytics:read_inventory_turnover'), analyticsController.getInventoryTurnover);
 
-// Customer insights
-router.get('/customer-insights', analyticsController.getCustomerInsights);
+// --- Advanced Analytics Routes ---
+router.get('/sales-forecast', authController.checkUserPermission('analytics:read_sales_forecast'), analyticsController.getSalesForecast);
+router.get('/customer-segments', authController.checkUserPermission('analytics:read_customer_segments'), analyticsController.getCustomerSegments);
 
-// Product performance analysis
-router.get('/product-performance', analyticsController.getProductPerformance);
-
-// Payment collection efficiency
-router.get('/payment-efficiency', analyticsController.getPaymentCollectionEfficiency);
-
-// Inventory turnover rate
-router.get('/inventory-turnover', analyticsController.getInventoryTurnover);
-
-module.exports = router; 
+module.exports = router;

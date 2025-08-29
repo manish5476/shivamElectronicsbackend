@@ -7,6 +7,7 @@ const handleFactory = require("./handleFactory"); // Your generic factory handle
 const mongoose = require("mongoose"); // For ObjectId validation
 const { body, validationResult } = require("express-validator"); // Still imported, even if not directly used by all handlers
 const PDFDocument = require("pdfkit"); // Import the PDF generation library
+const { toWords } = require('number-to-words');
 
 const ApiFeatures = require("../Utils/ApiFeatures"); // Import ApiFeatures
 
@@ -103,6 +104,7 @@ exports.createInvoice = catchAsync(async (req, res, next) => {
         data: newInvoice,
     });
 });
+
 // Helper function for product sales statistics (used by API and bot)
 const productSalesStatistics = async (
     startDate,
@@ -183,10 +185,10 @@ const productSalesStatistics = async (
                                                                             [
                                                                                 {
                                                                                     $getField:
-                                                                                        {
-                                                                                            field: "$$this.name",
-                                                                                            input: "$$value",
-                                                                                        },
+                                                                                    {
+                                                                                        field: "$$this.name",
+                                                                                        input: "$$value",
+                                                                                    },
                                                                                 },
                                                                                 0,
                                                                             ],
@@ -266,7 +268,7 @@ exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!invoice) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-                (!isSuperAdmin ? " or you do not have permission." : "."),
+            (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -348,7 +350,7 @@ exports.updateInvoiceBot = async (
     if (!updatedInv) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-                (!isSuperAdmin ? " or you do not have permission." : "."),
+            (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -369,7 +371,7 @@ exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!invoice) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-                (!isSuperAdmin ? " or you do not have permission." : "."),
+            (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -391,402 +393,682 @@ exports.getProductSalesBot = async (
     );
 };
 
+// --- THEME & LAYOUT CONSTANTS ---
+// Centralizing style makes it easy to change the invoice's look and feel.
+const theme = {
+    primaryColor: '#003366',    // Deep Blue
+    textColor: '#333333',
+    lightTextColor: '#777777',
+    borderColor: '#EAEAEA',
+    headerFont: 'Helvetica-Bold',
+    bodyFont: 'Helvetica',
+    tableHeaderBG: '#F5F5F5',
+    tableHeaderColor: '#333333',
+    alternateRowBG: '#FAFAFA'
+};
+
+const layout = {
+    margin: 50,
+    pageWidth: 595.28, // A4 width
+    contentWidth: 595.28 - 100
+};
+
+/**
+ * =================================================================
+ * MAIN PDF GENERATION CONTROLLER
+ * =================================================================
+ */
 exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const ownerFilter =
-        req.user.role === "superAdmin" ? {} : { owner: req.user._id };
+    const ownerFilter = req.user.role === 'superAdmin' ? {} : { owner: req.user._id };
 
     const invoice = await Invoice.findOne({ _id: id, ...ownerFilter })
-        .populate("buyer")
-        .populate("seller")
-        .populate("items.product");
+        .populate('buyer')
+        .populate('seller')
+        .populate('items.product');
 
     if (!invoice) {
-        return next(
-            new AppError(
-                "Invoice not found or you do not have permission.",
-                404,
-            ),
-        );
+        return next(new AppError('Invoice not found or you do not have permission.', 404));
     }
 
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
-    );
+    const doc = new PDFDocument({ size: 'A4', margin: layout.margin, bufferPages: true });
+    
+    // Set up the response headers to stream the PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
 
     doc.pipe(res);
 
-    // --- Helper Functions for PDF Layout ---
-    const generateHeader = (doc) => {
-        doc.fillColor("#444444")
-            .fontSize(20)
-            .text(invoice.seller.shopName || "Shivam Electronics", 50, 57)
-            .fontSize(10)
-            .text(
-                invoice.seller.address.street || "f-8 JB Shoppin Center Jolwa",
-                50,
-                80,
-            )
-            .text(
-                `${invoice.seller.address.city || ""}, ${invoice.seller.address.state || ""} ${invoice.seller.address.pincode || ""}`,
-                50,
-                95,
-            )
-            .text(invoice.seller.contactNumber || "", 50, 110);
+    // --- BUILD THE PDF DOCUMENT ---
+    // Each function is responsible for a section of the invoice and returns
+    // the Y-coordinate to start the next section.
+    let y = await generateHeader(doc, invoice);
+    y = generateCustomerInformation(doc, invoice, y + 25);
+    y = generateInvoiceTable(doc, invoice, y + 30);
+    const { leftY, rightY } = generateTotalsAndFooter(doc, invoice, y + 20);
 
-        doc.fillColor("#444444")
-            .fontSize(20)
-            .text("INVOICE", 275, 57, { align: "right" })
-            .fontSize(10)
-            .text(`Invoice No: ${invoice.invoiceNumber}`, 275, 80, {
-                align: "right",
-            })
-            .text(
-                `Date: ${new Date(invoice.invoiceDate).toLocaleDateString("en-IN")}`,
-                275,
-                95,
-                { align: "right" },
-            )
-            .text(
-                `Due Date: ${new Date(invoice.dueDate).toLocaleDateString("en-IN")}`,
-                275,
-                110,
-                { align: "right" },
-            );
-
-        doc.moveDown(5);
-    };
-
-    const generateCustomerInformation = (doc) => {
-        doc.rect(50, 160, 500, 60).stroke();
-        doc.fillColor("#444444")
-            .fontSize(12)
-            .font("Helvetica-Bold")
-            .text("Buyer Details", 60, 170);
-
-        doc.font("Helvetica")
-            .fontSize(10)
-            .text(`Buyer Name: ${invoice.buyer.fullname}`, 60, 190)
-            .text(
-                `Address: ${invoice.buyer.addresses?.[0]?.street || ""}, ${invoice.buyer.addresses?.[0]?.city || ""}`,
-                300,
-                190,
-            );
-    };
-
-    const generateInvoiceTable = (doc, invoice) => {
-        let i;
-        const invoiceTableTop = 250;
-
-        doc.font("Helvetica-Bold");
-        generateTableRow(
-            doc,
-            invoiceTableTop,
-            "Sr.",
-            "Item",
-            "HSN/SAC",
-            "Qty",
-            "Rate",
-            "Discount",
-            "Taxable",
-            "GST %",
-            "GST Amt",
-            "Amount",
-        );
-        generateHr(doc, invoiceTableTop + 20);
-        doc.font("Helvetica");
-
-        for (i = 0; i < invoice.items.length; i++) {
-            const item = invoice.items[i];
-            const position = invoiceTableTop + (i + 1) * 30;
-            generateTableRow(
-                doc,
-                position,
-                i + 1,
-                item.customTitle,
-                item.product?.hsnSac || "N/A",
-                item.quantity,
-                formatCurrency(item.rate),
-                formatCurrency(item.discount),
-                formatCurrency(item.taxableValue),
-                `${item.gstRate}%`,
-                formatCurrency(item.gstAmount),
-                formatCurrency(item.amount),
-            );
-            generateHr(doc, position + 20);
-        }
-
-        const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-        generateTableRow(
-            doc,
-            subtotalPosition,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "Subtotal",
-            formatCurrency(invoice.subTotal),
-        );
-
-        const discountPosition = subtotalPosition + 20;
-        generateTableRow(
-            doc,
-            discountPosition,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "Total Discount",
-            formatCurrency(invoice.totalDiscount),
-        );
-
-        const gstPosition = discountPosition + 20;
-        generateTableRow(
-            doc,
-            gstPosition,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "IGST",
-            formatCurrency(invoice.gst),
-        );
-
-        const totalPosition = gstPosition + 30;
-        doc.font("Helvetica-Bold");
-        generateTableRow(
-            doc,
-            totalPosition,
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "Total Amount",
-            formatCurrency(invoice.totalAmount),
-        );
-        doc.font("Helvetica");
-    };
-
-    const generateFooter = (doc) => {
-        doc.fontSize(10).text(
-            `Amount in Words: Rupees ${toWords(invoice.totalAmount)} Only`,
-            50,
-            680,
-            { align: "left" },
-        );
-        doc.fontSize(10).text("For Shivam Electronics", 50, 720, {
-            align: "right",
-        });
-        doc.fontSize(10).text("Authorised Signatory", 50, 740, {
-            align: "right",
-        });
-    };
-
-    const generateTableRow = (
-        doc,
-        y,
-        sr,
-        item,
-        hsn,
-        qty,
-        rate,
-        discount,
-        taxable,
-        gstRate,
-        gstAmt,
-        amount,
-    ) => {
-        doc.fontSize(8)
-            .text(sr.toString(), 50, y)
-            .text(item, 80, y)
-            .text(hsn, 180, y, { width: 60, align: "right" })
-            .text(qty.toString(), 250, y, { width: 30, align: "right" })
-            .text(rate.toString(), 290, y, { width: 50, align: "right" })
-            .text(discount.toString(), 340, y, { width: 40, align: "right" })
-            .text(taxable.toString(), 390, y, { width: 50, align: "right" })
-            .text(gstRate.toString(), 440, y, { width: 40, align: "right" })
-            .text(gstAmt.toString(), 480, y, { width: 50, align: "right" })
-            .text(amount.toString(), 0, y, { align: "right" });
-    };
-
-    const generateHr = (doc, y) => {
-        doc.strokeColor("#aaaaaa")
-            .lineWidth(1)
-            .moveTo(50, y)
-            .lineTo(550, y)
-            .stroke();
-    };
-
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat("en-IN", {
-            style: "currency",
-            currency: "INR",
-        }).format(amount);
-    };
-
-    // --- Build the PDF ---
-    generateHeader(doc);
-    generateCustomerInformation(doc);
-    generateInvoiceTable(doc, invoice);
-    generateFooter(doc);
+    // This function now correctly receives the 'invoice' object
+    generatePageFooter(doc, invoice, Math.max(leftY, rightY));
 
     doc.end();
 });
 
-// /**
-//  * @description Generates a PDF for a specific invoice and streams it to the client.
-//  */
+
+/**
+ * =================================================================
+ * HELPER FUNCTIONS FOR PDF SECTIONS
+ * =================================================================
+ */
+
+const generateHeader = async (doc, invoice) => {
+    // Attempt to add a company logo.
+    // Make sure 'logo.png' exists in your '/public/img/' directory.
+    try {
+        const logoPath = path.join(__dirname, '..', 'public', 'img', 'logo.png');
+        doc.image(logoPath, layout.margin, 40, { width: 150 });
+    } catch (error) {
+        console.warn("Logo not found. Falling back to text.");
+        doc.font(theme.headerFont).fontSize(20).fillColor(theme.primaryColor)
+           .text(invoice.seller.shopName, layout.margin, 57);
+    }
+    
+    // Invoice Title and Details
+    doc.font(theme.headerFont).fontSize(22).fillColor(theme.primaryColor)
+       .text('TAX INVOICE', layout.pageWidth - layout.margin - 200, 57, { width: 200, align: 'right' });
+    
+    const invoiceDetails = [
+        ['Invoice No:', invoice.invoiceNumber],
+        ['Invoice Date:', new Date(invoice.invoiceDate).toLocaleDateString('en-IN')],
+        ['Due Date:', new Date(invoice.dueDate).toLocaleDateString('en-IN')]
+    ];
+    
+    let y = 85;
+    invoiceDetails.forEach(([label, value]) => {
+        doc.font(theme.bodyFont).fontSize(10).fillColor(theme.textColor).text(label, 350, y, { width: 90, align: 'left' });
+        doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor).text(value, 440, y, { width: 105, align: 'right' });
+        y += 15;
+    });
+
+    return 140; // Return Y position after header
+};
+
+const generateCustomerInformation = (doc, invoice, y) => {
+    doc.fillColor(theme.textColor).font(theme.headerFont).fontSize(11);
+    doc.text('Bill To:', layout.margin, y);
+    doc.text('From (Seller):', layout.margin + layout.contentWidth / 2, y); // Changed 'Ship To' to 'From' for clarity
+    generateHr(doc, y + 15);
+
+    const billingAddress = invoice.buyer.addresses?.[0] || {};
+    const sellerAddress = invoice.seller.address || {};
+    
+    doc.fillColor(theme.textColor).font(theme.bodyFont).fontSize(10);
+    
+    // Buyer Info (Bill To)
+    doc.font(theme.headerFont).text(invoice.buyer.fullname, layout.margin, y + 25);
+    doc.font(theme.bodyFont).text(billingAddress.street || '', layout.margin, y + 40);
+    doc.text(`${billingAddress.city || ''}, ${billingAddress.state || ''} ${billingAddress.pincode || ''}`, layout.margin, y + 55);
+    
+    // Seller Info (From)
+    doc.font(theme.headerFont).text(invoice.seller.shopName, layout.margin + layout.contentWidth / 2, y + 25);
+    doc.font(theme.bodyFont).text(sellerAddress.street || '', layout.margin + layout.contentWidth / 2, y + 40);
+    doc.text(`${sellerAddress.city || ''}, ${sellerAddress.state || ''} ${sellerAddress.pincode || ''}`, layout.margin + layout.contentWidth / 2, y + 55);
+
+    generateHr(doc, y + 75);
+    return y + 75;
+};
+
+const generateInvoiceTable = (doc, invoice, y) => {
+    const tableTop = y;
+    const columns = [
+        { title: '#', width: 30, align: 'center' },
+        { title: 'Item Description', width: 230, align: 'left' },
+        { title: 'Qty', width: 40, align: 'right' },
+        { title: 'Rate', width: 70, align: 'right' },
+        { title: 'GST', width: 40, align: 'right' },
+        { title: 'Amount', width: 80, align: 'right' }
+    ];
+
+    // --- Table Header ---
+    doc.font(theme.headerFont).fontSize(9);
+    doc.rect(layout.margin, tableTop, layout.contentWidth, 20).fill(theme.tableHeaderBG);
+    doc.fillColor(theme.tableHeaderColor);
+
+    let x = layout.margin;
+    columns.forEach(col => {
+        doc.text(col.title, x + 5, tableTop + 6, { width: col.width - 10, align: col.align });
+        x += col.width;
+    });
+
+    // --- Table Body ---
+    let rowY = tableTop + 25; // Add some padding
+    invoice.items.forEach((item, i) => {
+        // Alternating row color
+        if (i % 2 !== 0) {
+            doc.rect(layout.margin, rowY - 5, layout.contentWidth, 25).fill(theme.alternateRowBG);
+        }
+        
+        const itemDescription = item.customTitle || item.product?.name || "N/A";
+        const cells = [
+            (i + 1).toString(),
+            itemDescription,
+            item.quantity.toString(),
+            formatCurrency(item.rate),
+            `${item.gstRate}%`,
+            formatCurrency(item.amount)
+        ];
+
+        doc.font(theme.bodyFont).fontSize(9).fillColor(theme.textColor);
+        
+        let cellX = layout.margin;
+        columns.forEach((col, j) => {
+            doc.text(cells[j], cellX + 5, rowY, { width: col.width - 10, align: col.align });
+            cellX += col.width;
+        });
+        rowY += 20; // Row height
+    });
+    
+    return rowY + 10;
+};
+
+const generateTotalsAndFooter = (doc, invoice, y) => {
+    // --- Left side: Amount in words, Bank Details, Terms ---
+    doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor);
+    doc.text('Amount in Words:', layout.margin, y);
+    doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
+    doc.text(`${toWords(invoice.totalAmount)} only.`, layout.margin, y + 15, { width: 250 });
+
+    y += 50;
+    
+    doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor);
+    doc.text('Bank Details:', layout.margin, y);
+    doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
+    doc.text(`Bank Name: ${invoice.seller.bankDetails?.bankName || 'N/A'}`, layout.margin, y + 15);
+    doc.text(`Account No: ${invoice.seller.bankDetails?.accountNumber || 'N/A'}`, layout.margin, y + 30);
+    doc.text(`IFSC Code: ${invoice.seller.bankDetails?.ifscCode || 'N/A'}`, layout.margin, y + 45);
+
+    const leftY = y + 65;
+
+    // --- Right side: Totals Summary ---
+    let summaryY = y - 50;
+    const summaryX = layout.pageWidth - layout.margin - 220;
+
+    const summaryItems = [
+        { label: 'Subtotal:', value: formatCurrency(invoice.subTotal) },
+        { label: 'Total Discount:', value: formatCurrency(invoice.totalDiscount) },
+        { label: 'GST:', value: formatCurrency(invoice.gst) }
+    ];
+
+    summaryItems.forEach(item => {
+        doc.font(theme.bodyFont).fontSize(10).fillColor(theme.textColor);
+        doc.text(item.label, summaryX, summaryY, { width: 100, align: 'left' });
+        doc.text(item.value, summaryX + 110, summaryY, { width: 100, align: 'right' });
+        summaryY += 20;
+    });
+    
+    generateHr(doc, summaryY, summaryX, 220);
+    summaryY += 10;
+    
+    // Grand Total
+    doc.rect(summaryX, summaryY, 220, 30).fill(theme.primaryColor);
+    doc.font(theme.headerFont).fontSize(12).fillColor('#FFFFFF');
+    doc.text('Grand Total', summaryX + 10, summaryY + 8);
+    doc.text(formatCurrency(invoice.totalAmount), summaryX + 110, summaryY + 8, { width: 100, align: 'right' });
+
+    const rightY = summaryY + 50;
+    
+    return { leftY, rightY };
+};
+
+// ✅ CORRECTED FUNCTION: Now accepts 'invoice' as an argument
+const generatePageFooter = (doc, invoice, y) => {
+    // Ensure footer is at the bottom of the page, regardless of content height
+    const pageBottom = doc.page.height - layout.margin - 40;
+    y = Math.max(y, pageBottom - 60);
+
+    generateHr(doc, y);
+    
+    doc.font(theme.bodyFont).fontSize(9).fillColor(theme.lightTextColor);
+    doc.text(`For ${invoice.seller.shopName}`, layout.pageWidth - layout.margin - 200, y + 15, { width: 200, align: 'right' });
+    doc.text('Authorised Signatory', layout.pageWidth - layout.margin - 200, y + 45, { width: 200, align: 'right' });
+
+    doc.text('Thank you for your business!', layout.margin, doc.page.height - layout.margin, { align: 'center', width: layout.contentWidth });
+};
+
+/**
+ * =================================================================
+ * UTILITY FUNCTIONS
+ * =================================================================
+ */
+
+const generateHr = (doc, y, x = layout.margin, width = layout.contentWidth) => {
+    doc.strokeColor(theme.borderColor).lineWidth(0.5)
+       .moveTo(x, y).lineTo(x + width, y).stroke();
+};
+
+const formatCurrency = (amount) => {
+    return (amount || 0).toLocaleString('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2
+    });
+};
+
+
 // exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
 //     const { id } = req.params;
-//     const ownerFilter =
-//         req.user.role === "superAdmin" ? {} : { owner: req.user._id };
+//     const ownerFilter = req.user.role === 'superAdmin' ? {} : { owner: req.user._id };
 
-//     // Fetch the invoice with all necessary details populated
 //     const invoice = await Invoice.findOne({ _id: id, ...ownerFilter })
-//         .populate("buyer")
-//         .populate("seller")
-//         .populate("items.product");
+//         .populate('buyer')
+//         .populate('seller')
+//         .populate('items.product');
 
 //     if (!invoice) {
-//         return next(
-//             new AppError(
-//                 "Invoice not found or you do not have permission.",
-//                 404,
-//             ),
-//         );
+//         return next(new AppError('Invoice not found or you do not have permission.', 404));
 //     }
 
-//     // --- PDF Generation Starts Here ---
-//     const doc = new PDFDocument({ size: "A4", margin: 50 });
+//     const doc = new PDFDocument({ size: 'A4', margin: 50 });
+//     const buffers = [];
 
-//     // Set response headers to trigger a download
-//     res.setHeader("Content-Type", "application/pdf");
-//     res.setHeader(
-//         "Content-Disposition",
-//         `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
-//     );
-
-//     // Pipe the PDF document directly to the response stream
-//     doc.pipe(res);
+//     doc.on('data', buffers.push.bind(buffers));
+//     doc.on('end', () => {
+//         const pdfData = Buffer.concat(buffers);
+//         res.writeHead(200, {
+//             'Content-Type': 'application/pdf',
+//             'Content-Disposition': `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
+//             'Content-Length': pdfData.length
+//         });
+//         res.end(pdfData);
+//     });
 
 //     // --- Helper Functions for PDF Layout ---
 //     const generateHeader = (doc) => {
-//         doc.fontSize(20).text(invoice.seller.shopName || "Seller Company", {
-//             align: "left",
-//         });
-//         doc.fontSize(10).text(invoice.seller.address.street || "", {
-//             align: "left",
-//         });
-//         doc.fontSize(10).text(
-//             `${invoice.seller.address.city || ""}, ${invoice.seller.address.state || ""} ${invoice.seller.address.pincode || ""}`,
-//             { align: "left" },
-//         );
-//         doc.fontSize(10).text(invoice.seller.contactNumber || "", {
-//             align: "left",
-//         });
+//         doc.fillColor('#444444')
+//            .fontSize(20)
+//            .text(invoice.seller.shopName || 'Shivam Electronics', 50, 57)
+//            .fontSize(10)
+//            .text(invoice.seller.address.street || 'f-8 JB Shoppin Center Jolwa', 50, 80)
+//            .text(`${invoice.seller.address.city || ''}, ${invoice.seller.address.state || ''} ${invoice.seller.address.pincode || ''}`, 50, 95)
+//            .text(invoice.seller.contactNumber || '', 50, 110);
 
-//         doc.fontSize(20).text("INVOICE", { align: "right" });
-//         doc.moveDown();
+//         doc.fillColor('#444444')
+//            .fontSize(20)
+//            .text('INVOICE', 275, 57, { align: 'right' })
+//            .fontSize(10)
+//            .text(`Invoice No: ${invoice.invoiceNumber}`, 275, 80, { align: 'right' })
+//            .text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}`, 275, 95, { align: 'right' })
+//            .text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 275, 110, { align: 'right' });
+
+//         doc.moveDown(5);
 //     };
+    
+//     const generateCustomerInformation = (doc) => {
+//         doc.rect(50, 160, 500, 60).stroke();
+//         doc.fillColor('#444444')
+//            .fontSize(12)
+//            .font('Helvetica-Bold')
+//            .text('Buyer Details', 60, 170);
 
-//     const generateCustomerInformation = (doc, invoice) => {
-//         doc.fontSize(10);
-//         doc.text(`Invoice Number: ${invoice.invoiceNumber}`, { align: "left" });
-//         doc.text(
-//             `Invoice Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`,
-//             { align: "left" },
-//         );
-//         doc.text(
-//             `Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`,
-//             { align: "left" },
-//         );
-
-//         const customerX = 350;
-//         doc.text("Bill To:", customerX, 125);
-//         doc.font("Helvetica-Bold").text(invoice.buyer.fullname, customerX, 140);
-//         doc.font("Helvetica");
-//         if (invoice.buyer.addresses && invoice.buyer.addresses[0]) {
-//             const address = invoice.buyer.addresses[0];
-//             doc.text(`${address.street}, ${address.city}`, customerX, 155);
-//         }
-//         doc.moveDown(2);
+//         doc.font('Helvetica')
+//            .fontSize(10)
+//            .text(`Buyer Name: ${invoice.buyer.fullname}`, 60, 190)
+//            .text(`Address: ${invoice.buyer.addresses?.[0]?.street || ''}, ${invoice.buyer.addresses?.[0]?.city || ''}`, 300, 190);
 //     };
 
 //     const generateInvoiceTable = (doc, invoice) => {
 //         const tableTop = 250;
-//         const itemX = 50;
-//         const qtyX = 250;
-//         const rateX = 300;
-//         const amountX = 370;
+//         const columns = [
+//             { title: "Sr.", x: 50, width: 20, align: 'center' },
+//             { title: "Item", x: 70, width: 140, align: 'left' },
+//             { title: "Qty", x: 210, width: 30, align: 'right' },
+//             { title: "Rate", x: 240, width: 50, align: 'right' },
+//             { title: "Discount", x: 290, width: 50, align: 'right' },
+//             { title: "Taxable", x: 340, width: 50, align: 'right' },
+//             { title: "GST %", x: 390, width: 40, align: 'right' },
+//             { title: "GST Amt", x: 430, width: 60, align: 'right' },
+//             { title: "Amount", x: 490, width: 60, align: 'right' }
+//         ];
 
-//         doc.font("Helvetica-Bold");
-//         doc.text("Item", itemX, tableTop);
-//         doc.text("Quantity", qtyX, tableTop, { width: 90, align: "right" });
-//         doc.text("Rate", rateX, tableTop, { width: 90, align: "right" });
-//         doc.text("Amount", amountX, tableTop, { width: 100, align: "right" });
-//         doc.font("Helvetica");
+//         // --- Table Header with Color ---
+//         doc.font('Helvetica-Bold')
+//            .fontSize(10)
+//            .fillColor('#ffffff')
+//            .rect(50, tableTop, 500, 20)
+//            .fill('#2c3e50'); // Dark blue header background
 
-//         let i = 0;
-//         for (const item of invoice.items) {
-//             const y = tableTop + (i + 1) * 30;
-//             doc.text(item.customTitle, itemX, y);
-//             doc.text(item.quantity.toString(), qtyX, y, {
-//                 width: 90,
-//                 align: "right",
+//         doc.fillColor('#ffffff');
+//         generateTableRow(doc, tableTop + 5, columns, ["Sr.", "Item", "Qty", "Rate", "Discount", "Taxable", "GST %", "GST Amt", "Amount"]);
+
+//         doc.fillColor('#000000');
+//         generateHr(doc, tableTop + 20);
+
+//         // --- Table Body with Alternating Row Colors ---
+//         doc.font('Helvetica')
+//            .fontSize(9);
+
+//         let bodyY = tableTop + 20;
+//         for (let i = 0; i < invoice.items.length; i++) {
+//             const item = invoice.items[i];
+//             const cells = [
+//                 (i + 1).toString(),
+//                 item.customTitle || item.product?.name || "",
+//                 item.quantity.toString(),
+//                 formatCurrency(item.rate),
+//                 formatCurrency(item.discount),
+//                 formatCurrency(item.taxableValue),
+//                 `${item.gstRate}%`,
+//                 formatCurrency(item.gstAmount),
+//                 formatCurrency(item.amount)
+//             ];
+
+//             // Alternating row color
+//             if (i % 2 === 0) {
+//                 doc.fillColor('#f0f0f0')
+//                    .rect(50, bodyY, 500, 25)
+//                    .fill();
+//             }
+//             doc.fillColor('#000000');
+
+//             // Calculate dynamic row height for text wrapping
+//             let maxHeight = 0;
+//             columns.forEach((col, index) => {
+//                 const text = cells[index];
+//                 const opts = { width: col.width, align: col.align, continued: false };
+//                 const height = doc.heightOfString(text, opts);
+//                 if (height > maxHeight) maxHeight = height;
 //             });
-//             doc.text(item.rate.toFixed(2), rateX, y, {
-//                 width: 90,
-//                 align: "right",
-//             });
-//             doc.text(item.amount.toFixed(2), amountX, y, {
-//                 width: 100,
-//                 align: "right",
-//             });
-//             i++;
+//             const rowHeight = Math.max(25, maxHeight + 10); // Minimum 25px with padding
+
+//             generateTableRow(doc, bodyY + 5, columns, cells);
+
+//             generateHr(doc, bodyY + rowHeight);
+//             bodyY += rowHeight;
 //         }
 
-//         const subtotalY = tableTop + (i + 1) * 30;
-//         doc.font("Helvetica-Bold").text("Subtotal:", 200, subtotalY, {
-//             align: "right",
-//         });
-//         doc.text(invoice.subTotal.toFixed(2), 0, subtotalY, { align: "right" });
+//         // --- Draw Vertical Lines for Full Table Borders ---
+//         generateVerticalLines(doc, columns, tableTop, bodyY);
 
-//         const gstY = subtotalY + 20;
-//         doc.font("Helvetica-Bold").text("GST:", 200, gstY, { align: "right" });
-//         doc.text(invoice.gst.toFixed(2), 0, gstY, { align: "right" });
+//         // Return the Y position after the table for summary
+//         return bodyY + 20;
+//     };
 
-//         const totalY = gstY + 20;
-//         doc.font("Helvetica-Bold").text("Total:", 200, totalY, {
-//             align: "right",
+//     const generateSummaryTable = (doc, invoice, yStart) => {
+//         const summaryColumns = [
+//             { title: "Description", x: 350, width: 100, align: 'left' },
+//             { title: "Amount", x: 450, width: 100, align: 'right' }
+//         ];
+
+//         // --- Summary Header ---
+//         doc.font('Helvetica-Bold')
+//            .fontSize(10)
+//            .fillColor('#ffffff')
+//            .rect(350, yStart, 200, 20)
+//            .fill('#34495e'); // Slightly different blue for summary header
+//         doc.fillColor('#ffffff')
+//            .text('Summary', 350, yStart + 5, { width: 200, align: 'center' });
+
+//         generateHr(doc, yStart + 20);
+
+//         // --- Summary Rows ---
+//         doc.font('Helvetica')
+//            .fontSize(9)
+//            .fillColor('#000000');
+
+//         const rows = [
+//             ["Subtotal", formatCurrency(invoice.subTotal)],
+//             ["Total Discount", formatCurrency(invoice.totalDiscount)],
+//             ["IGST", formatCurrency(invoice.gst)],
+//             ["Total Amount", formatCurrency(invoice.totalAmount)]
+//         ];
+
+//         let rowY = yStart + 20;
+//         rows.forEach((row, index) => {
+//             // Highlight total row
+//             if (index === 3) {
+//                 doc.font('Helvetica-Bold')
+//                    .fillColor('#ffffff')
+//                    .rect(350, rowY, 200, 20)
+//                    .fill('#27ae60'); // Green for total
+//                 doc.fillColor('#ffffff');
+//             } else {
+//                 if (index % 2 === 0) {
+//                     doc.fillColor('#f9f9f9')
+//                        .rect(350, rowY, 200, 20)
+//                        .fill();
+//                 }
+//                 doc.fillColor('#000000');
+//             }
+
+//             doc.text(row[0], 360, rowY + 5, { width: 90, align: 'left' });
+//             doc.text(row[1], 450, rowY + 5, { width: 90, align: 'right' });
+
+//             generateHr(doc, rowY + 20);
+//             rowY += 20;
 //         });
-//         doc.text(invoice.totalAmount.toFixed(2), 0, totalY, { align: "right" });
+
+//         // --- Vertical Lines for Summary Table ---
+//         doc.strokeColor("#aaaaaa")
+//            .lineWidth(0.5)
+//            .moveTo(350, yStart)
+//            .lineTo(350, rowY)
+//            .moveTo(450, yStart)
+//            .lineTo(450, rowY)
+//            .moveTo(550, yStart)
+//            .lineTo(550, rowY)
+//            .stroke();
+
+//         // Return Y position after summary
+//         return rowY + 20;
+//     };
+
+//     const generateFooter = (doc, invoice, yStart) => {
+//         doc.fontSize(10)
+//            .fillColor('#444444')
+//            .text(`Amount in Words: Rupees ${toWords(invoice.totalAmount)} Only`, 50, yStart, { width: 500, align: 'left' })
+//            .text('For Shivam Electronics', 50, yStart + 40, { width: 500, align: 'right' })
+//            .text('Authorised Signatory', 50, yStart + 60, { width: 500, align: 'right' });
+//     };
+
+//     const generateTableRow = (doc, y, columns, cells) => {
+//         columns.forEach((col, index) => {
+//             doc.text(cells[index], col.x, y, { width: col.width, align: col.align });
+//         });
+//     };
+
+//     const generateHr = (doc, y) => {
+//         doc.strokeColor("#aaaaaa")
+//            .lineWidth(0.5)
+//            .moveTo(50, y)
+//            .lineTo(550, y)
+//            .stroke();
+//     };
+
+//     const generateVerticalLines = (doc, columns, topY, bottomY) => {
+//         doc.strokeColor("#aaaaaa")
+//            .lineWidth(0.5);
+//         columns.forEach((col) => {
+//             doc.moveTo(col.x, topY)
+//                .lineTo(col.x, bottomY)
+//                .stroke();
+//         });
+//         // Rightmost line
+//         const lastX = columns[columns.length - 1].x + columns[columns.length - 1].width;
+//         doc.moveTo(lastX, topY)
+//            .lineTo(lastX, bottomY)
+//            .stroke();
+//     };
+
+//     const formatCurrency = (amount) => {
+//         if (amount === null || typeof amount === 'undefined') {
+//             amount = 0;
+//         }
+//         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
 //     };
 
 //     // --- Build the PDF ---
 //     generateHeader(doc);
-//     generateCustomerInformation(doc, invoice);
-//     generateInvoiceTable(doc, invoice);
+//     generateCustomerInformation(doc);
+//     const tableEndY = generateInvoiceTable(doc, invoice);
+//     const summaryEndY = generateSummaryTable(doc, invoice, tableEndY);
+//     generateFooter(doc, invoice, summaryEndY);
 
-//     // Finalize the PDF and end the stream
+//     // Finalize the PDF
 //     doc.end();
-// });
+// }); 
+
+// // exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
+// //     const { id } = req.params;
+// //     const ownerFilter = req.user.role === 'superAdmin' ? {} : { owner: req.user._id };
+
+// //     const invoice = await Invoice.findOne({ _id: id, ...ownerFilter })
+// //         .populate('buyer')
+// //         .populate('seller')
+// //         .populate('items.product');
+
+// //     if (!invoice) {
+// //         return next(new AppError('Invoice not found or you do not have permission.', 404));
+// //     }
+
+// //     const doc = new PDFDocument({ size: 'A4', margin: 50 });
+// //     const buffers = [];
+
+// //     doc.on('data', buffers.push.bind(buffers));
+// //     doc.on('end', () => {
+// //         const pdfData = Buffer.concat(buffers);
+// //         res.writeHead(200, {
+// //             'Content-Type': 'application/pdf',
+// //             'Content-Disposition': `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
+// //             'Content-Length': pdfData.length
+// //         });
+// //         res.end(pdfData);
+// //     });
+
+// //     // --- Helper Functions for PDF Layout ---
+// //     const generateHeader = (doc) => {
+// //         doc.fillColor('#444444')
+// //            .fontSize(20)
+// //            .text(invoice.seller.shopName || 'Shivam Electronics', 50, 57)
+// //            .fontSize(10)
+// //            .text(invoice.seller.address.street || 'f-8 JB Shoppin Center Jolwa', 50, 80)
+// //            .text(`${invoice.seller.address.city || ''}, ${invoice.seller.address.state || ''} ${invoice.seller.address.pincode || ''}`, 50, 95)
+// //            .text(invoice.seller.contactNumber || '', 50, 110);
+
+// //         doc.fillColor('#444444')
+// //            .fontSize(20)
+// //            .text('INVOICE', 275, 57, { align: 'right' })
+// //            .fontSize(10)
+// //            .text(`Invoice No: ${invoice.invoiceNumber}`, 275, 80, { align: 'right' })
+// //            .text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString('en-IN')}`, 275, 95, { align: 'right' })
+// //            .text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString('en-IN')}`, 275, 110, { align: 'right' });
+
+// //         doc.moveDown(5);
+// //     };
+    
+// //     const generateCustomerInformation = (doc) => {
+// //         doc.rect(50, 160, 500, 60).stroke();
+// //         doc.fillColor('#444444')
+// //            .fontSize(12)
+// //            .font('Helvetica-Bold')
+// //            .text('Buyer Details', 60, 170);
+
+// //         doc.font('Helvetica')
+// //            .fontSize(10)
+// //            .text(`Buyer Name: ${invoice.buyer.fullname}`, 60, 190)
+// //            .text(`Address: ${invoice.buyer.addresses?.[0]?.street || ''}, ${invoice.buyer.addresses?.[0]?.city || ''}`, 300, 190);
+// //     };
+
+// //     const generateInvoiceTable = (doc, invoice) => {
+// //         let i;
+// //         const invoiceTableTop = 250;
+        
+// //         doc.font('Helvetica-Bold');
+// //         generateTableRow(doc, invoiceTableTop, "Sr.", "Item", "HSN/SAC", "Qty", "Rate", "Discount", "Taxable", "GST %", "GST Amt", "Amount");
+// //         generateHr(doc, invoiceTableTop + 20);
+// //         doc.font('Helvetica');
+
+// //         for (i = 0; i < invoice.items.length; i++) {
+// //             const item = invoice.items[i];
+// //             const position = invoiceTableTop + (i + 1) * 30;
+// //             generateTableRow(
+// //                 doc,
+// //                 position,
+// //                 i + 1,
+// //                 item.customTitle,
+// //                 item.product?.hsnSac || 'N/A',
+// //                 item.quantity,
+// //                 formatCurrency(item.rate),
+// //                 formatCurrency(item.discount),
+// //                 formatCurrency(item.taxableValue),
+// //                 `${item.gstRate}%`,
+// //                 formatCurrency(item.gstAmount),
+// //                 formatCurrency(item.amount)
+// //             );
+// //             generateHr(doc, position + 20);
+// //         }
+
+// //         // --- IMPROVED SUMMARY SECTION ---
+// //         const summaryY = invoiceTableTop + (i + 2) * 30;
+// //         doc.font('Helvetica');
+// //         doc.text('Subtotal:', 350, summaryY, { align: 'right', width: 100 });
+// //         doc.text(formatCurrency(invoice.subTotal), 450, summaryY, { align: 'right' });
+
+// //         doc.text('Total Discount:', 350, summaryY + 20, { align: 'right', width: 100 });
+// //         doc.text(formatCurrency(invoice.totalDiscount), 450, summaryY + 20, { align: 'right' });
+        
+// //         doc.text('IGST:', 350, summaryY + 40, { align: 'right', width: 100 });
+// //         doc.text(formatCurrency(invoice.gst), 450, summaryY + 40, { align: 'right' });
+
+// //         generateHr(doc, summaryY + 65);
+
+// //         doc.font('Helvetica-Bold');
+// //         doc.text('Total Amount:', 350, summaryY + 75, { align: 'right', width: 100 });
+// //         doc.text(formatCurrency(invoice.totalAmount), 450, summaryY + 75, { align: 'right' });
+// //         doc.font('Helvetica');
+// //     };
+
+// //     const generateFooter = (doc) => {
+// //         // Adjust Y position based on the new summary table height
+// //         const footerY = doc.y + 50; // Add some space after the table
+// //         doc.fontSize(10).text(`Amount in Words: Rupees ${toWords(invoice.totalAmount)} Only`, 50, footerY, { align: 'left' });
+// //         doc.fontSize(10).text('For Shivam Electronics', 50, footerY + 40, { align: 'right' });
+// //         doc.fontSize(10).text('Authorised Signatory', 50, footerY + 60, { align: 'right' });
+// //     };
+
+// //     const generateTableRow = (doc, y, sr, item, hsn, qty, rate, discount, taxable, gstRate, gstAmt, amount) => {
+// //         doc.fontSize(8)
+// //            .text(sr.toString(), 50, y)
+// //            .text(item, 80, y, { width: 100 })
+// //            .text(hsn, 180, y, { width: 60, align: 'right' })
+// //            .text(qty.toString(), 250, y, { width: 30, align: 'right' })
+// //            .text(rate.toString(), 290, y, { width: 50, align: 'right' })
+// //            .text(discount.toString(), 340, y, { width: 40, align: 'right' })
+// //            .text(taxable.toString(), 390, y, { width: 50, align: 'right' })
+// //            .text(gstRate.toString(), 440, y, { width: 40, align: 'right' })
+// //            .text(gstAmt.toString(), 480, y, { width: 50, align: 'right' })
+// //            .text(amount.toString(), 0, y, { align: 'right' });
+// //     };
+
+// //     const generateHr = (doc, y) => {
+// //         doc.strokeColor("#aaaaaa")
+// //            .lineWidth(1)
+// //            .moveTo(50, y)
+// //            .lineTo(550, y)
+// //            .stroke();
+// //     };
+
+// //     const formatCurrency = (amount) => {
+// //         if (amount === null || typeof amount === 'undefined') {
+// //             amount = 0;
+// //         }
+// //         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+// //     };
+
+// //     // --- Build the PDF ---
+// //     generateHeader(doc);
+// //     generateCustomerInformation(doc);
+// //     generateInvoiceTable(doc, invoice);
+// //     generateFooter(doc);
+
+// //     // Finalize the PDF
+// //     doc.end();
+// // });

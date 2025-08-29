@@ -220,7 +220,6 @@ app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/permissions", permissionsRouter);
 
-// new
 app.use("/api/v1/transactions", transactionRoutes); // <-- ADD THIS LINE
 app.use("/api/v1/analytics", advancedAnalyticsRoutes);
 app.use("/api/v1/emis", emiRoutes);
