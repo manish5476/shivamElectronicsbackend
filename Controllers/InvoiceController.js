@@ -248,150 +248,6 @@ exports.getProductSales = catchAsync(async (req, res, next) => {
     });
 });
 
-// --- Bot-Specific Helper Functions (No req, res, next) ---
-// These functions are designed to be called directly by the Telegram bot handlers.
-
-exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
-    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError("Invalid invoice ID.", 400);
-    }
-
-    let filter = { _id: invoiceId };
-    if (!isSuperAdmin) {
-        filter.owner = userId;
-    }
-
-    const invoice = await Invoice.findOne(filter).populate(
-        "customerId",
-        "fullname email mobileNumber",
-    );
-    if (!invoice) {
-        throw new AppError(
-            `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
-            404,
-        );
-    }
-    return invoice;
-};
-
-exports.getAllInvoicesBot = async (userId, isSuperAdmin = false) => {
-    let filter = {};
-    if (!isSuperAdmin) {
-        filter.owner = userId;
-    }
-    const invoices = await Invoice.find(filter).populate(
-        "customerId",
-        "fullname email mobileNumber",
-    );
-    return invoices;
-};
-
-exports.newInvoiceBot = async (invoiceData, userId) => {
-    const {
-        customerId,
-        customerName,
-        amount,
-        status,
-        productName,
-        productQuantity,
-        productPrice,
-    } = invoiceData;
-
-    if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        throw new AppError("Invalid customer ID provided.", 400);
-    }
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-        throw new AppError(
-            "Customer not found for the provided customerId",
-            400,
-        );
-    }
-
-    const productsArray = [
-        {
-            productName,
-            quantity: parseInt(productQuantity, 10),
-            price: parseFloat(productPrice),
-        },
-    ];
-
-    const newInv = await Invoice.create({
-        customerId,
-        customerName: customerName || customer.fullname,
-        amount: parseFloat(amount),
-        status: status || "pending",
-        products: productsArray,
-        owner: userId, // Assign owner from bot user
-    });
-    return newInv;
-};
-
-exports.updateInvoiceBot = async (
-    invoiceId,
-    updateData,
-    userId,
-    isSuperAdmin = false,
-) => {
-    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError("Invalid invoice ID.", 400);
-    }
-
-    let filter = { _id: invoiceId };
-    if (!isSuperAdmin) {
-        filter.owner = userId;
-    }
-
-    const updatedInv = await Invoice.findOneAndUpdate(filter, updateData, {
-        new: true,
-        runValidators: true,
-    });
-    if (!updatedInv) {
-        throw new AppError(
-            `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
-            404,
-        );
-    }
-    return updatedInv;
-};
-
-exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
-    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
-        throw new AppError("Invalid invoice ID.", 400);
-    }
-
-    let filter = { _id: invoiceId };
-    if (!isSuperAdmin) {
-        filter.owner = userId;
-    }
-
-    const invoice = await Invoice.findOneAndDelete(filter);
-    if (!invoice) {
-        throw new AppError(
-            `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
-            404,
-        );
-    }
-    return { message: "Invoice deleted successfully" };
-};
-
-exports.getProductSalesBot = async (
-    startDate,
-    endDate,
-    userId,
-    isSuperAdmin = false,
-) => {
-    // This bot function now directly calls the shared productSalesStatistics helper
-    return await productSalesStatistics(
-        startDate,
-        endDate,
-        userId,
-        isSuperAdmin,
-    );
-};
 
 // --- THEME & LAYOUT CONSTANTS ---
 // Centralizing style makes it easy to change the invoice's look and feel.
@@ -543,10 +399,7 @@ const generateInvoiceTable = (doc, invoice, y) => {
     let rowY = tableTop + 25; // Add some padding
     invoice.items.forEach((item, i) => {
         // Alternating row color
-        if (i % 2 !== 0) {
-            doc.rect(layout.margin, rowY - 5, layout.contentWidth, 25).fill(theme.alternateRowBG);
-        }
-        
+        if (i % 2 !== 0) {  doc.rect(layout.margin, rowY - 5, layout.contentWidth, 25).fill(theme.alternateRowBG); }
         const itemDescription = item.customTitle || item.product?.name || "N/A";
         const cells = [
             (i + 1).toString(),
@@ -556,9 +409,7 @@ const generateInvoiceTable = (doc, invoice, y) => {
             `${item.gstRate}%`,
             formatCurrency(item.amount)
         ];
-
         doc.font(theme.bodyFont).fontSize(9).fillColor(theme.textColor);
-        
         let cellX = layout.margin;
         columns.forEach((col, j) => {
             doc.text(cells[j], cellX + 5, rowY, { width: col.width - 10, align: col.align });
@@ -566,7 +417,6 @@ const generateInvoiceTable = (doc, invoice, y) => {
         });
         rowY += 20; // Row height
     });
-    
     return rowY + 10;
 };
 
@@ -576,22 +426,17 @@ const generateTotalsAndFooter = (doc, invoice, y) => {
     doc.text('Amount in Words:', layout.margin, y);
     doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
     doc.text(`${toWords(invoice.totalAmount)} only.`, layout.margin, y + 15, { width: 250 });
-
     y += 50;
-    
     doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor);
     doc.text('Bank Details:', layout.margin, y);
     doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
     doc.text(`Bank Name: ${invoice.seller.bankDetails?.bankName || 'N/A'}`, layout.margin, y + 15);
     doc.text(`Account No: ${invoice.seller.bankDetails?.accountNumber || 'N/A'}`, layout.margin, y + 30);
     doc.text(`IFSC Code: ${invoice.seller.bankDetails?.ifscCode || 'N/A'}`, layout.margin, y + 45);
-
     const leftY = y + 65;
-
     // --- Right side: Totals Summary ---
     let summaryY = y - 50;
     const summaryX = layout.pageWidth - layout.margin - 220;
-
     const summaryItems = [
         { label: 'Subtotal:', value: formatCurrency(invoice.subTotal) },
         { label: 'Total Discount:', value: formatCurrency(invoice.totalDiscount) },
@@ -654,6 +499,202 @@ const formatCurrency = (amount) => {
 };
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// --- Bot-Specific Helper Functions (No req, res, next) ---
+// These functions are designed to be called directly by the Telegram bot handlers.
+
+exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
+    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
+        throw new AppError("Invalid invoice ID.", 400);
+    }
+
+    let filter = { _id: invoiceId };
+    if (!isSuperAdmin) {
+        filter.owner = userId;
+    }
+
+    const invoice = await Invoice.findOne(filter).populate(
+        "customerId",
+        "fullname email mobileNumber",
+    );
+    if (!invoice) {
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+            (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
+    }
+    return invoice;
+};
+
+exports.getAllInvoicesBot = async (userId, isSuperAdmin = false) => {
+    let filter = {};
+    if (!isSuperAdmin) {
+        filter.owner = userId;
+    }
+    const invoices = await Invoice.find(filter).populate(
+        "customerId",
+        "fullname email mobileNumber",
+    );
+    return invoices;
+};
+
+exports.newInvoiceBot = async (invoiceData, userId) => {
+    const {
+        customerId,
+        customerName,
+        amount,
+        status,
+        productName,
+        productQuantity,
+        productPrice,
+    } = invoiceData;
+
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+        throw new AppError("Invalid customer ID provided.", 400);
+    }
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+        throw new AppError(
+            "Customer not found for the provided customerId",
+            400,
+        );
+    }
+
+    const productsArray = [
+        {
+            productName,
+            quantity: parseInt(productQuantity, 10),
+            price: parseFloat(productPrice),
+        },
+    ];
+
+    const newInv = await Invoice.create({
+        customerId,
+        customerName: customerName || customer.fullname,
+        amount: parseFloat(amount),
+        status: status || "pending",
+        products: productsArray,
+        owner: userId, // Assign owner from bot user
+    });
+    return newInv;
+};
+
+exports.updateInvoiceBot = async (
+    invoiceId,
+    updateData,
+    userId,
+    isSuperAdmin = false,
+) => {
+    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
+        throw new AppError("Invalid invoice ID.", 400);
+    }
+
+    let filter = { _id: invoiceId };
+    if (!isSuperAdmin) {
+        filter.owner = userId;
+    }
+
+    const updatedInv = await Invoice.findOneAndUpdate(filter, updateData, {
+        new: true,
+        runValidators: true,
+    });
+    if (!updatedInv) {
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+            (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
+    }
+    return updatedInv;
+};
+
+exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
+    if (!mongoose.Types.ObjectId.isValid(invoiceId)) {
+        throw new AppError("Invalid invoice ID.", 400);
+    }
+
+    let filter = { _id: invoiceId };
+    if (!isSuperAdmin) {
+        filter.owner = userId;
+    }
+
+    const invoice = await Invoice.findOneAndDelete(filter);
+    if (!invoice) {
+        throw new AppError(
+            `No invoice found with ID ${invoiceId}` +
+            (!isSuperAdmin ? " or you do not have permission." : "."),
+            404,
+        );
+    }
+    return { message: "Invoice deleted successfully" };
+};
+
+exports.getProductSalesBot = async (
+    startDate,
+    endDate,
+    userId,
+    isSuperAdmin = false,
+) => {
+    // This bot function now directly calls the shared productSalesStatistics helper
+    return await productSalesStatistics(
+        startDate,
+        endDate,
+        userId,
+        isSuperAdmin,
+    );
+};
 // exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
 //     const { id } = req.params;
 //     const ownerFilter = req.user.role === 'superAdmin' ? {} : { owner: req.user._id };
