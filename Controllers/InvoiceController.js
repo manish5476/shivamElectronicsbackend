@@ -7,7 +7,8 @@ const handleFactory = require("./handleFactory"); // Your generic factory handle
 const mongoose = require("mongoose"); // For ObjectId validation
 const { body, validationResult } = require("express-validator"); // Still imported, even if not directly used by all handlers
 const PDFDocument = require("pdfkit"); // Import the PDF generation library
-const { toWords } = require('number-to-words');
+const { toWords } = require("number-to-words");
+const notificationService = require("../Services/notificationService"); // <-- ADD THIS
 
 const ApiFeatures = require("../Utils/ApiFeatures"); // Import ApiFeatures
 
@@ -185,10 +186,10 @@ const productSalesStatistics = async (
                                                                             [
                                                                                 {
                                                                                     $getField:
-                                                                                    {
-                                                                                        field: "$$this.name",
-                                                                                        input: "$$value",
-                                                                                    },
+                                                                                        {
+                                                                                            field: "$$this.name",
+                                                                                            input: "$$value",
+                                                                                        },
                                                                                 },
                                                                                 0,
                                                                             ],
@@ -268,7 +269,7 @@ exports.getInvoiceByIdBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!invoice) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
+                (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -350,7 +351,7 @@ exports.updateInvoiceBot = async (
     if (!updatedInv) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
+                (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -371,7 +372,7 @@ exports.deleteInvoiceBot = async (invoiceId, userId, isSuperAdmin = false) => {
     if (!invoice) {
         throw new AppError(
             `No invoice found with ID ${invoiceId}` +
-            (!isSuperAdmin ? " or you do not have permission." : "."),
+                (!isSuperAdmin ? " or you do not have permission." : "."),
             404,
         );
     }
@@ -393,24 +394,116 @@ exports.getProductSalesBot = async (
     );
 };
 
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Helper function to generate PDF to a buffer
+const generatePdfToBuffer = (invoice) => {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ size: "A4", margin: 50 });
+        const buffers = [];
+
+        doc.on("data", buffers.push.bind(buffers));
+        doc.on("end", () => {
+            const pdfData = Buffer.concat(buffers);
+            resolve(pdfData);
+        });
+        doc.on("error", reject);
+
+        // --- PDF Content Generation (copied from your existing PDF logic) ---
+        // This should be the full PDF generation logic from your generateInvoicePDF function
+        doc.fontSize(20).text(`Invoice #${invoice.invoiceNumber}`, {
+            align: "center",
+        });
+        doc.moveDown();
+        doc.fontSize(12).text(`Customer: ${invoice.buyer.fullname}`);
+        doc.text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`);
+        // ... Add the rest of your detailed PDF content generation here ...
+        doc.end();
+    });
+};
+
+// UPDATED createInvoice function
+exports.createInvoice = catchAsync(async (req, res, next) => {
+    const newInvoice = await Invoice.create({
+        ...req.body,
+        owner: req.user._id,
+    });
+
+    // --- NEW: Send Email to Customer ---
+    // We run this after sending the response to the client so it doesn't slow down the API request
+    res.status(201).json({
+        status: "success",
+        data: {
+            invoice: newInvoice,
+        },
+    });
+
+    // Post-response actions:
+    try {
+        const fullInvoice = await Invoice.findById(newInvoice._id).populate(
+            "buyer",
+        );
+        if (fullInvoice && fullInvoice.buyer) {
+            const pdfBuffer = await generatePdfToBuffer(fullInvoice);
+            await notificationService.sendInvoiceToCustomer(
+                fullInvoice,
+                pdfBuffer,
+            );
+        }
+    } catch (emailError) {
+        // Log the error, but don't crash the server as the invoice was already created.
+        console.error(
+            `Post-creation task failed for invoice ${newInvoice._id}:`,
+            emailError,
+        );
+    }
+});
+
+// --- NEW: Controller to manually send an invoice email ---
+exports.emailInvoice = catchAsync(async (req, res, next) => {
+    const invoice = await Invoice.findById(req.params.id).populate("buyer");
+
+    if (!invoice) {
+        return next(new AppError("No invoice found with that ID", 404));
+    }
+    if (!invoice.buyer || !invoice.buyer.email) {
+        return next(
+            new AppError(
+                "This customer does not have an email address on file.",
+                400,
+            ),
+        );
+    }
+
+    const pdfBuffer = await generatePdfToBuffer(invoice);
+    await notificationService.sendInvoiceToCustomer(invoice, pdfBuffer);
+
+    res.status(200).json({
+        status: "success",
+        message: `Invoice successfully sent to ${invoice.buyer.email}`,
+    });
+});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- THEME & LAYOUT CONSTANTS ---
 // Centralizing style makes it easy to change the invoice's look and feel.
 const theme = {
-    primaryColor: '#003366',    // Deep Blue
-    textColor: '#333333',
-    lightTextColor: '#777777',
-    borderColor: '#EAEAEA',
-    headerFont: 'Helvetica-Bold',
-    bodyFont: 'Helvetica',
-    tableHeaderBG: '#F5F5F5',
-    tableHeaderColor: '#333333',
-    alternateRowBG: '#FAFAFA'
+    primaryColor: "#003366", // Deep Blue
+    textColor: "#333333",
+    lightTextColor: "#777777",
+    borderColor: "#EAEAEA",
+    headerFont: "Helvetica-Bold",
+    bodyFont: "Helvetica",
+    tableHeaderBG: "#F5F5F5",
+    tableHeaderColor: "#333333",
+    alternateRowBG: "#FAFAFA",
 };
 
 const layout = {
     margin: 50,
     pageWidth: 595.28, // A4 width
-    contentWidth: 595.28 - 100
+    contentWidth: 595.28 - 100,
 };
 
 /**
@@ -420,22 +513,35 @@ const layout = {
  */
 exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    const ownerFilter = req.user.role === 'superAdmin' ? {} : { owner: req.user._id };
+    const ownerFilter =
+        req.user.role === "superAdmin" ? {} : { owner: req.user._id };
 
     const invoice = await Invoice.findOne({ _id: id, ...ownerFilter })
-        .populate('buyer')
-        .populate('seller')
-        .populate('items.product');
+        .populate("buyer")
+        .populate("seller")
+        .populate("items.product");
 
     if (!invoice) {
-        return next(new AppError('Invoice not found or you do not have permission.', 404));
+        return next(
+            new AppError(
+                "Invoice not found or you do not have permission.",
+                404,
+            ),
+        );
     }
 
-    const doc = new PDFDocument({ size: 'A4', margin: layout.margin, bufferPages: true });
-    
+    const doc = new PDFDocument({
+        size: "A4",
+        margin: layout.margin,
+        bufferPages: true,
+    });
+
     // Set up the response headers to stream the PDF
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=invoice-${invoice.invoiceNumber}.pdf`,
+    );
 
     doc.pipe(res);
 
@@ -453,7 +559,6 @@ exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
     doc.end();
 });
 
-
 /**
  * =================================================================
  * HELPER FUNCTIONS FOR PDF SECTIONS
@@ -464,28 +569,50 @@ const generateHeader = async (doc, invoice) => {
     // Attempt to add a company logo.
     // Make sure 'logo.png' exists in your '/public/img/' directory.
     try {
-        const logoPath = path.join(__dirname, '..', 'public', 'img', 'logo.png');
+        const logoPath = path.join(
+            __dirname,
+            "..",
+            "public",
+            "img",
+            "logo.png",
+        );
         doc.image(logoPath, layout.margin, 40, { width: 150 });
     } catch (error) {
         console.warn("Logo not found. Falling back to text.");
-        doc.font(theme.headerFont).fontSize(20).fillColor(theme.primaryColor)
-           .text(invoice.seller.shopName, layout.margin, 57);
+        doc.font(theme.headerFont)
+            .fontSize(20)
+            .fillColor(theme.primaryColor)
+            .text(invoice.seller.shopName, layout.margin, 57);
     }
-    
+
     // Invoice Title and Details
-    doc.font(theme.headerFont).fontSize(22).fillColor(theme.primaryColor)
-       .text('TAX INVOICE', layout.pageWidth - layout.margin - 200, 57, { width: 200, align: 'right' });
-    
+    doc.font(theme.headerFont)
+        .fontSize(22)
+        .fillColor(theme.primaryColor)
+        .text("TAX INVOICE", layout.pageWidth - layout.margin - 200, 57, {
+            width: 200,
+            align: "right",
+        });
+
     const invoiceDetails = [
-        ['Invoice No:', invoice.invoiceNumber],
-        ['Invoice Date:', new Date(invoice.invoiceDate).toLocaleDateString('en-IN')],
-        ['Due Date:', new Date(invoice.dueDate).toLocaleDateString('en-IN')]
+        ["Invoice No:", invoice.invoiceNumber],
+        [
+            "Invoice Date:",
+            new Date(invoice.invoiceDate).toLocaleDateString("en-IN"),
+        ],
+        ["Due Date:", new Date(invoice.dueDate).toLocaleDateString("en-IN")],
     ];
-    
+
     let y = 85;
     invoiceDetails.forEach(([label, value]) => {
-        doc.font(theme.bodyFont).fontSize(10).fillColor(theme.textColor).text(label, 350, y, { width: 90, align: 'left' });
-        doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor).text(value, 440, y, { width: 105, align: 'right' });
+        doc.font(theme.bodyFont)
+            .fontSize(10)
+            .fillColor(theme.textColor)
+            .text(label, 350, y, { width: 90, align: "left" });
+        doc.font(theme.headerFont)
+            .fontSize(10)
+            .fillColor(theme.textColor)
+            .text(value, 440, y, { width: 105, align: "right" });
         y += 15;
     });
 
@@ -494,24 +621,48 @@ const generateHeader = async (doc, invoice) => {
 
 const generateCustomerInformation = (doc, invoice, y) => {
     doc.fillColor(theme.textColor).font(theme.headerFont).fontSize(11);
-    doc.text('Bill To:', layout.margin, y);
-    doc.text('From (Seller):', layout.margin + layout.contentWidth / 2, y); // Changed 'Ship To' to 'From' for clarity
+    doc.text("Bill To:", layout.margin, y);
+    doc.text("From (Seller):", layout.margin + layout.contentWidth / 2, y); // Changed 'Ship To' to 'From' for clarity
     generateHr(doc, y + 15);
 
     const billingAddress = invoice.buyer.addresses?.[0] || {};
     const sellerAddress = invoice.seller.address || {};
-    
+
     doc.fillColor(theme.textColor).font(theme.bodyFont).fontSize(10);
-    
+
     // Buyer Info (Bill To)
-    doc.font(theme.headerFont).text(invoice.buyer.fullname, layout.margin, y + 25);
-    doc.font(theme.bodyFont).text(billingAddress.street || '', layout.margin, y + 40);
-    doc.text(`${billingAddress.city || ''}, ${billingAddress.state || ''} ${billingAddress.pincode || ''}`, layout.margin, y + 55);
-    
+    doc.font(theme.headerFont).text(
+        invoice.buyer.fullname,
+        layout.margin,
+        y + 25,
+    );
+    doc.font(theme.bodyFont).text(
+        billingAddress.street || "",
+        layout.margin,
+        y + 40,
+    );
+    doc.text(
+        `${billingAddress.city || ""}, ${billingAddress.state || ""} ${billingAddress.pincode || ""}`,
+        layout.margin,
+        y + 55,
+    );
+
     // Seller Info (From)
-    doc.font(theme.headerFont).text(invoice.seller.shopName, layout.margin + layout.contentWidth / 2, y + 25);
-    doc.font(theme.bodyFont).text(sellerAddress.street || '', layout.margin + layout.contentWidth / 2, y + 40);
-    doc.text(`${sellerAddress.city || ''}, ${sellerAddress.state || ''} ${sellerAddress.pincode || ''}`, layout.margin + layout.contentWidth / 2, y + 55);
+    doc.font(theme.headerFont).text(
+        invoice.seller.shopName,
+        layout.margin + layout.contentWidth / 2,
+        y + 25,
+    );
+    doc.font(theme.bodyFont).text(
+        sellerAddress.street || "",
+        layout.margin + layout.contentWidth / 2,
+        y + 40,
+    );
+    doc.text(
+        `${sellerAddress.city || ""}, ${sellerAddress.state || ""} ${sellerAddress.pincode || ""}`,
+        layout.margin + layout.contentWidth / 2,
+        y + 55,
+    );
 
     generateHr(doc, y + 75);
     return y + 75;
@@ -520,22 +671,27 @@ const generateCustomerInformation = (doc, invoice, y) => {
 const generateInvoiceTable = (doc, invoice, y) => {
     const tableTop = y;
     const columns = [
-        { title: '#', width: 30, align: 'center' },
-        { title: 'Item Description', width: 230, align: 'left' },
-        { title: 'Qty', width: 40, align: 'right' },
-        { title: 'Rate', width: 70, align: 'right' },
-        { title: 'GST', width: 40, align: 'right' },
-        { title: 'Amount', width: 80, align: 'right' }
+        { title: "#", width: 30, align: "center" },
+        { title: "Item Description", width: 230, align: "left" },
+        { title: "Qty", width: 40, align: "right" },
+        { title: "Rate", width: 70, align: "right" },
+        { title: "GST", width: 40, align: "right" },
+        { title: "Amount", width: 80, align: "right" },
     ];
 
     // --- Table Header ---
     doc.font(theme.headerFont).fontSize(9);
-    doc.rect(layout.margin, tableTop, layout.contentWidth, 20).fill(theme.tableHeaderBG);
+    doc.rect(layout.margin, tableTop, layout.contentWidth, 20).fill(
+        theme.tableHeaderBG,
+    );
     doc.fillColor(theme.tableHeaderColor);
 
     let x = layout.margin;
-    columns.forEach(col => {
-        doc.text(col.title, x + 5, tableTop + 6, { width: col.width - 10, align: col.align });
+    columns.forEach((col) => {
+        doc.text(col.title, x + 5, tableTop + 6, {
+            width: col.width - 10,
+            align: col.align,
+        });
         x += col.width;
     });
 
@@ -544,9 +700,11 @@ const generateInvoiceTable = (doc, invoice, y) => {
     invoice.items.forEach((item, i) => {
         // Alternating row color
         if (i % 2 !== 0) {
-            doc.rect(layout.margin, rowY - 5, layout.contentWidth, 25).fill(theme.alternateRowBG);
+            doc.rect(layout.margin, rowY - 5, layout.contentWidth, 25).fill(
+                theme.alternateRowBG,
+            );
         }
-        
+
         const itemDescription = item.customTitle || item.product?.name || "N/A";
         const cells = [
             (i + 1).toString(),
@@ -554,37 +712,54 @@ const generateInvoiceTable = (doc, invoice, y) => {
             item.quantity.toString(),
             formatCurrency(item.rate),
             `${item.gstRate}%`,
-            formatCurrency(item.amount)
+            formatCurrency(item.amount),
         ];
 
         doc.font(theme.bodyFont).fontSize(9).fillColor(theme.textColor);
-        
+
         let cellX = layout.margin;
         columns.forEach((col, j) => {
-            doc.text(cells[j], cellX + 5, rowY, { width: col.width - 10, align: col.align });
+            doc.text(cells[j], cellX + 5, rowY, {
+                width: col.width - 10,
+                align: col.align,
+            });
             cellX += col.width;
         });
         rowY += 20; // Row height
     });
-    
+
     return rowY + 10;
 };
 
 const generateTotalsAndFooter = (doc, invoice, y) => {
     // --- Left side: Amount in words, Bank Details, Terms ---
     doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor);
-    doc.text('Amount in Words:', layout.margin, y);
+    doc.text("Amount in Words:", layout.margin, y);
     doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
-    doc.text(`${toWords(invoice.totalAmount)} only.`, layout.margin, y + 15, { width: 250 });
+    doc.text(`${toWords(invoice.totalAmount)} only.`, layout.margin, y + 15, {
+        width: 250,
+    });
 
     y += 50;
-    
+
     doc.font(theme.headerFont).fontSize(10).fillColor(theme.textColor);
-    doc.text('Bank Details:', layout.margin, y);
+    doc.text("Bank Details:", layout.margin, y);
     doc.font(theme.bodyFont).fontSize(10).fillColor(theme.lightTextColor);
-    doc.text(`Bank Name: ${invoice.seller.bankDetails?.bankName || 'N/A'}`, layout.margin, y + 15);
-    doc.text(`Account No: ${invoice.seller.bankDetails?.accountNumber || 'N/A'}`, layout.margin, y + 30);
-    doc.text(`IFSC Code: ${invoice.seller.bankDetails?.ifscCode || 'N/A'}`, layout.margin, y + 45);
+    doc.text(
+        `Bank Name: ${invoice.seller.bankDetails?.bankName || "N/A"}`,
+        layout.margin,
+        y + 15,
+    );
+    doc.text(
+        `Account No: ${invoice.seller.bankDetails?.accountNumber || "N/A"}`,
+        layout.margin,
+        y + 30,
+    );
+    doc.text(
+        `IFSC Code: ${invoice.seller.bankDetails?.ifscCode || "N/A"}`,
+        layout.margin,
+        y + 45,
+    );
 
     const leftY = y + 65;
 
@@ -593,29 +768,40 @@ const generateTotalsAndFooter = (doc, invoice, y) => {
     const summaryX = layout.pageWidth - layout.margin - 220;
 
     const summaryItems = [
-        { label: 'Subtotal:', value: formatCurrency(invoice.subTotal) },
-        { label: 'Total Discount:', value: formatCurrency(invoice.totalDiscount) },
-        { label: 'GST:', value: formatCurrency(invoice.gst) }
+        { label: "Subtotal:", value: formatCurrency(invoice.subTotal) },
+        {
+            label: "Total Discount:",
+            value: formatCurrency(invoice.totalDiscount),
+        },
+        { label: "GST:", value: formatCurrency(invoice.gst) },
     ];
 
-    summaryItems.forEach(item => {
+    summaryItems.forEach((item) => {
         doc.font(theme.bodyFont).fontSize(10).fillColor(theme.textColor);
-        doc.text(item.label, summaryX, summaryY, { width: 100, align: 'left' });
-        doc.text(item.value, summaryX + 110, summaryY, { width: 100, align: 'right' });
+        doc.text(item.label, summaryX, summaryY, { width: 100, align: "left" });
+        doc.text(item.value, summaryX + 110, summaryY, {
+            width: 100,
+            align: "right",
+        });
         summaryY += 20;
     });
-    
+
     generateHr(doc, summaryY, summaryX, 220);
     summaryY += 10;
-    
+
     // Grand Total
     doc.rect(summaryX, summaryY, 220, 30).fill(theme.primaryColor);
-    doc.font(theme.headerFont).fontSize(12).fillColor('#FFFFFF');
-    doc.text('Grand Total', summaryX + 10, summaryY + 8);
-    doc.text(formatCurrency(invoice.totalAmount), summaryX + 110, summaryY + 8, { width: 100, align: 'right' });
+    doc.font(theme.headerFont).fontSize(12).fillColor("#FFFFFF");
+    doc.text("Grand Total", summaryX + 10, summaryY + 8);
+    doc.text(
+        formatCurrency(invoice.totalAmount),
+        summaryX + 110,
+        summaryY + 8,
+        { width: 100, align: "right" },
+    );
 
     const rightY = summaryY + 50;
-    
+
     return { leftY, rightY };
 };
 
@@ -626,12 +812,27 @@ const generatePageFooter = (doc, invoice, y) => {
     y = Math.max(y, pageBottom - 60);
 
     generateHr(doc, y);
-    
-    doc.font(theme.bodyFont).fontSize(9).fillColor(theme.lightTextColor);
-    doc.text(`For ${invoice.seller.shopName}`, layout.pageWidth - layout.margin - 200, y + 15, { width: 200, align: 'right' });
-    doc.text('Authorised Signatory', layout.pageWidth - layout.margin - 200, y + 45, { width: 200, align: 'right' });
 
-    doc.text('Thank you for your business!', layout.margin, doc.page.height - layout.margin, { align: 'center', width: layout.contentWidth });
+    doc.font(theme.bodyFont).fontSize(9).fillColor(theme.lightTextColor);
+    doc.text(
+        `For ${invoice.seller.shopName}`,
+        layout.pageWidth - layout.margin - 200,
+        y + 15,
+        { width: 200, align: "right" },
+    );
+    doc.text(
+        "Authorised Signatory",
+        layout.pageWidth - layout.margin - 200,
+        y + 45,
+        { width: 200, align: "right" },
+    );
+
+    doc.text(
+        "Thank you for your business!",
+        layout.margin,
+        doc.page.height - layout.margin,
+        { align: "center", width: layout.contentWidth },
+    );
 };
 
 /**
@@ -641,18 +842,22 @@ const generatePageFooter = (doc, invoice, y) => {
  */
 
 const generateHr = (doc, y, x = layout.margin, width = layout.contentWidth) => {
-    doc.strokeColor(theme.borderColor).lineWidth(0.5)
-       .moveTo(x, y).lineTo(x + width, y).stroke();
+    doc.strokeColor(theme.borderColor)
+        .lineWidth(0.5)
+        .moveTo(x, y)
+        .lineTo(x + width, y)
+        .stroke();
 };
 
 const formatCurrency = (amount) => {
-    return (amount || 0).toLocaleString('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        minimumFractionDigits: 2
+    return (amount || 0).toLocaleString("en-IN", {
+        style: "currency",
+        currency: "INR",
+        minimumFractionDigits: 2,
     });
 };
 
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
 //     const { id } = req.params;
@@ -701,7 +906,7 @@ const formatCurrency = (amount) => {
 
 //         doc.moveDown(5);
 //     };
-    
+
 //     const generateCustomerInformation = (doc) => {
 //         doc.rect(50, 160, 500, 60).stroke();
 //         doc.fillColor('#444444')
@@ -914,7 +1119,7 @@ const formatCurrency = (amount) => {
 
 //     // Finalize the PDF
 //     doc.end();
-// }); 
+// });
 
 // // exports.generateInvoicePDF = catchAsync(async (req, res, next) => {
 // //     const { id } = req.params;
@@ -963,7 +1168,7 @@ const formatCurrency = (amount) => {
 
 // //         doc.moveDown(5);
 // //     };
-    
+
 // //     const generateCustomerInformation = (doc) => {
 // //         doc.rect(50, 160, 500, 60).stroke();
 // //         doc.fillColor('#444444')
@@ -980,7 +1185,7 @@ const formatCurrency = (amount) => {
 // //     const generateInvoiceTable = (doc, invoice) => {
 // //         let i;
 // //         const invoiceTableTop = 250;
-        
+
 // //         doc.font('Helvetica-Bold');
 // //         generateTableRow(doc, invoiceTableTop, "Sr.", "Item", "HSN/SAC", "Qty", "Rate", "Discount", "Taxable", "GST %", "GST Amt", "Amount");
 // //         generateHr(doc, invoiceTableTop + 20);
@@ -1014,7 +1219,7 @@ const formatCurrency = (amount) => {
 
 // //         doc.text('Total Discount:', 350, summaryY + 20, { align: 'right', width: 100 });
 // //         doc.text(formatCurrency(invoice.totalDiscount), 450, summaryY + 20, { align: 'right' });
-        
+
 // //         doc.text('IGST:', 350, summaryY + 40, { align: 'right', width: 100 });
 // //         doc.text(formatCurrency(invoice.gst), 450, summaryY + 40, { align: 'right' });
 

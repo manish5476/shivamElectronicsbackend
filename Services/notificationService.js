@@ -135,6 +135,58 @@ exports.sendLowStockAlerts = async () => {
     }
 };
 
+/**
+ * @description Sends the invoice PDF to the customer's email.
+ * @param {object} invoice - The full invoice object, populated with buyer details.
+ * @param {Buffer} pdfBuffer - The generated PDF as a buffer.
+ */
+exports.sendInvoiceToCustomer = async (invoice, pdfBuffer) => {
+    try {
+        const customer = invoice.buyer;
+        if (!customer || !customer.email) {
+            console.log(
+                `Invoice ${invoice.invoiceNumber} created, but customer has no email address. Skipping email.`,
+            );
+            return;
+        }
+
+        const htmlMessage = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+                <h2 style="color: #333;">Thank you for your purchase!</h2>
+                <p>Dear ${customer.fullname},</p>
+                <p>Thank you for your recent purchase from Shivam Electronics. Your invoice #${invoice.invoiceNumber} is attached to this email.</p>
+                <p>We appreciate your business!</p>
+                <br>
+                <p>Sincerely,</p>
+                <p>The Shivam Electronics Team</p>
+            </div>
+        `;
+
+        await sendEmail({
+            email: customer.email,
+            subject: `Your Invoice from Shivam Electronics (${invoice.invoiceNumber})`,
+            message: `Dear ${customer.fullname}, please find your invoice attached.`,
+            html: htmlMessage,
+            attachments: [
+                {
+                    filename: `invoice-${invoice.invoiceNumber}.pdf`,
+                    content: pdfBuffer,
+                    contentType: "application/pdf",
+                },
+            ],
+        });
+
+        console.log(
+            `Successfully sent invoice ${invoice.invoiceNumber} to customer ${customer.email}`,
+        );
+    } catch (error) {
+        console.error(
+            `Failed to send invoice email for #${invoice.invoiceNumber}:`,
+            error,
+        );
+    }
+};
+
 // const Emi = require("../Models/emiModel");
 // const Invoice = require("../Models/invoiceModel");
 // const Product = require("../Models/productModel");
